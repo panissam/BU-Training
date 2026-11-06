@@ -1,0 +1,8 @@
+{
+  "name": "BU Training Management System",
+  "description": "ระบบบริหารจัดการลงทะเบียน เช็คอิน และประเมินผลการอบรมบุคลากร มหาวิทยาลัยกรุงเทพ (All-in-One BU Training Management System)",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

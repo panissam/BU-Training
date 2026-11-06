@@ -1,0 +1,175 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Global Safety Net (Catch-all Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Authentication guards
+    function isSignedAndVerified() {
+      return request.auth != null && 
+             request.auth.token.email != null && 
+             request.auth.token.email.lower().matches('^.*@bu\\.ac\\.th$');
+    }
+
+    // Admin authorization guard
+    function isAdmin() {
+      return request.auth != null && 
+             request.auth.token.email != null && (
+               request.auth.token.email.lower() == 'panisara.l@bu.ac.th' ||
+               exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()))
+             );
+    }
+
+    // Path variable ID security validation
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidAdmin(admin) {
+      return admin.email is string && admin.email.lower().matches('^.*@bu\\.ac\\.th$') && admin.email.size() <= 120 &&
+             admin.name is string && admin.name.size() > 0 && admin.name.size() <= 200 &&
+             admin.role is string && (admin.role == 'Admin' || admin.role == 'Super Admin' || admin.role == 'Coordinator');
+    }
+
+    function isValidPersonnel(p) {
+      return p.id is string && p.id.size() > 0 && p.id.size() <= 128 &&
+             p.name is string && p.name.size() > 0 && p.name.size() <= 300 &&
+             p.department is string && p.department.size() <= 500 &&
+             p.email is string && p.email.size() <= 200 &&
+             (!('position' in p) || (p.position is string && p.position.size() <= 500)) &&
+             (!('phone' in p) || (p.phone is string && p.phone.size() <= 200)) &&
+             (!('curriculum' in p) || (p.curriculum is string && p.curriculum.size() <= 1000)) &&
+             (!('academicDepartment' in p) || (p.academicDepartment is string && p.academicDepartment.size() <= 500)) &&
+             (!('createdAt' in p) || (p.createdAt is string && p.createdAt.size() <= 100));
+    }
+
+    function isValidCourse(c) {
+      return c.title is string && c.title.size() > 0 && c.title.size() <= 300 &&
+             c.speaker is string && c.speaker.size() > 0 && c.speaker.size() <= 200 &&
+             c.date is string && c.date.size() > 0 && c.date.size() <= 1000 &&
+             c.time is string && c.time.size() > 0 && c.time.size() <= 100 &&
+             c.location is string && c.location.size() > 0 && c.location.size() <= 200 &&
+             (!('description' in c) || c.description == null || (c.description is string && c.description.size() <= 5000)) &&
+             (!('posterUrl' in c) || c.posterUrl == null || (c.posterUrl is string && c.posterUrl.size() <= 1500000)) &&
+             (!('qrOpened' in c) || c.qrOpened is bool) &&
+             (!('qrOpenTime' in c) || c.qrOpenTime == null || c.qrOpenTime is string) &&
+             (!('qrCloseTime' in c) || c.qrCloseTime == null || c.qrCloseTime is string) &&
+             (!('registrationCloseTime' in c) || c.registrationCloseTime == null || c.registrationCloseTime is string) &&
+             (!('registeredCount' in c) || (c.registeredCount is number && c.registeredCount >= 0));
+    }
+
+    function isValidRegistration(r) {
+      return r.courseId is string && r.courseId.size() > 0 && r.courseId.size() <= 128 &&
+             r.email is string && r.email.lower().matches('^.*@bu\\.ac\\.th$') &&
+             r.name is string && r.name.size() > 0 && r.name.size() <= 200 &&
+             r.personnelId is string && r.personnelId.size() > 0 && r.personnelId.size() <= 50 &&
+             r.department is string && r.department.size() > 0 && r.department.size() <= 200 &&
+             (!('position' in r) || (r.position is string && r.position.size() <= 500)) &&
+             (!('curriculum' in r) || (r.curriculum is string && r.curriculum.size() <= 1000)) &&
+             (!('academicDepartment' in r) || (r.academicDepartment is string && r.academicDepartment.size() <= 500)) &&
+             r.checkedIn is bool &&
+             (!('checkedInAt' in r) || r.checkedInAt == null || (r.checkedInAt is string && r.checkedInAt.size() <= 40)) &&
+             (!('feedback' in r) || (
+               r.feedback.satisfaction is number && r.feedback.satisfaction >= 1 && r.feedback.satisfaction <= 5 &&
+               (!('recommendation' in r.feedback) || (r.feedback.recommendation is number && r.feedback.recommendation >= 1 && r.feedback.recommendation <= 5)) &&
+               (!('comments' in r.feedback) || (r.feedback.comments is string && r.feedback.comments.size() <= 2000)) &&
+               (!('submittedAt' in r.feedback) || (r.feedback.submittedAt is string && r.feedback.submittedAt.size() <= 40)) &&
+               (!('affiliation' in r.feedback) || r.feedback.affiliation is string) &&
+               (!('affiliationOther' in r.feedback) || r.feedback.affiliationOther is string) &&
+               (!('part2Before' in r.feedback) || r.feedback.part2Before is number) &&
+               (!('part2After' in r.feedback) || r.feedback.part2After is number) &&
+               (!('answers' in r.feedback) || r.feedback.answers is map)
+             ));
+    }
+
+    // --- Collection Routes ---
+
+    // Admins Collection
+    match /admins/{adminEmail} {
+      allow read: if isSignedAndVerified() && (adminEmail.lower() == request.auth.token.email.lower() || isAdmin());
+      allow create, update: if isAdmin() && isValidId(adminEmail) && isValidAdmin(incoming());
+      allow delete: if isAdmin() && isValidId(adminEmail);
+    }
+
+    // Personnel Collection
+    match /personnel/{personnelId} {
+      // All authenticated university users can view the personnel directory
+      allow read: if isSignedAndVerified();
+      // ONLY Admin can create, update, or delete personnel data
+      allow create, update: if isAdmin() && isValidId(personnelId) && isValidPersonnel(incoming());
+      allow delete: if isAdmin() && isValidId(personnelId);
+    }
+
+    // Courses Collection
+    match /courses/{courseId} {
+      allow read: if isSignedAndVerified();
+      allow create: if isAdmin() && isValidId(courseId) && isValidCourse(incoming());
+      allow update: if isValidId(courseId) && (
+        (isAdmin() && isValidCourse(incoming())) ||
+        (isSignedAndVerified() && isValidCourse(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['registeredCount']))
+      );
+      allow delete: if isAdmin() && isValidId(courseId);
+    }
+
+    // Registrations Collection
+    match /registrations/{regId} {
+      // Row-Level security for registrations
+      allow read: if isSignedAndVerified() && (resource.data.email.lower() == request.auth.token.email.lower() || isAdmin());
+      
+      // User registers self or Admin enrolls anyone
+      allow create: if (isAdmin() && isValidId(regId) && isValidRegistration(incoming()) && incoming().registeredAt is string && incoming().registeredAt.size() <= 40) ||
+                    (isSignedAndVerified() && 
+                    isValidId(regId) && 
+                    isValidRegistration(incoming()) && 
+                    incoming().email.lower() == request.auth.token.email.lower() &&
+                    incoming().registeredAt is string &&
+                    incoming().registeredAt.size() <= 40);
+      
+      // Check-in and feedback updates
+      allow update: if isSignedAndVerified() && 
+                    isValidRegistration(incoming()) && (
+                      isAdmin() || (
+                        existing().email.lower() == request.auth.token.email.lower() &&
+                        incoming().email.lower() == request.auth.token.email.lower() &&
+                        incoming().courseId == existing().courseId &&
+                        incoming().personnelId == existing().personnelId &&
+                        incoming().registeredAt == existing().registeredAt &&
+                        (
+                          // Action check-in
+                          (incoming().diff(existing()).affectedKeys().hasOnly(['checkedIn', 'checkedInAt'])) ||
+                          // Action feedback
+                          (incoming().diff(existing()).affectedKeys().hasOnly(['feedback'])) ||
+                          // Action batch check-in + feedback
+                          (incoming().diff(existing()).affectedKeys().hasOnly(['checkedIn', 'checkedInAt', 'feedback']))
+                        )
+                      )
+                    );
+      
+      allow delete: if isAdmin();
+    }
+
+    // Settings Collection
+    match /settings/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Campaign Logs Collection
+    match /campaign_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

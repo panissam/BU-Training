@@ -1,0 +1,144 @@
+{
+  "entities": {
+    "Admin": {
+      "title": "Admin",
+      "description": "System administrator user account",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "description": "Admin email (must end with @bu.ac.th)" },
+        "name": { "type": "string", "description": "Admin name" },
+        "assignedAt": { "type": "string", "format": "date-time", "description": "When they became admin" },
+        "assignedBy": { "type": "string", "description": "Email of admin who assigned them" },
+        "role": { "type": "string", "enum": ["Admin", "Super Admin", "Coordinator"], "description": "Role level" }
+      },
+      "required": ["email", "name", "role"]
+    },
+    "Personnel": {
+      "title": "Personnel",
+      "description": "Bangkok University academic and support staff members",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Employee/Personnel ID" },
+        "name": { "type": "string", "description": "Full name (Thai/English)" },
+        "position": { "type": "string", "description": "Job Title/Position" },
+        "department": { "type": "string", "description": "Department or Faculty" },
+        "curriculum": { "type": "string", "description": "Curriculum / Study Program" },
+        "academicDepartment": { "type": "string", "description": "Academic Department / Major / ภาควิชา" },
+        "email": { "type": "string", "description": "Email address (@bu.ac.th)" },
+        "phone": { "type": "string", "description": "Telephone number" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Record creation time" }
+      },
+      "required": ["id", "name", "department", "email"]
+    },
+    "Course": {
+      "title": "Course",
+      "description": "Training program, seminar or academic course activity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique auto-generated course ID" },
+        "title": { "type": "string", "description": "Topic or title of the training" },
+        "speaker": { "type": "string", "description": "Name of guest speaker or instructor" },
+        "date": { "type": "string", "description": "Date of training (YYYY-MM-DD)" },
+        "time": { "type": "string", "description": "Time range of training" },
+        "location": { "type": "string", "description": "Room, building or link" },
+        "description": { "type": "string", "description": "Detailed syllabus or info" },
+        "posterUrl": { "type": "string", "description": "Promotional poster or banner image URL" },
+        "qrOpened": { "type": "boolean", "description": "Whether check-in QR Code is active right now" },
+        "qrOpenTime": { "type": "string", "format": "date-time", "description": "Time range when checkin opens" },
+        "qrCloseTime": { "type": "string", "format": "date-time", "description": "Time range when checkin closes" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Time when course is created" },
+        "createdBy": { "type": "string", "description": "Admin user who created this" },
+        "visible": { "type": "boolean", "description": "Whether this course is visible to participants" },
+        "registeredCount": { "type": "integer", "description": "Number of users currently registered" },
+        "maxSeats": { "type": "integer", "description": "Maximum number of seats available for this course. Zero or undefined means unlimited" }
+      },
+      "required": ["title", "speaker", "date", "time", "location"]
+    },
+    "Registration": {
+      "title": "Registration",
+      "description": "Enrollment record of a staff member for a specific course, including check-in state and survey rating",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID, formed as courseId_email or auto ID" },
+        "courseId": { "type": "string", "description": "Referenced course ID" },
+        "email": { "type": "string", "description": "Staff email" },
+        "personnelId": { "type": "string", "description": "Staff ID" },
+        "name": { "type": "string", "description": "Staff name" },
+        "position": { "type": "string", "description": "Staff position / job title" },
+        "department": { "type": "string", "description": "Staff department" },
+        "curriculum": { "type": "string", "description": "Staff curriculum / program" },
+        "academicDepartment": { "type": "string", "description": "Staff academic department / major" },
+        "registeredAt": { "type": "string", "format": "date-time", "description": "Time of registration" },
+        "checkedIn": { "type": "boolean", "description": "Whether user checked in at the event" },
+        "checkedInAt": { "type": "string", "format": "date-time", "description": "Time of check-in" },
+        "feedback": {
+          "type": "object",
+          "properties": {
+            "satisfaction": { "type": "number", "description": "Rating score 1 to 5" },
+            "recommendation": { "type": "number", "description": "Rating score 1 to 5" },
+            "comments": { "type": "string", "description": "Feedback comments" },
+            "submittedAt": { "type": "string", "format": "date-time", "description": "Time feedback was submitted" }
+          },
+          "required": ["satisfaction"]
+        }
+      },
+      "required": ["courseId", "email", "personnelId", "name", "department"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Global application configuration key-value states",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Setting key identifier (e.g., config)" },
+        "value": { "type": "string", "description": "Value stored" }
+      },
+      "required": ["id", "value"]
+    },
+    "CampaignLog": {
+      "title": "CampaignLog",
+      "description": "Log of email campaign dispatches",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique campaign ID" },
+        "courseId": { "type": "string", "description": "ID of the target course" },
+        "courseTitle": { "type": "string", "description": "Title of the target course" },
+        "subject": { "type": "string", "description": "Email subject" },
+        "message": { "type": "string", "description": "Email message template" },
+        "targetType": { "type": "string", "description": "Target selection criteria" },
+        "targetDetails": { "type": "string", "description": "Readable target group description" },
+        "recipientsCount": { "type": "integer", "description": "Number of recipients" },
+        "successCount": { "type": "integer", "description": "Number of successfully sent emails" },
+        "failCount": { "type": "integer", "description": "Number of failed emails" },
+        "sentAt": { "type": "string", "format": "date-time", "description": "Time of dispatch" },
+        "sentBy": { "type": "string", "description": "Email of admin who sent the campaign" }
+      },
+      "required": ["id", "courseId", "courseTitle", "subject", "message", "targetType", "recipientsCount", "sentAt", "sentBy"]
+    }
+  },
+  "firestore": {
+    "admins": {
+      "schema": "Admin",
+      "description": "Collection of system administrators"
+    },
+    "personnel": {
+      "schema": "Personnel",
+      "description": "Collection of university personnel imported or registered"
+    },
+    "courses": {
+      "schema": "Course",
+      "description": "Collection of training activities"
+    },
+    "registrations": {
+      "schema": "Registration",
+      "description": "Registrations, check-ins, and survey completions"
+    },
+    "settings": {
+      "schema": "Setting",
+      "description": "Global application configurations"
+    },
+    "campaign_logs": {
+      "schema": "CampaignLog",
+      "description": "Collection of sent email campaign dispatches and metrics"
+    }
+  }
+}
