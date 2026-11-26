@@ -11,13 +11,15 @@ import {
   Plus, PlusCircle, Upload, Download, Trash2, Edit, Check, Settings, Mail, 
   Search, Users, Landmark, Target, Award, ArrowRight, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, 
   ToggleRight, Calendar, MapPin, Sparkles, Send, Shield, QrCode, Copy, CheckCircle, Clock, FileSpreadsheet,
-  AlertTriangle, Globe, RotateCw, RefreshCw, Filter, Eye, EyeOff, Archive, Info
+  AlertTriangle, Globe, RotateCw, RotateCcw, RefreshCw, Filter, Eye, EyeOff, Archive, Info, UserPlus, X, MessageSquare, Loader2, BookOpen, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { db, handleFirestoreError, OperationType, cleanForFirestore } from '../firebase';
 import { Course, Personnel, Registration, Admin, SurveyQuestion, EvaluationConfig, DEFAULT_EVALUATION_CONFIG, CampaignLog, CourseCampaignTemplate, CampaignRecipientSnapshot } from '../types';
 import { downloadCSV, parsePersonnelCSV, getDisplayCurriculum, decodeCsvBuffer } from '../utils/csv';
 import AppsScriptGuide from './AppsScriptGuide';
+import { EvaluationImportModal, EvaluationImportResult } from './EvaluationImportModal';
 import { sendGasWebhook, GasWebhookResponse } from '../services/webhookService';
+import VisualHtmlEditor, { sanitizeEmailHtml, VariableOption } from './VisualHtmlEditor';
 
 const toLocalDateTimeString = (isoString: string | null | undefined): string => {
   if (!isoString) return '';
@@ -170,19 +172,19 @@ const ImageToHtmlHelper: React.FC<{ onInsert: (html: string) => void }> = ({ onI
   };
 
   return (
-    <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl mt-2 font-sans">
+    <div className="bg-[#F5F7FA] border border-[#E2E8F0] p-3.5 rounded-2xl mt-2 font-sans">
       <div className="flex justify-between items-center mb-2">
-        <p className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+        <p className="text-[11px] font-bold text-[#071A4B] flex items-center gap-1.5">
           🖼️ แทรกไฟล์รูปภาพลงในจดหมาย
         </p>
-        <div className="flex bg-slate-200 p-0.5 rounded-lg text-[9px] font-bold">
+        <div className="flex bg-white border border-[#E2E8F0] p-0.5 rounded-full text-[10px] font-bold">
           <button
             type="button"
             onClick={() => handleModeChange('hd')}
-            className={`px-2 py-1 rounded-md transition-all ${
+            className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
               mode === 'hd'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-800'
+                ? 'bg-[#071A4B] text-white shadow-xs'
+                : 'text-slate-600 hover:text-[#071A4B]'
             }`}
           >
             ✨ คมชัดสูง (HD)
@@ -190,10 +192,10 @@ const ImageToHtmlHelper: React.FC<{ onInsert: (html: string) => void }> = ({ onI
           <button
             type="button"
             onClick={() => handleModeChange('standard')}
-            className={`px-2 py-1 rounded-md transition-all ${
+            className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
               mode === 'standard'
-                ? 'bg-slate-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-800'
+                ? 'bg-[#071A4B] text-white shadow-xs'
+                : 'text-slate-600 hover:text-[#071A4B]'
             }`}
           >
             มาตรฐาน
@@ -202,8 +204,8 @@ const ImageToHtmlHelper: React.FC<{ onInsert: (html: string) => void }> = ({ onI
       </div>
       
       <div className="flex flex-wrap gap-2 items-center">
-        <label className="cursor-pointer text-[10px] font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition">
-          <Upload className="w-3 h-3 text-slate-500" />
+        <label className="cursor-pointer text-[11px] font-bold text-[#071A4B] bg-white border border-[#E2E8F0] hover:border-[#071A4B] px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs transition">
+          <Upload className="w-3.5 h-3.5 text-[#071A4B]" />
           <span>{loading ? 'กำลังประมวลผล...' : 'เลือกไฟล์รูปภาพในเครื่อง'}</span>
           <input
             type="file"
@@ -216,16 +218,16 @@ const ImageToHtmlHelper: React.FC<{ onInsert: (html: string) => void }> = ({ onI
         
         {imagePreview && (
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 border border-slate-200 rounded overflow-hidden bg-white flex items-center justify-center relative group">
+            <div className="w-10 h-10 border border-[#E2E8F0] rounded-xl overflow-hidden bg-white flex items-center justify-center relative group">
               <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <div className="absolute inset-0 bg-[#071A4B]/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                 <span className="text-[8px] text-white font-bold">{mode === 'hd' ? 'HD' : 'SD'}</span>
               </div>
             </div>
             <button
               type="button"
               onClick={handleInsert}
-              className="text-[10px] font-extrabold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1"
+              className="text-[11px] font-bold bg-[#F97316] hover:bg-[#EA580C] text-white px-3.5 py-1.5 rounded-full transition shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               📥 แทรกลงในข้อความเลย!
             </button>
@@ -235,7 +237,7 @@ const ImageToHtmlHelper: React.FC<{ onInsert: (html: string) => void }> = ({ onI
                 setImagePreview(null);
                 setOriginalDataUrl(null);
               }}
-              className="text-[10px] font-medium text-rose-600 hover:bg-rose-50 px-2 py-1.5 rounded-lg transition"
+              className="text-[11px] font-bold text-rose-600 hover:bg-rose-50 px-2.5 py-1.5 rounded-full transition cursor-pointer"
             >
               ยกเลิก
             </button>
@@ -243,9 +245,9 @@ const ImageToHtmlHelper: React.FC<{ onInsert: (html: string) => void }> = ({ onI
         )}
       </div>
       
-      <div className="text-[9px] text-slate-400 mt-1.5 leading-relaxed">
+      <div className="text-[10px] text-slate-500 mt-2 leading-relaxed">
         {mode === 'hd' ? (
-          <p className="text-blue-600 font-semibold">💡 กำลังใช้โหมดคมชัดสูงพิเศษ (HD): ย่อกว้างสูงสุด 1200px คุณภาพ 95% เหมาะสำหรับแผนผัง ที่นั่ง ตาราง และอินโฟกราฟิกที่มีตัวหนังสือเล็กๆ ค่ะ</p>
+          <p className="text-[#071A4B] font-semibold">💡 กำลังใช้โหมดคมชัดสูงพิเศษ (HD): ย่อกว้างสูงสุด 1200px คุณภาพ 95% เหมาะสำหรับแผนผัง ที่นั่ง ตาราง และอินโฟกราฟิกที่มีตัวหนังสือเล็กๆ ค่ะ</p>
         ) : (
           <p>💡 โหมดมาตรฐาน: ย่อกว้างสูงสุด 600px คุณภาพ 75% เหมาะสำหรับรูปภาพทั่วไป บรรยากาศ หรือรูปคนทั่วไปค่ะ</p>
         )}
@@ -411,6 +413,61 @@ export const DEFAULT_EVALUATION_HTML = `<div style='font-family: "Sarabun", sans
   </div>
 </div>`;
 
+export const DEFAULT_CAMPAIGN_MESSAGE =
+  'เรียน อาจารย์ {name}\n\nสำนักมาตรฐานคุณภาพการศึกษา ขอเชิญเข้าร่วมอบรม "{course_title}"\nโดยวิทยากร: {speaker}\n\nรายละเอียดกิจกรรมอบรม:\nวันที่จัดงาน: {date_time}\nสถานที่: {location}\n{course_poster}\nสำหรับท่านที่มีความประสงค์จะเข้าร่วมอบรม สามารถลงทะเบียนเพื่อจองสิทธิ์ที่นั่งได้ผ่านทางลิงก์ลงทะเบียนด้านล่าง\n\nขอแสดงความนับถืออย่างสูง\nสำนักมาตรฐานคุณภาพการศึกษา มหาวิทยาลัยกรุงเทพ';
+
+const SETTINGS_TEMPLATE_VARIABLES: VariableOption[] = [
+  { token: '{learner_name}', label: 'ชื่อผู้รับ (ชื่ออาจารย์/บุคลากร)' },
+  { token: '{course_title}', label: 'ชื่อหลักสูตรอบรม' },
+  { token: '{course_date}', label: 'วันที่จัดอบรม' },
+  { token: '{course_time}', label: 'เวลาจัดอบรม' },
+  { token: '{course_location}', label: 'สถานที่จัดอบรม' },
+  { token: '{course_description}', label: 'รายละเอียดหลักสูตร' },
+  { token: '{survey_link}', label: 'ลิงก์แบบประเมินความพึงพอใจ' },
+  { token: '{learner_certificate_link}', label: 'ลิงก์ดาวน์โหลดเกียรติบัตร' },
+  { token: '{course_poster_html}', label: 'รูปภาพโปสเตอร์หลักสูตร' },
+];
+
+const CAMPAIGN_VARIABLES: VariableOption[] = [
+  { token: '{name}', label: 'ชื่อผู้รับ' },
+  { token: '{course_title}', label: 'ชื่อหลักสูตรอบรม' },
+  { token: '{date_time}', label: 'วันที่และเวลาอบรม' },
+  { token: '{location}', label: 'สถานที่จัดอบรม' },
+  { token: '{speaker}', label: 'วิทยากร' },
+  { token: '{department}', label: 'คณะ/หน่วยงาน' },
+  { token: '{register_link}', label: 'ลิงก์ลงทะเบียนเข้าร่วม' },
+  { token: '{course_poster}', label: 'รูปภาพโปสเตอร์หลักสูตร' },
+];
+
+const COURSE_DISPATCH_VARIABLES: VariableOption[] = [
+  { token: '{learner_name}', label: 'ชื่อผู้รับ ({learner_name})' },
+  { token: '{name}', label: 'ชื่อผู้รับ ({name})' },
+  { token: '{course_title}', label: 'ชื่อหลักสูตรอบรม' },
+  { token: '{course_date}', label: 'วันที่จัดอบรม' },
+  { token: '{course_time}', label: 'เวลาจัดอบรม' },
+  { token: '{date_time}', label: 'วันและเวลาอบรม' },
+  { token: '{location}', label: 'สถานที่จัดอบรม' },
+  { token: '{speaker}', label: 'วิทยากร' },
+  { token: '{register_link}', label: 'ลิงก์ลงทะเบียนเข้าร่วม' },
+  { token: '{survey_link}', label: 'ลิงก์แบบประเมินความพึงพอใจ' },
+  { token: '{learner_certificate_link}', label: 'ลิงก์ดาวน์โหลดเกียรติบัตร' },
+  { token: '{course_poster}', label: 'รูปภาพโปสเตอร์หลักสูตร' },
+];
+
+const stripHtmlToPlainText = (html: string): string => {
+  if (!html) return '';
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|tr|h[1-6])>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
 interface AdminPortalProps {
   userEmail: string;
   userName: string;
@@ -489,6 +546,8 @@ export default function AdminPortal({
   const [saveEvalConfigSuccess, setSaveEvalConfigSuccess] = useState(false);
   const [evaluationSubTab, setEvaluationSubTab] = useState<'report' | 'manage'>('report');
   const [selectedDetailedFeedback, setSelectedDetailedFeedback] = useState<Registration | null>(null);
+  const [showEvaluationImportModal, setShowEvaluationImportModal] = useState(false);
+  const [evaluationImportBanner, setEvaluationImportBanner] = useState<EvaluationImportResult | null>(null);
 
   // Selected Course ID for "รายชื่อผู้สมัคร" tab
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
@@ -518,6 +577,18 @@ export default function AdminPortal({
 
   // Checkbox selection state for applicants
   const [selectedRegIds, setSelectedRegIds] = useState<Record<string, boolean>>({});
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState('');
+  const [applicantToast, setApplicantToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  useEffect(() => {
+    if (!applicantToast) return;
+    const timer = setTimeout(() => {
+      setApplicantToast(null);
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [applicantToast]);
 
   // Firestore resources
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
@@ -570,6 +641,9 @@ export default function AdminPortal({
   // Expanded Course Registrations Manager
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
   const [activeCourseSubTab, setActiveCourseSubTab] = useState<'qr' | 'attendees' | 'reminder' | 'evaluation'>('attendees');
+  const [togglingArchiveId, setTogglingArchiveId] = useState<string | null>(null);
+  const [archivedRosterFilter, setArchivedRosterFilter] = useState<'all' | 'checkedIn' | 'pending'>('all');
+  const [brokenCoursePosterIds, setBrokenCoursePosterIds] = useState<Record<string, boolean>>({});
   const [courseReminderSubject, setCourseReminderSubject] = useState('');
   const [courseReminderMessage, setCourseReminderMessage] = useState('');
   const [courseEvaluationSubject, setCourseEvaluationSubject] = useState('');
@@ -768,9 +842,7 @@ export default function AdminPortal({
   const [bulkCcAdmin, setBulkCcAdmin] = useState(false);
   const [bulkCcEmails, setBulkCcEmails] = useState<string[]>([]);
   const [campaignSubject, setCampaignSubject] = useState<string>('ขอเรียนเชิญบุคลากรเข้าร่วมโครงการอบรม {course_title}');
-  const [campaignMessage, setCampaignMessage] = useState<string>(
-    'เรียน อาจารย์ {name}\n\nสำนักมาตรฐานคุณภาพการศึกษา ขอเชิญเข้าร่วมอบรม "{course_title}"\nโดยวิทยากร: {speaker}\n\nรายละเอียดกิจกรรมอบรม:\nวันที่จัดงาน: {date_time}\nสถานที่: {location}\n{course_poster}\nสำหรับท่านที่มีความประสงค์จะเข้าร่วมอบรม สามารถลงทะเบียนเพื่อจองสิทธิ์ที่นั่งได้ผ่านทางลิงก์ลงทะเบียนด้านล่าง\n\nขอแสดงความนับถืออย่างสูง\nสำนักมาตรฐานคุณภาพการศึกษา มหาวิทยาลัยกรุงเทพ'
-  );
+  const [campaignMessage, setCampaignMessage] = useState<string>(DEFAULT_CAMPAIGN_MESSAGE);
   const [sendingCampaignMessage, setSendingCampaignMessage] = useState(false);
   const [campaignProgress, setCampaignProgress] = useState<{ total: number; sent: number; logs: string[] } | null>(null);
   const [showCampaignLogs, setShowCampaignLogs] = useState(false);
@@ -1508,14 +1580,20 @@ export default function AdminPortal({
   };
 
   const handleToggleArchive = async (course: Course) => {
+    setTogglingArchiveId(course.id);
     try {
       const nextArchived = !course.archived;
       await updateDoc(doc(db, 'courses', course.id), {
         archived: nextArchived
       });
+      if (expandedCourseId === course.id) {
+        setExpandedCourseId(null);
+      }
     } catch (err) {
       console.error(err);
       alert('ข้อผิดพลาด: ไม่สามารถเปลี่ยนสถานะการจัดเก็บหลักสูตรได้');
+    } finally {
+      setTogglingArchiveId(null);
     }
   };
 
@@ -1955,7 +2033,7 @@ export default function AdminPortal({
         }
 
         let personalizedSubject = replaceAll(emailSubject);
-        const formattedMsgHtml = msg.replace(/\n/g, '<br/>');
+        const formattedMsgHtml = formatMessageForHtml(msg);
         const emailHtmlBody = `
           <div style='font-family: "Sarabun", sans-serif, Tahoma; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: auto; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);'>
             <div style='text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); padding: 20px; border-radius: 8px; color: #ffffff;'>
@@ -1993,7 +2071,7 @@ export default function AdminPortal({
               ...(isGroupTo ? {} : { bccEmails: batchEmails }),
               ccEmail: modalCcAdmin ? (modalCcEmails.length > 0 ? modalCcEmails.join(",") : (userEmail || 'buqa@bu.ac.th')) : undefined,
               subject: personalizedSubject,
-              messageText: msg.replace(/<[^>]*>/g, ''),
+              messageText: stripHtmlToPlainText(msg),
               htmlBody: finalHtml,
               ...(posterAttach ? {
                 inlinePosterBase64: posterAttach.inlinePosterBase64,
@@ -2073,7 +2151,7 @@ export default function AdminPortal({
           }
 
           let personalizedSubject = replaceAll(emailSubject);
-          const formattedMsgHtml = msg.replace(/\n/g, '<br/>');
+          const formattedMsgHtml = formatMessageForHtml(msg);
           const emailHtmlBody = `
             <div style='font-family: "Sarabun", sans-serif, Tahoma; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: auto; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);'>
               <div style='text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); padding: 20px; border-radius: 8px; color: #ffffff;'>
@@ -2106,7 +2184,7 @@ export default function AdminPortal({
               email: item.email,
               ccEmail: modalCcAdmin ? (modalCcEmails.length > 0 ? modalCcEmails.join(",") : (userEmail || 'buqa@bu.ac.th')) : undefined,
               subject: personalizedSubject,
-              messageText: msg.replace(/<[^>]*>/g, ''),
+              messageText: stripHtmlToPlainText(msg),
               htmlBody: finalHtml,
               ...(posterAttach ? {
                 inlinePosterBase64: posterAttach.inlinePosterBase64,
@@ -3014,7 +3092,7 @@ export default function AdminPortal({
     let payload;
 
     if (isGroupTo || isGroupBcc) {
-      const formattedMsgHtml = bulkEmailMessage.replace(/\n/g, '<br/>');
+      const formattedMsgHtml = formatMessageForHtml(bulkEmailMessage);
       const emailHtmlBody = `
         <div style='font-family: "Sarabun", sans-serif, Tahoma; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: auto; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);'>
           <div style='text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); padding: 20px; border-radius: 8px; color: #ffffff;'>
@@ -3026,7 +3104,7 @@ export default function AdminPortal({
             <h4 style='color: #4f46e5; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; font-weight: 800;'>${selectedCourseForEmail.title}</h4>
             <p style='font-size: 14px; color: #334155;'>เรียน อาจารย์ทุกท่าน,</p>
             <p style='font-size: 14px; color: #475569; line-height: 1.6;'>ผู้ดำเนินการจัดโครงการอบรมหลักสูตรดังกล่าว ได้ทำการส่งข้อมูลเอกสารประกอบการศึกษาและไฟล์มีเดียประกอบสัมมนาสำหรับคุณ ดังรายละเอียดความข้างล่างนี้:</p>
-            <div style='background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px; color: #334155; border: 1px solid #f1f5f9; white-space: pre-wrap; line-height: 1.6;'>${formattedMsgHtml}</div>
+            <div style='background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px; color: #334155; border: 1px solid #f1f5f9; line-height: 1.6;'>${formattedMsgHtml}</div>
             <p style='font-size: 14px; color: #334155;'>ขอแสดงความนับถืออย่างสูง,<br/><strong style='color: #4f46e5;'>สำนักมาตรฐานคุณภาพการศึกษา มหาวิทยาลัยกรุงเทพ</strong></p>
           </div>
           
@@ -3043,7 +3121,7 @@ export default function AdminPortal({
         ...(isGroupTo ? {} : { bccEmails: emails }),
         ccEmail: ccEmail,
         subject: subject,
-        messageText: bulkEmailMessage,
+        messageText: stripHtmlToPlainText(bulkEmailMessage),
         htmlBody: emailHtmlBody
       };
     } else {
@@ -3051,7 +3129,7 @@ export default function AdminPortal({
         action: 'bulk',
         emails: emails,
         courseTitle: selectedCourseForEmail.title,
-        messageText: bulkEmailMessage,
+        messageText: formatMessageForHtml(bulkEmailMessage),
         ccEmail: ccEmail
       };
     }
@@ -3125,13 +3203,18 @@ export default function AdminPortal({
     return campaignCustomRecipients;
   };
 
-  // Format text for email HTML rendering (preserves manual line breaks faithfully, handles no-break spans and zero-width spaces)
+  // Format text/HTML for email rendering (sanitizes markup and converts plain newlines only when no block/break HTML tags exist)
   const formatMessageForHtml = (msg: string): string => {
     if (!msg) return '';
-    return msg
-      .replace(/\[nobr\]([\s\S]*?)\[\/nobr\]/g, '<span style="white-space: nowrap; word-break: keep-all; display: inline-block;">$1</span>')
-      .replace(/\r\n/g, '\n')
-      .replace(/\n/g, '<br/>');
+    const withNobr = msg.replace(
+      /\[nobr\]([\s\S]*?)\[\/nobr\]/g,
+      '<span style="white-space: nowrap; word-break: keep-all; display: inline-block;">$1</span>'
+    );
+    const hasBlockOrBreak = /<(div|p|table|tr|td|th|ul|ol|li|h[1-6]|hr|blockquote|br)\b/i.test(withNobr);
+    const prepared = hasBlockOrBreak
+      ? withNobr
+      : withNobr.replace(/\r\n/g, '\n').replace(/\n/g, '<br/>');
+    return sanitizeEmailHtml(prepared);
   };
 
 
@@ -3782,7 +3865,7 @@ export default function AdminPortal({
               ...(isGroupTo ? {} : { bccEmails: batchEmails }),
               ccEmail: campaignCcAdmin ? (campaignCcEmails.length > 0 ? campaignCcEmails.join(",") : (userEmail || 'buqa@bu.ac.th')) : undefined,
               subject: personalizedSubject,
-              messageText: personalizedMessage,
+              messageText: stripHtmlToPlainText(personalizedMessage),
               htmlBody: finalCampaignHtmlBody,
               courseId: selectedCourse.id,
               courseTitle: selectedCourse.title,
@@ -3921,7 +4004,7 @@ export default function AdminPortal({
               email: recipient.email,
               ccEmail: campaignCcAdmin ? (campaignCcEmails.length > 0 ? campaignCcEmails.join(",") : (userEmail || 'buqa@bu.ac.th')) : undefined,
               subject: personalizedSubject,
-              messageText: personalizedMessage,
+              messageText: stripHtmlToPlainText(personalizedMessage),
               htmlBody: finalCampaignHtmlBody,
               courseId: selectedCourse.id,
               courseTitle: selectedCourse.title,
@@ -4180,7 +4263,7 @@ export default function AdminPortal({
     value: deptMap[key]
   })).sort((a, b) => b.value - a.value);
 
-  const COLORS = ['#ea580c', '#3b82f6', '#10b981', '#a855f7', '#f43f5e', '#64748b', '#06b6d4', '#eab308'];
+  const COLORS = ['#F97316', '#071A4B', '#0D2566', '#EA580C', '#059669', '#2563EB', '#64748B', '#EAB308'];
 
   // Export Summary of All Courses Metrics as CSV
   const handleExportAllCoursesSummary = () => {
@@ -4294,50 +4377,50 @@ export default function AdminPortal({
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800" id="admin-portal-container">
+    <div className="min-h-screen bg-[#F5F7FA] flex flex-col font-sans text-[#071A4B]" id="admin-portal-container">
       {/* 1. TOP NAVIGATION / HEADER */}
-      <header className="w-full bg-slate-900 text-slate-100 flex flex-col border-b border-slate-800 z-10" id="admin-top-nav">
+      <header className="w-full bg-[#071A4B] text-white flex flex-col border-b border-white/10 z-10 shadow-sm" id="admin-top-nav">
         {/* Upper Top Bar: Logo & Admin profile */}
-        <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 gap-4" id="top-nav-logo-bar">
-          <div className="flex items-center gap-2.5">
-            <span className="h-9 w-9 rounded-xl bg-orange-500 flex items-center justify-center font-black text-white text-lg shadow-md shadow-orange-500/20">
+        <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between border-b border-white/10 gap-4" id="top-nav-logo-bar">
+          <div className="flex items-center gap-3">
+            <span className="h-10 w-10 rounded-full bg-[#F97316] flex items-center justify-center font-black text-white text-sm shadow-sm">
               BU
             </span>
             <div>
               <h2 className="text-sm font-black tracking-wide text-white uppercase leading-none">BU Training</h2>
-              <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase leading-none">Management System</p>
+              <p className="text-[10px] font-bold tracking-[0.14em] text-[#F97316] mt-1 uppercase leading-none">Management System</p>
             </div>
           </div>
 
           {/* Right Admin info */}
           <div className="flex items-center gap-4 text-xs" id="top-nav-profile">
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-[8px] bg-orange-500/15 text-orange-400 px-2 py-0.5 rounded border border-orange-500/30">ADMIN</span>
+            <div className="flex items-center gap-2.5">
+              <span className="font-extrabold text-[9px] tracking-wider bg-[#F97316]/20 text-orange-300 px-2.5 py-0.5 rounded-full border border-[#F97316]/40">ADMIN</span>
               <div className="text-left">
-                <p className="font-bold text-slate-200 text-xs leading-tight">{currentAdminProfile ? currentAdminProfile.name : userName}</p>
-                <p className="text-slate-500 font-mono text-[9px]">{userEmail}</p>
+                <p className="font-bold text-white text-xs leading-tight">{currentAdminProfile ? currentAdminProfile.name : userName}</p>
+                <p className="text-slate-300 font-mono text-[10px]">{userEmail}</p>
               </div>
             </div>
-            <div className="h-6 w-[1px] bg-slate-800 hidden sm:block"></div>
+            <div className="h-6 w-[1px] bg-white/15 hidden sm:block"></div>
             <button
               onClick={() => { window.location.href = '/'; }}
-              className="text-xs font-bold text-slate-400 hover:text-rose-450 transition cursor-pointer"
+              className="px-3.5 py-1.5 rounded-full border border-white/20 text-xs font-bold text-slate-200 hover:bg-white/10 hover:text-white transition cursor-pointer"
               title="ออกจากเว็บบริการแอดมิน"
             >
-              [ออกจากระบบแอดมิน]
+              ออกจากระบบแอดมิน
             </button>
           </div>
         </div>
 
         {/* Horizontal Navigation Tab Bar */}
-        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900 bg-slate-950/40" id="top-nav-tabs">
-          <nav className="flex items-center gap-1.5 p-3 min-w-max mx-2" id="top-nav-menu">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-[#071A4B] bg-[#0A2463] border-t border-white/10" id="top-nav-tabs">
+          <nav className="flex items-center gap-2 p-3 min-w-max mx-2" id="top-nav-menu">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'dashboard'
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-sm'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
               <Target className="h-4 w-4" />
@@ -4346,10 +4429,10 @@ export default function AdminPortal({
 
             <button
               onClick={() => setActiveTab('courses')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'courses'
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-sm'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
               <Calendar className="h-4 w-4" />
@@ -4363,10 +4446,10 @@ export default function AdminPortal({
                 }
                 setActiveTab('applicants');
               }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'applicants'
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-sm'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
               <FileSpreadsheet className="h-4 w-4" />
@@ -4375,10 +4458,10 @@ export default function AdminPortal({
 
             <button
               onClick={() => setActiveTab('personnel')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'personnel'
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-sm'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
               <Users className="h-4 w-4" />
@@ -4387,10 +4470,10 @@ export default function AdminPortal({
 
             <button
               onClick={() => setActiveTab('invitations')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'invitations'
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-sm'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
               <Mail className="h-4 w-4" />
@@ -4404,10 +4487,10 @@ export default function AdminPortal({
                 }
                 setActiveTab('evaluations');
               }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'evaluations'
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-sm'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
               <Award className="h-4 w-4" />
@@ -4416,10 +4499,10 @@ export default function AdminPortal({
 
             <button
               onClick={() => setActiveTab('admins')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'admins'
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/15'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-sm'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
               <Shield className="h-4 w-4" />
@@ -4428,10 +4511,10 @@ export default function AdminPortal({
 
             <button
               onClick={() => setActiveTab('settings')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'settings'
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-sm'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
               <Settings className="h-4 w-4" />
@@ -4442,48 +4525,91 @@ export default function AdminPortal({
       </header>
 
       {/* 2. MAIN CONTENT AREA */}
-      <main className="flex-1 p-6 md:p-8 overflow-x-hidden space-y-6" id="admin-main-pane">
+      <main className="flex-1 p-5 md:p-8 max-w-[1440px] w-full mx-auto overflow-x-hidden space-y-6" id="admin-main-pane">
         {/* Top Header Bar inside content */}
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm" id="content-header-bar">
-          <div className="flex items-center gap-3">
-            <span className="p-2.5 bg-orange-50 border border-orange-100 rounded-xl text-orange-600 flex items-center justify-center">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] p-5 md:p-6 rounded-2xl shadow-sm" id="content-header-bar">
+          <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
               <Shield className="h-5 w-5" />
             </span>
             <div>
-              <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none">BU Training Management System</h1>
-              <p className="text-[11px] font-bold text-slate-400 mt-1">LEARNING DEVELOPMENT OFFICE (ADMIN PORTAL)</p>
+              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-2">
+                <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                Learning Development Office · Admin Portal
+              </p>
+              <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-[#071A4B] leading-tight mt-0.5">
+                BU Training <span className="text-[#F97316]">Management</span>
+              </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-3" id="top-header-right-actions">
-            <span className="text-[11px] font-bold text-slate-400">สถานะแผง: <strong className="text-emerald-600">ONLINE ● L&D</strong></span>
+          <div className="flex items-center gap-2.5 text-xs font-bold text-slate-600 tabular-nums" id="top-header-right-actions">
+            <span className="px-3.5 py-1.5 rounded-full bg-[#F5F7FA] border border-[#E2E8F0] text-[#071A4B]">
+              หลักสูตร {courses.length} โครงการ
+            </span>
+            <span className="px-3.5 py-1.5 rounded-full bg-[#F5F7FA] border border-[#E2E8F0] text-[#071A4B]">
+              ลงทะเบียนสะสม {registrations.length} รายการ
+            </span>
           </div>
         </header>
 
         {loading ? (
-          <div className="py-20 text-center text-slate-400">กำลังเชื่อมฐานข้อมูล Firestore...</div>
+          <div className="space-y-6 py-4" id="admin-loading-skeleton">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {[1, 2, 3, 4].map((idx) => (
+                <div key={idx} className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm space-y-4 animate-pulse">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2 flex-1">
+                      <div className="h-3 w-24 bg-slate-200 rounded-full"></div>
+                      <div className="h-8 w-28 bg-slate-200 rounded-xl"></div>
+                    </div>
+                    <div className="w-11 h-11 rounded-full bg-slate-200"></div>
+                  </div>
+                  <div className="h-3 w-36 bg-slate-100 rounded-full"></div>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 bg-white border border-[#E2E8F0] rounded-2xl p-6 h-80 animate-pulse">
+                <div className="h-4 w-56 bg-slate-200 rounded-full mb-6"></div>
+                <div className="h-56 bg-slate-100 rounded-xl"></div>
+              </div>
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 h-80 animate-pulse">
+                <div className="h-4 w-44 bg-slate-200 rounded-full mb-6"></div>
+                <div className="h-56 bg-slate-100 rounded-xl"></div>
+              </div>
+            </div>
+          </div>
       ) : activeTab === 'dashboard' ? (
         /* Executive Dashboard tab */
         <div className="space-y-8" id="dashboard-tab-content">
           {/* Dashboard Scope Filter Card */}
-          <div className="bg-white border border-slate-200/85 p-5 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-sm md:text-base font-black text-slate-800 flex items-center gap-2">
-                <Filter className="h-5 w-5 text-orange-500" />
-                <span>ตัวกรองและขอบเขตวิเคราะห์โครงการอบรม</span>
-              </h2>
-              <p className="text-[11px] text-slate-405 font-sans leading-relaxed">
-                {isAllCourses 
-                  ? '📊 กำลังแสดงรายงานสรุปสถิติจำนวนรวมสะสมของ "ทุกโครงการอบรมทั้งหมด" ในระบบ' 
-                  : `🎯 กำลังแสดงรายงานวิเคราะห์เจาะลึกเฉพาะหัวข้อ: "${selectedDashboardCourse?.title}"`}
-              </p>
+          <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] p-5 md:p-6 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <span className="w-10 h-10 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0 mt-0.5">
+                <Filter className="h-4.5 w-4.5" />
+              </span>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-2">
+                  <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                  Analytics Scope
+                </p>
+                <h2 className="text-base md:text-lg font-extrabold text-[#071A4B]">
+                  ตัวกรองและขอบเขต<span className="text-[#F97316]">วิเคราะห์โครงการอบรม</span>
+                </h2>
+                <p className="text-xs text-slate-500 font-sans leading-relaxed">
+                  {isAllCourses 
+                    ? '📊 กำลังแสดงรายงานสรุปสถิติจำนวนรวมสะสมของ "ทุกโครงการอบรมทั้งหมด" ในระบบ' 
+                    : `🎯 กำลังแสดงรายงานวิเคราะห์เจาะลึกเฉพาะหัวข้อ: "${selectedDashboardCourse?.title}"`}
+                </p>
+              </div>
             </div>
             
             <div className="flex flex-wrap items-center gap-2.5">
               <select
                 value={selectedDashboardCourseId}
                 onChange={(e) => setSelectedDashboardCourseId(e.target.value)}
-                className="bg-slate-50 border border-slate-250 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold focus:outline-none focus:border-orange-500 cursor-pointer min-h-[40px] max-w-full sm:max-w-xs md:max-w-md truncate shadow-3xs"
+                className="bg-[#F5F7FA] border border-[#E2E8F0] text-[#071A4B] px-4 py-2.5 rounded-full text-xs font-bold focus:outline-none focus:border-[#071A4B] cursor-pointer min-h-[42px] max-w-full sm:max-w-xs md:max-w-md truncate shadow-xs"
               >
                 <option value="all">🌐 ภาพรวมรวมสะสมทุกหลักสูตร (All Courses)</option>
                 {courses.filter(c => !c.archived || c.id === selectedDashboardCourseId || showArchivedInDropdown).map(c => (
@@ -4497,26 +4623,30 @@ export default function AdminPortal({
                 <button
                   type="button"
                   onClick={handleExportAllCoursesSummary}
-                  className="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm min-h-[40px] cursor-pointer"
+                  className="pl-5 pr-2 py-1.5 bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-bold rounded-full transition flex items-center gap-2.5 shadow-sm min-h-[42px] cursor-pointer"
                 >
-                  <Download className="h-4 w-4" />
                   <span>ส่งออกสถิติทุกวิชา (CSV)</span>
+                  <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
                 </button>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => selectedDashboardCourse && handleExportCourseData(selectedDashboardCourse)}
-                    className="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm min-h-[40px] cursor-pointer"
+                    className="pl-5 pr-2 py-1.5 bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-bold rounded-full transition flex items-center gap-2.5 shadow-sm min-h-[42px] cursor-pointer"
                     title="ส่งออกรายชื่อผู้ลงทะเบียนและแบบประเมิน"
                   >
-                    <Download className="h-4 w-4" />
                     <span>ดึงรายชื่อและผลประเมิน (CSV)</span>
+                    <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setSelectedDashboardCourseId('all')}
-                    className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition border border-slate-200 min-h-[40px] cursor-pointer"
+                    className="px-4 py-2 bg-white hover:bg-slate-50 text-[#071A4B] text-xs font-bold rounded-full transition border border-[#E2E8F0] hover:border-[#071A4B] min-h-[42px] cursor-pointer"
                   >
                     <span>ล้างตัวกรอง</span>
                   </button>
@@ -4527,78 +4657,78 @@ export default function AdminPortal({
 
           {/* Key Metrics Banners */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="stats-grid">
-            <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm hover:shadow relative">
-              <div className="flex justify-between items-start">
+            <div className="bg-[#071A4B] text-white p-6 rounded-2xl shadow-sm border border-white/10 border-b-2 border-b-[#F97316]">
+              <div className="flex justify-between items-start gap-3">
                 <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider font-sans">จำนวนผู้ลงทะเบียน</p>
-                  <h3 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">{totalRegCount} ที่นั่ง</h3>
+                  <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider font-sans">จำนวนผู้ลงทะเบียน</p>
+                  <h3 className="text-2xl md:text-3xl font-extrabold text-white mt-1.5 tabular-nums">{totalRegCount} ที่นั่ง</h3>
                 </div>
-                <span className="p-3 bg-orange-50 text-orange-600 rounded-xl">
+                <span className="w-11 h-11 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
                   <Users className="h-5 w-5" />
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-4 font-sans">
-                {isAllCourses ? 'รวมทุกวิชาวิทยากรในระบบสะสม' : `เฉพาะหัวข้อการสัมมนาวิชาการนี้`}
+              <p className="text-xs text-slate-300 mt-4 font-sans">
+                {isAllCourses ? 'รวมทุกวิชาวิทยากรในระบบสะสม' : 'เฉพาะหัวข้อการสัมมนาวิชาการนี้'}
               </p>
             </div>
 
-            <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm hover:shadow relative">
-              <div className="flex justify-between items-start">
+            <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] text-white p-6 rounded-2xl shadow-sm">
+              <div className="flex justify-between items-start gap-3">
                 <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider font-sans">ยอดผู้เข้ารับการเช็คอิน</p>
-                  <h3 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">{checkedInCount} คน</h3>
+                  <p className="text-[11px] font-bold text-orange-100 uppercase tracking-wider font-sans">ยอดผู้เข้ารับการเช็คอิน</p>
+                  <h3 className="text-2xl md:text-3xl font-extrabold text-white mt-1.5 tabular-nums">{checkedInCount} คน</h3>
                 </div>
-                <span className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                <span className="w-11 h-11 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
                   <CheckCircle className="h-5 w-5" />
                 </span>
               </div>
-              <p className="text-xs text-emerald-600 mt-4 font-bold flex items-center gap-1 font-sans">
+              <p className="text-xs text-orange-50 mt-4 font-bold flex items-center gap-1 font-sans tabular-nums">
                 <span>คิดเป็นร้อยละ {attendanceRate}% ของยอดสำรองสิทธิ์</span>
               </p>
             </div>
 
-            <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm hover:shadow relative">
-              <div className="flex justify-between items-start">
+            <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] p-6 rounded-2xl shadow-sm">
+              <div className="flex justify-between items-start gap-3">
                 <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider font-sans">ระดับความพึงพอใจเฉลี่ย</p>
-                  <h3 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">ระดับความพึงพอใจเฉลี่ย</p>
+                  <h3 className="text-2xl md:text-3xl font-extrabold text-[#071A4B] mt-1.5 tabular-nums">
                     {rawAvgSatisfaction > 0 ? `★ ${rawAvgSatisfaction} / 5` : '-'}
                   </h3>
                 </div>
-                <span className="p-3 bg-amber-50 text-amber-500 rounded-xl">
+                <span className="w-11 h-11 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
                   <Target className="h-5 w-5" />
                 </span>
               </div>
-              <p className="text-xs text-slate-405 mt-4 font-bold font-sans">
+              <p className="text-xs text-slate-500 mt-4 font-bold font-sans tabular-nums">
                 {avgSatisfactionPercent > 0 
                   ? `เทียบเป็นเปอร์เซ็นต์ได้ ${avgSatisfactionPercent}% (${ratedRegs.length} ผู้ประเมิน)` 
                   : 'ยังไม่มีผู้ทำแบบประเมินผลความพึงพอใจ'}
               </p>
             </div>
 
-            <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm hover:shadow relative">
-              <div className="flex justify-between items-start">
+            <div className="bg-[#0D2566] text-white p-6 rounded-2xl shadow-sm border border-white/10">
+              <div className="flex justify-between items-start gap-3">
                 {isAllCourses ? (
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider font-sans">จำนวนโครงการอบรมสัมมนา</p>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">{courses.length} หัวข้อ</h3>
+                    <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider font-sans">จำนวนโครงการอบรมสัมมนา</p>
+                    <h3 className="text-2xl md:text-3xl font-extrabold text-white mt-1.5 tabular-nums">{courses.length} หัวข้อ</h3>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider font-sans">การแนะนำหลักสูตรต่อ</p>
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">
+                    <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider font-sans">การแนะนำหลักสูตรต่อ</p>
+                    <h3 className="text-2xl md:text-3xl font-extrabold text-white mt-1.5 tabular-nums">
                       {rawAvgRecommendation > 0 ? `★ ${rawAvgRecommendation} / 5` : '-'}
                     </h3>
                   </div>
                 )}
-                <span className="p-3 bg-slate-100 text-slate-800 rounded-xl">
+                <span className="w-11 h-11 rounded-full bg-white text-[#071A4B] flex items-center justify-center shrink-0">
                   <Landmark className="h-5 w-5" />
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-4 font-bold font-sans">
+              <p className="text-xs text-slate-300 mt-4 font-bold font-sans">
                 {isAllCourses 
                   ? 'จากกำลังโครงสร้างโครงการปีปัจจุบัน' 
-                  : `จากระดับ 5 ดาวความพร้อมแนะนำต่อเพื่อนพนักงาน`}
+                  : 'จากระดับ 5 ดาวความพร้อมแนะนำต่อเพื่อนพนักงาน'}
               </p>
             </div>
           </div>
@@ -4608,25 +4738,27 @@ export default function AdminPortal({
             
             {isAllCourses ? (
               /* All Courses view - Presence vs Rating comparison chart */
-              <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm col-span-2">
-                <h3 className="text-base font-extrabold text-slate-800 mb-4 flex items-center gap-2">
-                  <Target className="h-4 w-4 text-orange-600" />
+              <div className="bg-white border border-[#E2E8F0] p-6 rounded-2xl shadow-sm lg:col-span-2">
+                <h3 className="text-base font-extrabold text-[#071A4B] mb-4 flex items-center gap-2.5">
+                  <span className="w-8 h-8 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                    <Target className="h-4 w-4" />
+                  </span>
                   <span>วิเคราะห์เปรียบเทียบอัตราเข้าร่วมและระดับคะแนนความประเมิน (%)</span>
                 </h3>
                 
                 {chartData.length === 0 ? (
-                  <div className="h-64 flex items-center justify-center text-slate-400 text-xs font-sans">ยังไม่มีชุดข้อมูลสรุปทางสถิติรองรับการวิเคราะห์</div>
+                  <div className="h-64 flex items-center justify-center text-slate-400 text-xs font-sans border border-dashed border-[#E2E8F0] rounded-xl bg-[#F5F7FA]">ยังไม่มีชุดข้อมูลสรุปทางสถิติรองรับการวิเคราะห์</div>
                 ) : (
                   <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" stroke="#94a3b8" fontSize={9} tickLine={false} />
-                        <YAxis stroke="#94a3b8" fontSize={11} domain={[0, 100]} tickLine={false} />
-                        <Tooltip contentStyle={{ background: '#0f172a', borderRadius: '8px', color: '#fff', fontSize: '11px' }} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                        <XAxis dataKey="name" stroke="#64748B" fontSize={9} tickLine={false} />
+                        <YAxis stroke="#64748B" fontSize={11} domain={[0, 100]} tickLine={false} />
+                        <Tooltip contentStyle={{ background: '#071A4B', borderRadius: '10px', border: 'none', color: '#fff', fontSize: '11px' }} />
                         <Legend iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                        <Bar dataKey="อัตราเข้าอบรม (%)" fill="#ea580c" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="ความพึงพอใจ/คะแนน (%)" fill="#334155" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="อัตราเข้าอบรม (%)" fill="#F97316" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="ความพึงพอใจ/คะแนน (%)" fill="#071A4B" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -4634,27 +4766,29 @@ export default function AdminPortal({
               </div>
             ) : (
               /* Specific Course view - Detailed rating distribution 1-5 stars */
-              <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm col-span-2">
-                <h3 className="text-base font-extrabold text-slate-800 mb-4 flex items-center gap-2">
-                  <Target className="h-4 w-4 text-orange-600" />
+              <div className="bg-white border border-[#E2E8F0] p-6 rounded-2xl shadow-sm lg:col-span-2">
+                <h3 className="text-base font-extrabold text-[#071A4B] mb-4 flex items-center gap-2.5">
+                  <span className="w-8 h-8 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                    <Target className="h-4 w-4" />
+                  </span>
                   <span>การแจกแจงคะแนนแบบประเมินความพึงพอใจหลักสูตร (จำนวนคนแยกตามดาว)</span>
                 </h3>
                 
                 {ratedRegs.length === 0 ? (
-                  <div className="h-64 flex items-center justify-center text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl font-sans">
+                  <div className="h-64 flex items-center justify-center text-slate-400 text-xs border border-dashed border-[#E2E8F0] bg-[#F5F7FA] rounded-xl font-sans">
                     ยังไม่มีข้อมูลแบบประเมินผลความพึงพอใจในวิชาการรอบนี้
                   </div>
                 ) : (
                   <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={singleCourseRatingData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                        <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-                        <Tooltip contentStyle={{ background: '#0f172a', borderRadius: '8px', color: '#fff', fontSize: '11px' }} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                        <XAxis dataKey="name" stroke="#64748B" fontSize={11} tickLine={false} />
+                        <YAxis stroke="#64748B" fontSize={11} tickLine={false} />
+                        <Tooltip contentStyle={{ background: '#071A4B', borderRadius: '10px', border: 'none', color: '#fff', fontSize: '11px' }} />
                         <Legend iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                        <Bar name="จำนวนผู้ให้คะแนน (คน)" dataKey="จำนวนผู้ให้คะแนน" fill="#ea580c" radius={[4, 4, 0, 0]} />
-                        <Bar name="สัดส่วนเปอร์เซ็นต์ (%)" dataKey="สัดส่วน (%)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        <Bar name="จำนวนผู้ให้คะแนน (คน)" dataKey="จำนวนผู้ให้คะแนน" fill="#F97316" radius={[4, 4, 0, 0]} />
+                        <Bar name="สัดส่วนเปอร์เซ็นต์ (%)" dataKey="สัดส่วน (%)" fill="#071A4B" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -4663,14 +4797,16 @@ export default function AdminPortal({
             )}
 
             {/* Department share Pie */}
-            <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm">
-              <h3 className="text-base font-extrabold text-slate-800 mb-4 flex items-center gap-2">
-                <Users className="h-4 w-4 text-orange-600" />
+            <div className="bg-white border border-[#E2E8F0] p-6 rounded-2xl shadow-sm">
+              <h3 className="text-base font-extrabold text-[#071A4B] mb-4 flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <Users className="h-4 w-4" />
+                </span>
                 <span>{isAllCourses ? 'สัดส่วนการมีส่วนร่วมแยกตามสังกัดรวม' : 'สัดส่วนผู้เข้าร่วมแยกตามสังกัดวิชา'}</span>
               </h3>
               
               {deptChartData.length === 0 ? (
-                <div className="h-64 flex items-center justify-center text-slate-400 text-xs text-center border border-dashed border-slate-200 rounded-xl p-6 font-sans">
+                <div className="h-64 flex items-center justify-center text-slate-400 text-xs text-center border border-dashed border-[#E2E8F0] bg-[#F5F7FA] rounded-xl p-6 font-sans">
                   ไม่มีสัดส่วนสถิติสังกัด เนื่องจากยังไม่มีบุคลากรมาทำกิจกรรมในระบบ
                 </div>
               ) : (
@@ -4691,11 +4827,11 @@ export default function AdminPortal({
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip contentStyle={{ fontSize: '11px' }} />
+                        <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px' }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="flex flex-wrap justify-center gap-x-2.5 gap-y-1 text-[10px] text-slate-500 max-h-[72px] overflow-y-auto">
+                  <div className="flex flex-wrap justify-center gap-x-2.5 gap-y-1 text-[10px] text-slate-600 max-h-[72px] overflow-y-auto tabular-nums">
                     {deptChartData.slice(0, 8).map((entry, index) => (
                       <span key={entry.name} className="flex items-center gap-1 font-sans">
                         <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
@@ -4712,42 +4848,46 @@ export default function AdminPortal({
           </div>
 
           {/* DETAILED STATISTICAL TABLE OF ALL COURSES (ดึงข้อมูล/วิเคราะห์สถิติต่อ) */}
-          <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm space-y-4">
+          <div className="bg-white border border-[#E2E8F0] p-6 rounded-2xl shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-extrabold text-slate-855 flex items-center gap-2">
-                  <FileSpreadsheet className="h-5 w-5 text-orange-500" />
-                  <span>ตารางวิเคราะห์สถิติสรุปผลดำเนินงานรายหลักสูตร (Courses Analytics Matrix)</span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5 font-sans leading-relaxed">
-                  ตารางรายงานสรุปความพึงพอใจและอัตราเข้าเช็คอินของทุกหัวข้อ สามารถดึงข้อมูลดิบไปจัดพิมพ์หรือใช้วิเคราะห์ต่อยอดในโปรแกรมประมวลผลภายนอกได้
-                </p>
+              <div className="flex items-start gap-3">
+                <span className="w-9 h-9 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0 mt-0.5">
+                  <FileSpreadsheet className="h-4 w-4" />
+                </span>
+                <div>
+                  <h3 className="text-base font-extrabold text-[#071A4B]">
+                    ตารางวิเคราะห์สถิติสรุปผลดำเนินงานรายหลักสูตร (Courses Analytics Matrix)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5 font-sans leading-relaxed">
+                    ตารางรายงานสรุปความพึงพอใจและอัตราเข้าเช็คอินของทุกหัวข้อ สามารถดึงข้อมูลดิบไปจัดพิมพ์หรือใช้วิเคราะห์ต่อยอดในโปรแกรมประมวลผลภายนอกได้
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={handleExportAllCoursesSummary}
-                className="px-4 py-2.5 bg-slate-50 border border-slate-250 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-100 flex items-center gap-1.5 transition self-start sm:self-auto cursor-pointer shadow-3xs min-h-[40px]"
+                className="px-4 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs hover:bg-slate-50 flex items-center gap-1.5 transition self-start sm:self-auto cursor-pointer shadow-xs min-h-[40px]"
               >
-                <Download className="h-4 w-4 text-slate-500" />
+                <Download className="h-4 w-4 text-[#071A4B]" />
                 <span>ดาวน์โหลดข้อมูลภาพรวมสรุปทุกหลักสูตร (CSV)</span>
               </button>
             </div>
 
-            <div className="overflow-x-auto border border-slate-150 rounded-xl">
+            <div className="overflow-x-auto border border-[#E2E8F0] rounded-2xl">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-150 text-slate-600 font-bold font-sans">
-                    <th className="p-3">หัวข้อหลักสูตรอบรมสัมมนา</th>
-                    <th className="p-3 text-center">ผู้ลงทะเบียนสะสม</th>
-                    <th className="p-3 text-center">ผู้เข้าร่วมเช็คอิน</th>
-                    <th className="p-3 text-center">อัตราเข้าอบรม</th>
-                    <th className="p-3 text-center">จำนวนแบบประเมิน</th>
-                    <th className="p-3 text-center">คะแนนเฉลี่ย</th>
-                    <th className="p-3 text-center">คะแนนเปอร์เซ็นต์</th>
-                    <th className="p-3 text-center">จัดการดูสถิติ</th>
+                  <tr className="bg-[#F5F7FA] border-b border-[#E2E8F0] text-[#071A4B] font-bold font-sans">
+                    <th className="p-3.5">หัวข้อหลักสูตรอบรมสัมมนา</th>
+                    <th className="p-3.5 text-center">ผู้ลงทะเบียนสะสม</th>
+                    <th className="p-3.5 text-center">ผู้เข้าร่วมเช็คอิน</th>
+                    <th className="p-3.5 text-center">อัตราเข้าอบรม</th>
+                    <th className="p-3.5 text-center">จำนวนแบบประเมิน</th>
+                    <th className="p-3.5 text-center">คะแนนเฉลี่ย</th>
+                    <th className="p-3.5 text-center">คะแนนเปอร์เซ็นต์</th>
+                    <th className="p-3.5 text-center">จัดการดูสถิติ</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-150 text-slate-700 font-sans">
+                <tbody className="divide-y divide-[#E2E8F0] text-slate-700 font-sans tabular-nums">
                   {courses.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="p-6 text-center text-slate-400 italic">ยังไม่มีข้อมูลโครงการอบรมสัมมนาในระบบฐานข้อมูล</td>
@@ -4768,15 +4908,15 @@ export default function AdminPortal({
                       const isCurrentSelected = selectedDashboardCourseId === c.id;
 
                       return (
-                        <tr key={c.id} className={`hover:bg-slate-50/55 transition-all ${isCurrentSelected ? 'bg-orange-50/40 font-medium' : ''}`}>
-                          <td className="p-3 max-w-xs sm:max-w-md truncate">
-                            <span className="font-extrabold text-slate-900 block leading-tight">{c.title}</span>
-                            <span className="text-[10px] text-slate-450 block mt-1">วิทยากร: {c.speaker} | วันจัด: {c.date}</span>
+                        <tr key={c.id} className={`hover:bg-slate-50/70 transition-all ${isCurrentSelected ? 'bg-orange-50/60 font-medium' : ''}`}>
+                          <td className="p-3.5 max-w-xs sm:max-w-md truncate">
+                            <span className="font-extrabold text-[#071A4B] block leading-tight">{c.title}</span>
+                            <span className="text-[10px] text-slate-500 block mt-1">วิทยากร: {c.speaker} | วันจัด: {c.date}</span>
                           </td>
-                          <td className="p-3 text-center font-bold text-slate-800">{total}{c.maxSeats ? ` / ${c.maxSeats}` : ''} ที่นั่ง</td>
-                          <td className="p-3 text-center font-bold text-emerald-700">{presence} คน</td>
-                          <td className="p-3 text-center">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          <td className="p-3.5 text-center font-bold text-[#071A4B]">{total}{c.maxSeats ? ` / ${c.maxSeats}` : ''} ที่นั่ง</td>
+                          <td className="p-3.5 text-center font-bold text-emerald-700">{presence} คน</td>
+                          <td className="p-3.5 text-center">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                               rate >= 80 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
                               rate >= 50 ? 'bg-amber-50 text-amber-800 border border-amber-200' :
                               'bg-rose-50 text-rose-800 border border-rose-200'
@@ -4784,21 +4924,21 @@ export default function AdminPortal({
                               {rate}%
                             </span>
                           </td>
-                          <td className="p-3 text-center text-slate-500">{rated.length} ฉบับ</td>
-                          <td className="p-3 text-center font-bold text-amber-600">
+                          <td className="p-3.5 text-center text-slate-500">{rated.length} ฉบับ</td>
+                          <td className="p-3.5 text-center font-bold text-[#EA580C]">
                             {avgSat > 0 ? `★ ${avgSat}` : '-'}
                           </td>
-                          <td className="p-3 text-center font-bold">
+                          <td className="p-3.5 text-center font-bold text-[#071A4B]">
                             {avgSatPercent > 0 ? `${avgSatPercent}%` : '-'}
                           </td>
-                          <td className="p-3 text-center">
+                          <td className="p-3.5 text-center">
                             <button
                               type="button"
                               onClick={() => setSelectedDashboardCourseId(c.id)}
-                              className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all shadow-3xs cursor-pointer min-h-[28px] ${
+                              className={`px-3.5 py-1.5 text-[10px] font-bold rounded-full transition-all shadow-xs cursor-pointer min-h-[28px] border ${
                                 isCurrentSelected
-                                  ? 'bg-orange-500 text-white hover:bg-orange-600'
-                                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                                  ? 'bg-[#F97316] border-[#EA580C] text-white hover:bg-[#EA580C]'
+                                  : 'bg-white border-[#E2E8F0] text-[#071A4B] hover:bg-slate-50 hover:border-[#071A4B]'
                               }`}
                             >
                               {isCurrentSelected ? 'กำลังวิเคราะห์' : 'เจาะลึกสถิติ'}
@@ -4814,53 +4954,61 @@ export default function AdminPortal({
           </div>
 
           {/* INDIVIDUAL TRACKING PLATFORM */}
-          <div className="bg-slate-900 text-white rounded-2xl p-6 md:p-8 relative overflow-hidden shadow-lg" id="individual-tracker-panel">
+          <div className="bg-[#071A4B] text-white rounded-2xl p-6 md:p-8 relative overflow-hidden shadow-md border border-white/10 border-b-2 border-b-[#F97316]" id="individual-tracker-panel">
             <div className="relative z-10 w-full">
-              <span className="bg-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest flex items-center w-fit gap-1 mb-4">
-                <Sparkles className="h-3.5 w-3.5 text-white animate-pulse" />
-                ระบบสืบค้นข้อมูลเข้ารับการตอบแทนเป็นรายบุคคล (Individual Tracking)
+              <span className="bg-[#0D2566] border border-white/15 text-orange-300 text-[10px] font-bold px-3.5 py-1 rounded-full uppercase tracking-[0.12em] flex items-center w-fit gap-2 mb-4">
+                <span className="inline-block w-3 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                <Sparkles className="h-3.5 w-3.5 text-[#F97316]" />
+                Individual Tracking · ระบบสืบค้นประวัติรายบุคคล
               </span>
-              <h2 className="text-2xl font-bold tracking-tight text-white font-sans">ตรวจจับแฟ้มผลการอบรมอาจารย์สัญชาตลักษณ์</h2>
+              <h2 className="text-2xl font-extrabold tracking-tight text-white font-sans">
+                ตรวจจับแฟ้มผลการอบรม<span className="text-[#F97316]">บุคลากรรายบุคคล</span>
+              </h2>
               <p className="text-slate-300 text-sm mt-1 max-w-xl font-sans">
-                กรอกรหัสบุคลากร หรืออีเมลบัญชีผู้ใช้ @bu.ac.th เพื่อเรียกดูรายงานสรุปชั่วโมงสะสมพร้อมแฟ้มประวัติ!
+                กรอกรหัสบุคลากร หรืออีเมลบัญชีผู้ใช้ @bu.ac.th เพื่อเรียกดูรายงานสรุปชั่วโมงสะสมพร้อมแฟ้มประวัติ
               </p>
 
               {/* SEARCH SECTION */}
-              <div className="flex flex-col sm:flex-row gap-3 mt-6 max-w-lg">
+              <div className="flex flex-col sm:flex-row gap-3 mt-6 max-w-xl">
                 <input
                   type="text"
                   placeholder="กรอกรหัสบุคลากร หรืออีเมล..."
                   value={trackerQuery}
                   onChange={(e) => setTrackerQuery(e.target.value)}
-                  className="flex-1 bg-slate-800 text-white placeholder-slate-400 border border-slate-700 px-4 py-2.5 rounded-xl text-xs focus:outline-none focus:border-orange-500 font-sans font-medium"
+                  className="flex-1 bg-[#0D2566] text-white placeholder-slate-400 border border-white/15 px-5 py-2.5 rounded-full text-xs focus:outline-none focus:border-[#F97316] font-sans font-medium"
                 />
                 <button
                   type="button"
                   onClick={handleTrackerSearch}
-                  className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition shadow-md min-h-[44px]"
+                  className="pl-5 pr-2 py-1.5 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold rounded-full text-xs transition shadow-sm min-h-[44px] flex items-center justify-center gap-2.5 cursor-pointer"
                 >
-                  สืบค้นประวัติ
+                  <span>สืบค้นประวัติ</span>
+                  <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
                 </button>
               </div>
 
               {/* TRACKER RESULT SECTION */}
               {trackerResult && (
-                <div className="mt-8 bg-slate-800/80 border border-slate-700 p-6 rounded-2xl space-y-4 animate-in fade-in slide-in-from-top-4 duration-200">
+                <div className="mt-8 bg-[#0D2566] border border-white/15 p-6 rounded-2xl space-y-4">
                   {trackerResult.person ? (
                     <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-700 pb-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-white/10 pb-4">
                         <div>
-                          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <Users className="h-5 w-5 text-orange-500" />
+                          <h3 className="text-lg font-bold text-white flex items-center gap-2.5">
+                            <span className="w-8 h-8 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                              <Users className="h-4 w-4" />
+                            </span>
                             <span>{trackerResult.person.name}</span>
                           </h3>
-                          <p className="text-[11px] text-slate-400 mt-0.5">{trackerResult.person.position} • {trackerResult.person.department}</p>
+                          <p className="text-xs text-slate-300 mt-1">{trackerResult.person.position} • {trackerResult.person.department}</p>
                         </div>
                         <div className="text-left sm:text-right">
-                          <span className="text-xs font-mono font-bold bg-slate-700 px-2.5 py-1 rounded-lg text-slate-300">
+                          <span className="text-xs font-mono font-bold bg-[#071A4B] px-3 py-1 rounded-full text-slate-200 border border-white/15 tabular-nums">
                             ID: {trackerResult.person.id}
                           </span>
-                          <p className="text-[11px] text-slate-400 font-mono mt-1">{trackerResult.person.email}</p>
+                          <p className="text-[11px] text-slate-300 font-mono mt-1.5">{trackerResult.person.email}</p>
                         </div>
                       </div>
 
@@ -4869,18 +5017,18 @@ export default function AdminPortal({
                         const attended = trackerResult.history.filter(h => h.registration.checkedIn);
                         const totalHours = attended.length * 3;
                         return (
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div className="p-4 bg-slate-900/55 border border-slate-750 rounded-xl">
-                              <p className="text-[10px] font-bold text-slate-400 uppercase">หลักสูตรลงทะเบียนทั้งหมด</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 tabular-nums">
+                            <div className="p-4 bg-[#071A4B] border border-white/10 rounded-xl">
+                              <p className="text-[10px] font-bold text-slate-300 uppercase">หลักสูตรลงทะเบียนทั้งหมด</p>
                               <h4 className="text-xl font-black text-white mt-1 font-sans">{trackerResult.history.length} วิชา</h4>
                             </div>
-                            <div className="p-4 bg-slate-900/55 border border-slate-750 rounded-xl">
-                              <p className="text-[10px] font-bold text-slate-400 uppercase">ผ่านการรับรองเข้าอบรมสำเร็จ</p>
+                            <div className="p-4 bg-[#071A4B] border border-white/10 rounded-xl">
+                              <p className="text-[10px] font-bold text-slate-300 uppercase">ผ่านการรับรองเข้าอบรมสำเร็จ</p>
                               <h4 className="text-xl font-black text-emerald-400 mt-1 font-sans">{attended.length} วิชา</h4>
                             </div>
-                            <div className="p-4 bg-slate-900/55 border border-slate-750 rounded-xl">
-                              <p className="text-[10px] font-bold text-slate-400 uppercase">ชั่วโมงวิชาการสะสมพัฒนาตนเอง</p>
-                              <h4 className="text-xl font-black text-orange-400 mt-1 font-sans">{totalHours} ชั่วโมง</h4>
+                            <div className="p-4 bg-gradient-to-br from-[#F97316] to-[#EA580C] border border-white/10 rounded-xl">
+                              <p className="text-[10px] font-bold text-orange-100 uppercase">ชั่วโมงวิชาการสะสมพัฒนาตนเอง</p>
+                              <h4 className="text-xl font-black text-white mt-1 font-sans">{totalHours} ชั่วโมง</h4>
                             </div>
                           </div>
                         );
@@ -4888,22 +5036,22 @@ export default function AdminPortal({
 
                       {/* History list of courses */}
                       <div className="space-y-2 pt-2">
-                        <p className="text-[10px] font-bold text-slate-450 uppercase tracking-wider font-sans">บันทึกประวัติการผ่านโครงการอบรมพัฒนา:</p>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider font-sans">บันทึกประวัติการผ่านโครงการอบรมพัฒนา:</p>
                         {trackerResult.history.length === 0 ? (
-                          <p className="text-xs text-slate-400 italic font-sans animate-pulse">ไม่มีข้อมูลการลงทะเบียนในระบบ</p>
+                          <p className="text-xs text-slate-300 italic font-sans">ไม่มีข้อมูลการลงทะเบียนในระบบ</p>
                         ) : (
-                          <div className="divide-y divide-slate-700 max-h-60 overflow-y-auto pr-1">
+                          <div className="divide-y divide-white/10 max-h-60 overflow-y-auto pr-1">
                             {trackerResult.history.map(({ course, registration }) => (
-                              <div key={registration.id} className="py-2.5 flex justify-between items-center text-xs">
+                              <div key={registration.id} className="py-2.5 flex justify-between items-center text-xs gap-4">
                                 <div>
                                   <p className="font-bold text-white font-sans">{course.title}</p>
-                                  <p className="text-slate-400 text-[10px] font-sans">วิทยากร: {course.speaker} • วันที่: {course.date}</p>
+                                  <p className="text-slate-300 text-[11px] font-sans tabular-nums">วิทยากร: {course.speaker} • วันที่: {course.date}</p>
                                 </div>
-                                <div className="text-right">
-                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                <div className="text-right shrink-0">
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                                     registration.checkedIn 
-                                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                                      : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' 
+                                      : 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
                                   }`}>
                                     {registration.checkedIn ? 'สำเร็จการอบรม' : 'ไม่ได้เช็คอิน'}
                                   </span>
@@ -4915,7 +5063,7 @@ export default function AdminPortal({
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-slate-400 text-xs font-sans">
+                    <div className="text-center py-4 text-slate-300 text-xs font-sans">
                       ไม่พบบุคลากรที่มีข้อมูลตรงกับ "{trackerQuery}" ในฐานข้อมูล
                     </div>
                   )}
@@ -4928,13 +5076,21 @@ export default function AdminPortal({
         <div className="space-y-8" id="courses-tab-content">
           
           {/* Header of Courses page & Add New Course button */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-            <div>
-              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <Landmark className="h-5 w-5 text-orange-600" />
-                <span>การบริหารการจัดอบรมและเช็คอินหลักสูตร</span>
-              </h2>
-              <p className="text-xs text-slate-405 mt-1 font-sans">ตั้งค่าเปิดปิดเช็คอิน จัดกลุ่มเป้าหมาย จัดการผู้เข้าอบรม และพิมพ์สถิติส่งออก</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-[#E2E8F0] border-b-2 border-b-[#F97316] shadow-sm">
+            <div className="flex items-start gap-3.5">
+              <span className="w-11 h-11 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                <Landmark className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-2">
+                  <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                  Course Administration
+                </p>
+                <h2 className="text-xl font-extrabold text-[#071A4B] mt-0.5">
+                  การจัดอบรม<span className="text-[#F97316]">และหลักสูตร</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-1 font-sans">ตั้งค่าเปิดปิดเช็คอิน จัดกลุ่มเป้าหมาย จัดการผู้เข้าอบรม และพิมพ์สถิติส่งออก</p>
+              </div>
             </div>
             {!showCourseForm && !editingCourseId && (
               <button
@@ -4948,22 +5104,34 @@ export default function AdminPortal({
                   setEditingCourseId(null);
                   setShowCourseForm(true);
                 }}
-                className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-xl shadow-md transition duration-155 flex items-center gap-1.5 min-h-[44px]"
+                className="pl-5 pr-2 py-1.5 bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-bold rounded-full shadow-sm transition duration-150 flex items-center gap-2.5 min-h-[44px] cursor-pointer shrink-0"
                 id="btn-add-course"
               >
-                <PlusCircle className="h-4.5 w-4.5" />
                 <span>สร้างหลักสูตรอบรมใหม่</span>
+                <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </span>
               </button>
             )}
           </div>
 
           {/* COURSE INTEGRATED CREATOR/EDIT FORM */}
           {(showCourseForm || editingCourseId) && (
-            <form onSubmit={handleSaveCourse} className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm space-y-5 flex flex-col" id="form-course-admin">
-              <h3 className="text-base font-extrabold text-slate-800 pb-2.5 border-b border-slate-100 flex items-center gap-1.5">
-                <PlusCircle className="h-5 w-5 text-orange-600" />
-                <span>{editingCourseId ? 'แก้ไขข้อมูลหลักสูตรอบรมชำนาญการ' : 'สร้างหลักสูตรอบรมใหม่'}</span>
-              </h3>
+            <form onSubmit={handleSaveCourse} className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] p-6 rounded-2xl shadow-sm space-y-5 flex flex-col" id="form-course-admin">
+              <div className="flex items-center gap-3 pb-3 border-b border-[#E2E8F0]">
+                <div className="w-9 h-9 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                  <PlusCircle className="h-4 w-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-2">
+                    <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                    Course Builder
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#071A4B]">
+                    {editingCourseId ? 'แก้ไขข้อมูลหลักสูตรอบรมชำนาญการ' : 'สร้างหลักสูตรอบรมใหม่'}
+                  </h3>
+                </div>
+              </div>
 
               {/* Grid Inputs for Course Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans">
@@ -5050,17 +5218,17 @@ export default function AdminPortal({
                         />
                         <label
                           htmlFor="file-poster-upload"
-                          className="px-3.5 h-[34px] text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200 hover:bg-orange-100 rounded-lg cursor-pointer transition flex items-center gap-1.5 whitespace-nowrap"
+                          className="px-4 h-[34px] text-xs font-bold text-[#071A4B] bg-white border border-[#E2E8F0] hover:border-[#071A4B] hover:bg-slate-50 rounded-full cursor-pointer transition flex items-center gap-1.5 whitespace-nowrap"
                         >
-                          <Upload className="w-3.5 h-3.5" />
+                          <Upload className="w-3.5 h-3.5 text-[#EA580C]" />
                           <span>อัปโหลดรูปภาพ</span>
                         </label>
                       </div>
                     </div>
                     
                     {courseForm.posterUrl && (
-                      <div className="flex items-center gap-3 bg-white p-2 border border-slate-150 rounded-lg">
-                        <div className="w-12 h-16 border rounded bg-slate-50 flex-shrink-0 overflow-hidden relative flex items-center justify-center">
+                      <div className="flex items-center gap-3 bg-white p-2 border border-[#E2E8F0] rounded-xl">
+                        <div className="w-12 h-16 border border-[#E2E8F0] rounded-lg bg-[#F5F7FA] flex-shrink-0 overflow-hidden relative flex items-center justify-center">
                           <img 
                             src={courseForm.posterUrl} 
                             alt="Course Poster" 
@@ -5069,7 +5237,7 @@ export default function AdminPortal({
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[10px] font-bold text-slate-700 truncate">
+                          <p className="text-[10px] font-bold text-[#071A4B] truncate">
                             {courseForm.posterUrl.startsWith('data:image/') ? 'รูปภาพอัปโหลด (Base64 JPEG)' : courseForm.posterUrl}
                           </p>
                           <p className="text-[9px] text-slate-400">
@@ -5079,7 +5247,7 @@ export default function AdminPortal({
                         <button
                           type="button"
                           onClick={() => setCourseForm({...courseForm, posterUrl: ''})}
-                          className="text-[10px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded cursor-pointer"
+                          className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 px-3 py-1 rounded-full cursor-pointer transition"
                         >
                           ลบรูปภาพ
                         </button>
@@ -5177,8 +5345,8 @@ export default function AdminPortal({
                         key={pos}
                         className={`flex items-center justify-between p-3 rounded-xl border text-xs font-bold transition cursor-pointer select-none ${
                           isChecked
-                            ? 'bg-orange-50/50 border-orange-300 text-orange-950 shadow-2xs'
-                            : 'bg-white border-slate-150 hover:bg-slate-50 text-slate-650'
+                            ? 'bg-orange-50/60 border-[#EA580C] text-[#071A4B] shadow-xs'
+                            : 'bg-white border-[#E2E8F0] hover:bg-slate-50 text-slate-700'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -5186,11 +5354,11 @@ export default function AdminPortal({
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => handleToggleTargetPosition(pos)}
-                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 h-4 w-4"
+                            className="rounded border-slate-300 text-[#EA580C] focus:ring-[#EA580C] h-4 w-4"
                           />
                           <span>{pos}</span>
                         </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${isChecked ? 'bg-orange-100 text-orange-850' : 'bg-slate-200 text-slate-500'}`}>
+                        <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-extrabold tabular-nums ${isChecked ? 'bg-[#F97316] text-white' : 'bg-slate-100 text-slate-600'}`}>
                           {personnelCount} คน
                         </span>
                       </label>
@@ -5199,18 +5367,18 @@ export default function AdminPortal({
                 </div>
 
                 {/* Custom Input Adding */}
-                <div className="flex gap-2 pt-1 border-t border-slate-100/60 items-center font-sans">
+                <div className="flex gap-2 pt-2 border-t border-[#E2E8F0] items-center font-sans">
                   <input
                     type="text"
                     placeholder="พิมพ์ตำแหน่งงานอื่น..."
                     value={customTargetPosition}
                     onChange={(e) => setCustomTargetPosition(e.target.value)}
-                    className="bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-orange-500"
+                    className="bg-white border border-[#E2E8F0] px-3 py-1.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                   />
                   <button
                     type="button"
                     onClick={handleAddCustomTargetPosition}
-                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition text-xs"
+                    className="px-4 py-1.5 bg-[#071A4B] hover:bg-[#0D2566] text-white text-xs font-bold rounded-full transition cursor-pointer"
                   >
                     เพิ่มตำแหน่งกำหนดเอง
                   </button>
@@ -5218,15 +5386,15 @@ export default function AdminPortal({
 
                 {/* Highlight selected chips */}
                 {(courseForm.targetPositions || []).length > 0 && (
-                  <div className="pt-2 border-t border-slate-100 flex flex-wrap gap-1.5 items-center font-sans">
+                  <div className="pt-2 border-t border-[#E2E8F0] flex flex-wrap gap-1.5 items-center font-sans">
                     <span className="text-[10px] uppercase font-bold text-slate-400">ตำแหน่งที่กำหนดสิทธิ์ลงทะเบียนได้ขณะนี้:</span>
                     {(courseForm.targetPositions || []).map(p => (
-                      <span key={p} className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-orange-100 text-orange-800 border border-orange-200 rounded-full text-[10px] font-bold">
+                      <span key={p} className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-orange-50 text-[#EA580C] border border-orange-200 rounded-full text-[10px] font-bold">
                         <span>{p}</span>
                         <button
                           type="button"
                           onClick={() => handleToggleTargetPosition(p)}
-                          className="text-orange-600 hover:text-orange-955 font-bold focus:outline-none font-sans"
+                          className="text-[#EA580C] hover:text-[#EA580C] font-bold focus:outline-none font-sans cursor-pointer"
                         >
                           ×
                         </button>
@@ -5236,8 +5404,8 @@ export default function AdminPortal({
                 )}
 
                 {/* 👥 Specific Personnel Selection */}
-                <div className="space-y-2 pt-3 border-t border-slate-150/65 font-sans">
-                  <label className="text-xs font-bold text-slate-600 block flex items-center gap-1.5">
+                <div className="space-y-2 pt-3 border-t border-[#E2E8F0] font-sans">
+                  <label className="text-xs font-bold text-[#071A4B] block flex items-center gap-1.5">
                     <span>👥 กำหนดรายชื่อบุคคลอบรมผ่านเกณฑ์ / ได้รับสิทธิ์ลงทะเบียนเฉพาะบุคคล (เจาะจงเฉพาะรายชื่อ)</span>
                   </label>
                   
@@ -5247,13 +5415,13 @@ export default function AdminPortal({
                       placeholder="ค้นหาชื่อ รหัสพนักงาน แผนก หรืออีเมล เพื่อเลือกเฉพาะบุคคล..."
                       value={personnelSearchForTarget}
                       onChange={(e) => setPersonnelSearchForTarget(e.target.value)}
-                      className="flex-1 bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-orange-500"
+                      className="flex-1 bg-white border border-[#E2E8F0] px-3 py-1.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     />
                     {personnelSearchForTarget && (
                       <button
                         type="button"
                         onClick={() => setPersonnelSearchForTarget('')}
-                        className="px-2.5 py-1.5 text-[10px] font-bold text-slate-500 hover:text-slate-800 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
+                        className="px-3.5 py-1.5 text-[10px] font-bold text-[#071A4B] border border-[#E2E8F0] rounded-full hover:bg-slate-50 cursor-pointer transition"
                       >
                         ล้างคำค้น
                       </button>
@@ -5262,7 +5430,7 @@ export default function AdminPortal({
 
                   {/* Search Results Dropdown List */}
                   {personnelSearchForTarget.trim().length > 0 && (
-                    <div className="max-h-48 overflow-y-auto border border-slate-200 bg-white rounded-lg divide-y divide-slate-100 shadow-sm">
+                    <div className="max-h-48 overflow-y-auto border border-[#E2E8F0] bg-white rounded-xl divide-y divide-slate-100 shadow-sm">
                       {(() => {
                         const query = personnelSearchForTarget.toLowerCase().trim();
                         const filtered = personnel.filter(p => 
@@ -5282,16 +5450,16 @@ export default function AdminPortal({
                           return (
                             <div key={p.id} className="p-2.5 flex items-center justify-between hover:bg-slate-50 text-xs font-sans">
                               <div>
-                                <p className="font-bold text-slate-800">{p.name} <span className="text-slate-400 font-normal">({p.id})</span></p>
+                                <p className="font-bold text-[#071A4B]">{p.name} <span className="text-slate-400 font-normal font-mono">({p.id})</span></p>
                                 <p className="text-[10px] text-slate-500">{p.position} • {p.department}</p>
                               </div>
                               {isAlreadyAdded ? (
-                                <span className="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-150 rounded-md font-bold">เพิ่มแล้ว</span>
+                                <span className="text-[10px] px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold">เพิ่มแล้ว</span>
                               ) : (
                                 <button
                                   type="button"
                                   onClick={() => handleAddTargetPersonnel(p.id)}
-                                  className="px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg text-[10px] transition cursor-pointer"
+                                  className="px-3 py-1 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold rounded-full text-[10px] transition cursor-pointer"
                                 >
                                   + เพิ่มรายชื่อ
                                 </button>
@@ -5305,9 +5473,9 @@ export default function AdminPortal({
 
                   {/* Selected Specific Personnel Chips */}
                   {(courseForm.targetPersonnelIds || []).length > 0 && (
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2 font-sans">
-                      <div className="flex justify-between items-center pb-1.5 border-b border-slate-200">
-                        <span className="text-[10px] uppercase font-extrabold text-slate-500">รายชื่อบุคคลที่กำหนดสิทธิ์เฉพาะ ({courseForm.targetPersonnelIds?.length} ท่าน):</span>
+                    <div className="bg-[#F5F7FA] border border-[#E2E8F0] rounded-xl p-3 space-y-2 font-sans">
+                      <div className="flex justify-between items-center pb-1.5 border-b border-[#E2E8F0]">
+                        <span className="text-[10px] uppercase font-extrabold text-slate-500 tabular-nums">รายชื่อบุคคลที่กำหนดสิทธิ์เฉพาะ ({courseForm.targetPersonnelIds?.length} ท่าน):</span>
                         <button
                           type="button"
                           onClick={() => setCourseForm(prev => ({ ...prev, targetPersonnelIds: [] }))}
@@ -5320,10 +5488,10 @@ export default function AdminPortal({
                         {courseForm.targetPersonnelIds?.map(id => {
                           const p = personnel.find(x => x.id === id);
                           return (
-                            <div key={id} className="flex items-center justify-between bg-white border border-slate-150 px-2.5 py-1 rounded-lg text-xs shadow-3xs">
+                            <div key={id} className="flex items-center justify-between bg-white border border-[#E2E8F0] px-2.5 py-1.5 rounded-xl text-xs">
                               <div className="min-w-0 pr-2">
-                                <p className="font-bold text-slate-800 truncate">{p ? p.name : 'ไม่พบรายชื่อในระบบ'}</p>
-                                <p className="text-[9px] text-slate-400 font-medium truncate">{id} {p ? `• ${p.position}` : ''}</p>
+                                <p className="font-bold text-[#071A4B] truncate">{p ? p.name : 'ไม่พบรายชื่อในระบบ'}</p>
+                                <p className="text-[9px] text-slate-400 font-medium truncate tabular-nums">{id} {p ? `• ${p.position}` : ''}</p>
                               </div>
                               <button
                                 type="button"
@@ -5345,22 +5513,25 @@ export default function AdminPortal({
 
 
               {/* Save/Cancel Buttons */}
-              <div className="flex gap-2 pt-3 border-t border-slate-100 font-sans justify-end">
+              <div className="flex gap-2.5 pt-3 border-t border-[#E2E8F0] font-sans justify-end">
                 <button
                   type="button"
                   onClick={() => {
                     setShowCourseForm(false);
                     setEditingCourseId(null);
                   }}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-705 text-xs font-bold rounded-xl transition duration-150"
+                  className="px-5 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] hover:bg-slate-50 text-[#071A4B] text-xs font-bold rounded-full transition duration-150 cursor-pointer min-h-[40px]"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-xl shadow-sm transition duration-150"
+                  className="pl-5 pr-2 py-1.5 bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-bold rounded-full shadow-sm transition duration-150 flex items-center gap-2.5 cursor-pointer min-h-[40px]"
                 >
-                  {editingCourseId ? 'อัปเดตหลักสูตร' : 'บันทึกการสร้าง'}
+                  <span>{editingCourseId ? 'อัปเดตหลักสูตร' : 'บันทึกการสร้าง'}</span>
+                  <span className="w-6 h-6 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
                 </button>
               </div>
             </form>
@@ -5370,67 +5541,94 @@ export default function AdminPortal({
           {!showCourseForm && !editingCourseId && (
             <div className="space-y-6" id="courses-list-section">
               {/* Filter tabs */}
-              <div className="flex flex-wrap border-b border-slate-100 pb-1.5 gap-2" id="admin-courses-filter-tabs">
+              <div className="flex flex-wrap pb-1 gap-2" id="admin-courses-filter-tabs">
                 <button
                   type="button"
-                  onClick={() => setCourseFilter('active')}
-                  className={`px-4 py-2 text-xs font-bold rounded-lg border transition duration-150 flex items-center gap-1.5 cursor-pointer ${
+                  onClick={() => {
+                    setCourseFilter('active');
+                    setExpandedCourseId(null);
+                    setParticipantSearchTerm('');
+                  }}
+                  className={`px-4 py-2 text-xs font-bold rounded-full border transition duration-150 flex items-center gap-2 cursor-pointer tabular-nums ${
                     courseFilter === 'active'
-                      ? 'bg-orange-50 border-orange-200 text-orange-750 font-extrabold shadow-3xs'
-                      : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                      ? 'bg-[#071A4B] border-[#071A4B] text-white shadow-xs'
+                      : 'bg-white border-[#E2E8F0] text-[#071A4B] hover:border-[#071A4B] hover:bg-slate-50'
                   }`}
                 >
-                  <span>🚀 เปิดดำเนินการอยู่ (Active)</span>
-                  <span className="bg-orange-100 text-orange-850 px-1.5 py-0.5 rounded-full text-[10px]">
+                  <span>เปิดดำเนินการอยู่ (Active)</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${courseFilter === 'active' ? 'bg-[#F97316] text-white' : 'bg-slate-100 text-slate-700'}`}>
                     {courses.filter(c => !c.archived).length}
                   </span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCourseFilter('archived')}
-                  className={`px-4 py-2 text-xs font-bold rounded-lg border transition duration-150 flex items-center gap-1.5 cursor-pointer ${
+                  onClick={() => {
+                    setCourseFilter('archived');
+                    setExpandedCourseId(null);
+                    setParticipantSearchTerm('');
+                  }}
+                  className={`px-4 py-2 text-xs font-bold rounded-full border transition duration-150 flex items-center gap-2 cursor-pointer tabular-nums ${
                     courseFilter === 'archived'
-                      ? 'bg-slate-100 border-slate-300 text-slate-750 font-extrabold shadow-3xs'
-                      : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                      ? 'bg-[#071A4B] border-[#071A4B] text-white shadow-xs'
+                      : 'bg-white border-[#E2E8F0] text-[#071A4B] hover:border-[#071A4B] hover:bg-slate-50'
                   }`}
                 >
-                  <span>📦 จัดเก็บแล้ว (Archived)</span>
-                  <span className="bg-slate-200 text-slate-750 px-1.5 py-0.5 rounded-full text-[10px]">
+                  <span>จัดเก็บแล้ว (Archived)</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${courseFilter === 'archived' ? 'bg-[#F97316] text-white' : 'bg-slate-100 text-slate-700'}`}>
                     {courses.filter(c => c.archived).length}
                   </span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCourseFilter('all')}
-                  className={`px-4 py-2 text-xs font-bold rounded-lg border transition duration-150 flex items-center gap-1.5 cursor-pointer ${
+                  onClick={() => {
+                    setCourseFilter('all');
+                    setExpandedCourseId(null);
+                    setParticipantSearchTerm('');
+                  }}
+                  className={`px-4 py-2 text-xs font-bold rounded-full border transition duration-150 flex items-center gap-2 cursor-pointer tabular-nums ${
                     courseFilter === 'all'
-                      ? 'bg-slate-150 border-slate-300 text-slate-800 font-extrabold shadow-3xs'
-                      : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                      ? 'bg-[#071A4B] border-[#071A4B] text-white shadow-xs'
+                      : 'bg-white border-[#E2E8F0] text-[#071A4B] hover:border-[#071A4B] hover:bg-slate-50'
                   }`}
                 >
-                  <span>🌐 ทั้งหมด (All)</span>
-                  <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full text-[10px]">
+                  <span>ทั้งหมด (All)</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${courseFilter === 'all' ? 'bg-[#F97316] text-white' : 'bg-slate-100 text-slate-700'}`}>
                     {courses.length}
                   </span>
                 </button>
               </div>
 
               {filteredCoursesForAdmin.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-2xl border border-slate-100 text-slate-400 text-xs font-sans shadow-sm">
-                  {courseFilter === 'active' 
-                    ? 'ไม่พบหลักสูตรปกติที่กำลังดำเนินการอบรมขณะนี้ค่ะ' 
-                    : courseFilter === 'archived'
-                    ? 'ไม่พบหลักสูตรที่จัดเก็บไว้ในสารบบขณะนี้ค่ะ'
-                    : 'ไม่พบหลักสูตรอบรมชำนาญการใดในระบบความปลอดภัยขณะนี้ กรุณากด "สร้างหลักสูตรอบรมใหม่" ค่ะ'}
+                <div className="text-center py-14 px-6 bg-white rounded-2xl border border-[#E2E8F0] font-sans shadow-sm">
+                  {courseFilter === 'archived' ? (
+                    <div className="max-w-md mx-auto space-y-2">
+                      <div className="w-11 h-11 rounded-full bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto mb-3">
+                        <Archive className="h-5 w-5" />
+                      </div>
+                      <p className="text-sm font-extrabold text-[#071A4B]">ยังไม่มีหลักสูตรที่จัดเก็บ (Archived)</p>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        เมื่อคุณกดจัดเก็บหลักสูตรที่อบรมเสร็จสิ้นแล้ว รายการจะถูกย้ายมาเก็บไว้ที่นี่เพื่อความเป็นระเบียบและค้นหาดูประวัติย้อนหลังได้ง่าย
+                      </p>
+                    </div>
+                  ) : courseFilter === 'active' ? (
+                    <p className="text-xs text-slate-500 font-medium">ไม่พบหลักสูตรปกติที่กำลังดำเนินการอบรมขณะนี้</p>
+                  ) : (
+                    <p className="text-xs text-slate-500 font-medium">ไม่พบหลักสูตรอบรมในระบบขณะนี้ กรุณากด "สร้างหลักสูตรอบรมใหม่"</p>
+                  )}
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {filteredCoursesForAdmin.map(course => {
                     const isExpanded = expandedCourseId === course.id;
                     const matchedRegs = registrations.filter(r => r.courseId === course.id);
                     const registeredLength = matchedRegs.length;
                     const checkedInLength = matchedRegs.filter(r => r.checkedIn).length;
+                    const attendanceRateCourse = registeredLength > 0 ? Math.round((checkedInLength / registeredLength) * 100) : 0;
                     const filteredParticipants = matchedRegs.filter(reg => {
+                      if (course.archived === true) {
+                        if (archivedRosterFilter === 'checkedIn' && !reg.checkedIn) return false;
+                        if (archivedRosterFilter === 'pending' && reg.checkedIn) return false;
+                      }
                       const p = personnel.find(x => (reg.personnelId && x.id === reg.personnelId) || (reg.email && x.email && x.email.toLowerCase() === reg.email.toLowerCase()));
                       const name = p?.name || reg.name || '';
                       const email = p?.email || reg.email || '';
@@ -5438,6 +5636,7 @@ export default function AdminPortal({
                       const dept = p?.department || reg.department || '';
                       const pos = p?.position || reg.position || '';
                       const term = participantSearchTerm.toLowerCase();
+                      if (!term) return true;
                       return (
                         name.toLowerCase().includes(term) ||
                         email.toLowerCase().includes(term) ||
@@ -5462,12 +5661,334 @@ export default function AdminPortal({
                       p.department.toLowerCase().includes(participantSearchTerm.toLowerCase())
                     );
 
+                    // COMPACT EXPANDABLE CARD FOR ARCHIVED COURSES
+                    if (course.archived === true) {
+                      const hasValidPoster = Boolean(course.posterUrl && !brokenCoursePosterIds[course.id]);
+                      return (
+                        <div
+                          key={course.id}
+                          className="bg-white border border-[#E2E8F0] hover:border-[#071A4B]/30 rounded-2xl p-5 shadow-xs transition duration-150 flex flex-col gap-4 font-sans"
+                          id={`course-card-${course.id}`}
+                        >
+                          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                            {/* Left: Thumbnail Poster + Summary Metadata */}
+                            <div className="flex items-start gap-4 flex-1 min-w-0">
+                              <div className="w-16 h-22 sm:w-20 sm:h-24 rounded-xl overflow-hidden border border-[#E2E8F0] shrink-0 bg-[#F5F7FA] shadow-xs">
+                                {hasValidPoster && course.posterUrl ? (
+                                  <img
+                                    src={course.posterUrl}
+                                    alt={course.title}
+                                    className="w-full h-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                    onError={() =>
+                                      setBrokenCoursePosterIds(prev => ({ ...prev, [course.id]: true }))
+                                    }
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-[#071A4B] to-[#0D2566] text-white flex flex-col items-center justify-center p-1.5 text-center">
+                                    <BookOpen className="h-4 w-4 text-[#F97316] mb-1" />
+                                    <span className="text-[9px] font-extrabold tracking-wider uppercase text-white/90">BU</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0 space-y-1.5">
+                                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs tabular-nums">
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
+                                    <Archive className="w-3 h-3 text-amber-600" />
+                                    <span>จัดเก็บแล้ว / ปิดรับสมัคร</span>
+                                  </span>
+                                  <span className="text-slate-600 font-medium inline-flex items-center gap-1">
+                                    <Calendar className="w-3.5 h-3.5 text-[#F97316]" />
+                                    <span>{course.date || '-'}</span>
+                                  </span>
+                                  <span className="text-slate-300" aria-hidden="true">·</span>
+                                  <span className="text-slate-600 font-medium inline-flex items-center gap-1">
+                                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>{course.time || '-'} น.</span>
+                                  </span>
+                                  {course.location && (
+                                    <>
+                                      <span className="text-slate-300" aria-hidden="true">·</span>
+                                      <span className="text-slate-600 font-medium inline-flex items-center gap-1 truncate max-w-[260px]" title={course.location}>
+                                        <MapPin className="w-3.5 h-3.5 text-[#071A4B] shrink-0" />
+                                        <span className="truncate">{course.location}</span>
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+
+                                <h3
+                                  className="font-extrabold text-[#071A4B] text-base md:text-lg leading-snug line-clamp-2"
+                                  id={`card-title-${course.id}`}
+                                >
+                                  {course.title}
+                                </h3>
+
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 pt-0.5 tabular-nums">
+                                  <span>
+                                    วิทยากร: <strong className="text-[#071A4B] font-semibold">{course.speaker || '-'}</strong>
+                                  </span>
+                                  <span className="text-slate-300" aria-hidden="true">|</span>
+                                  <span>
+                                    ผู้ลงทะเบียน: <strong className="text-[#071A4B] font-bold">{registeredLength}{course.maxSeats ? ` / ${course.maxSeats}` : ''} คน</strong>
+                                  </span>
+                                  <span className="text-slate-300" aria-hidden="true">|</span>
+                                  <span>
+                                    เช็คอินแล้ว: <strong className="text-emerald-700 font-bold">{checkedInLength} คน</strong>
+                                    {registeredLength > 0 && (
+                                      <span className="text-slate-400 ml-1">({attendanceRateCourse}%)</span>
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Right: Clean Compact Action Buttons */}
+                            <div className="flex flex-wrap items-center justify-start xl:justify-end gap-2 shrink-0 pt-3 xl:pt-0 border-t xl:border-t-0 border-[#E2E8F0]">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setExpandedCourseId(prev => (prev === course.id ? null : course.id));
+                                  setParticipantSearchTerm('');
+                                  setArchivedRosterFilter('all');
+                                }}
+                                className={`px-4 py-2 text-xs font-bold rounded-full transition duration-150 inline-flex items-center justify-center gap-1.5 min-h-[40px] cursor-pointer whitespace-nowrap shrink-0 border ${
+                                  isExpanded
+                                    ? 'bg-[#071A4B] border-[#071A4B] text-white shadow-xs'
+                                    : 'bg-[#FFF8F6] border-[#F97316]/40 text-[#EA580C] hover:bg-[#F97316] hover:text-white hover:border-[#F97316]'
+                                }`}
+                                id={`btn-toggle-roster-${course.id}`}
+                                aria-expanded={isExpanded}
+                              >
+                                <Users className="h-3.5 w-3.5 shrink-0" />
+                                <span className="tabular-nums">
+                                  {isExpanded
+                                    ? `ซ่อนรายชื่อผู้เข้าอบรม (${registeredLength} คน)`
+                                    : `ดูรายชื่อผู้เข้าอบรม (${registeredLength} คน)`}
+                                </span>
+                                {isExpanded ? (
+                                  <ChevronUp className="h-3.5 w-3.5 shrink-0" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                                )}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleToggleArchive(course)}
+                                disabled={togglingArchiveId === course.id}
+                                className="px-3.5 py-2 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-full transition duration-150 inline-flex items-center justify-center gap-1.5 min-h-[40px] cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60"
+                                id={`btn-toggle-archive-${course.id}`}
+                                title="กู้คืนหลักสูตร / ยกเลิกการจัดเก็บ"
+                              >
+                                {togglingArchiveId === course.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-700" />
+                                ) : (
+                                  <RotateCcw className="h-3.5 w-3.5 text-amber-700" />
+                                )}
+                                <span>{togglingArchiveId === course.id ? 'กำลังกู้คืน...' : 'ยกเลิกการจัดเก็บ'}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleExportCourseData(course)}
+                                className="px-3.5 py-2 text-xs font-bold text-[#071A4B] bg-white border border-[#E2E8F0] hover:border-[#071A4B] hover:bg-slate-50 rounded-full transition duration-150 inline-flex items-center justify-center gap-1.5 min-h-[40px] cursor-pointer whitespace-nowrap shrink-0"
+                                id={`btn-export-course-${course.id}`}
+                                title="ส่งออกข้อมูลผู้เข้าอบรมเป็นไฟล์ CSV"
+                              >
+                                <Download className="h-3.5 w-3.5 text-[#071A4B]" />
+                                <span>ส่งออก CSV</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleEditCourse(course)}
+                                className="px-3.5 py-2 text-xs font-bold text-[#071A4B] bg-white border border-[#E2E8F0] hover:border-[#071A4B] hover:bg-slate-50 rounded-full transition duration-150 inline-flex items-center justify-center gap-1.5 min-h-[40px] cursor-pointer whitespace-nowrap shrink-0"
+                                id={`btn-edit-course-${course.id}`}
+                              >
+                                <Edit className="h-3.5 w-3.5 text-[#EA580C]" />
+                                <span>แก้ไขรายละเอียด</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCourse(course.id)}
+                                className="px-3.5 py-2 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-full transition duration-150 inline-flex items-center justify-center gap-1.5 min-h-[40px] cursor-pointer whitespace-nowrap shrink-0"
+                                id={`btn-delete-course-${course.id}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                                <span>ลบหลักสูตร</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* On-Demand Expanded Participant Roster (Searchable & Scrollable, Manual Add Form Hidden) */}
+                          {isExpanded && (
+                            <div className="pt-4 border-t border-[#E2E8F0] space-y-3" id={`archived-roster-${course.id}`}>
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 tabular-nums">
+                                  <span className="font-extrabold text-[#071A4B]">
+                                    รายชื่อผู้เข้าอบรม ({filteredParticipants.length} / {registeredLength} คน)
+                                  </span>
+                                  <span className="text-slate-300" aria-hidden="true">·</span>
+                                  <span>
+                                    เช็คอินแล้ว <strong className="text-emerald-700">{checkedInLength}</strong>
+                                  </span>
+                                  <span className="text-slate-300" aria-hidden="true">·</span>
+                                  <span>
+                                    ยังไม่เช็คอิน <strong className="text-[#EA580C]">{registeredLength - checkedInLength}</strong>
+                                  </span>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                  <div className="inline-flex items-center gap-1 p-1 bg-[#F5F7FA] border border-[#E2E8F0] rounded-full self-start sm:self-auto">
+                                    <button
+                                      type="button"
+                                      onClick={() => setArchivedRosterFilter('all')}
+                                      className={`px-3 py-1 rounded-full text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
+                                        archivedRosterFilter === 'all'
+                                          ? 'bg-[#071A4B] text-white'
+                                          : 'text-slate-600 hover:text-[#071A4B]'
+                                      }`}
+                                    >
+                                      ทั้งหมด
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setArchivedRosterFilter('checkedIn')}
+                                      className={`px-3 py-1 rounded-full text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
+                                        archivedRosterFilter === 'checkedIn'
+                                          ? 'bg-[#071A4B] text-white'
+                                          : 'text-slate-600 hover:text-[#071A4B]'
+                                      }`}
+                                    >
+                                      เช็คอินแล้ว
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setArchivedRosterFilter('pending')}
+                                      className={`px-3 py-1 rounded-full text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
+                                        archivedRosterFilter === 'pending'
+                                          ? 'bg-[#071A4B] text-white'
+                                          : 'text-slate-600 hover:text-[#071A4B]'
+                                      }`}
+                                    >
+                                      ยังไม่เช็คอิน
+                                    </button>
+                                  </div>
+
+                                  <div className="relative min-w-[230px]">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                                    <input
+                                      type="text"
+                                      placeholder="ค้นหาชื่อ / รหัส / อีเมล / หน่วยงาน..."
+                                      value={participantSearchTerm}
+                                      onChange={(e) => setParticipantSearchTerm(e.target.value)}
+                                      className="w-full bg-white border border-[#E2E8F0] text-xs pl-8 pr-3 h-9 rounded-full focus:outline-none focus:border-[#F97316] font-medium text-[#071A4B]"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {filteredParticipants.length === 0 ? (
+                                <div className="text-center py-8 text-slate-500 bg-[#F5F7FA] border border-[#E2E8F0] rounded-xl text-xs font-medium">
+                                  ไม่พบรายชื่อผู้ลงทะเบียน/ผู้เข้าอบรมที่ตรงกับเงื่อนไขการค้นหา
+                                </div>
+                              ) : (
+                                <div className="max-h-[420px] overflow-y-auto overflow-x-auto border border-[#E2E8F0] rounded-xl bg-white">
+                                  <table className="w-full border-collapse text-left text-xs text-slate-600">
+                                    <thead className="sticky top-0 z-10 bg-[#F5F7FA] border-b border-[#E2E8F0] text-[#071A4B] font-bold text-[11px]">
+                                      <tr>
+                                        <th className="py-2.5 px-3 pl-4 w-12">#</th>
+                                        <th className="py-2.5 px-3">รหัสบุคลากร</th>
+                                        <th className="py-2.5 px-3">ชื่อ - นามสกุล</th>
+                                        <th className="py-2.5 px-3">ตำแหน่ง</th>
+                                        <th className="py-2.5 px-3">อีเมลติดต่อ</th>
+                                        <th className="py-2.5 px-3">หน่วยงาน / หลักสูตร</th>
+                                        <th className="py-2.5 px-3 text-center">สถานะเช็คอิน</th>
+                                        <th className="py-2.5 px-3 text-right pr-4">จัดการ</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[#E2E8F0]/70">
+                                      {filteredParticipants.map((participant, idx) => {
+                                        const p = personnel.find(
+                                          x =>
+                                            (participant.personnelId && x.id === participant.personnelId) ||
+                                            (participant.email && x.email && x.email.toLowerCase() === participant.email.toLowerCase())
+                                        );
+                                        const displayId = p?.id || participant.personnelId || '-';
+                                        const displayName = p?.name || participant.name || '-';
+                                        const displayPosition = p?.position || participant.position || '-';
+                                        const displayEmail = p?.email || participant.email || '-';
+                                        const displayDept = p?.department || participant.department || '-';
+                                        const displayCurriculum = getDisplayCurriculum(p?.curriculum, displayDept);
+
+                                        return (
+                                          <tr key={participant.id} className="hover:bg-[#F5F7FA] transition">
+                                            <td className="py-2.5 px-3 pl-4 text-slate-400 font-mono tabular-nums">{idx + 1}</td>
+                                            <td className="py-2.5 px-3 font-bold text-[#071A4B] font-mono tabular-nums whitespace-nowrap">{displayId}</td>
+                                            <td className="py-2.5 px-3 font-bold text-[#071A4B] whitespace-nowrap">{displayName}</td>
+                                            <td className="py-2.5 px-3 text-slate-600">{displayPosition}</td>
+                                            <td className="py-2.5 px-3 text-slate-500 font-mono">{displayEmail}</td>
+                                            <td className="py-2.5 px-3 text-slate-600">
+                                              <div className="font-medium text-[#071A4B]">{displayDept}</div>
+                                              {displayCurriculum && displayCurriculum !== displayDept && (
+                                                <div className="text-[11px] text-[#EA580C] truncate max-w-[220px]" title={displayCurriculum}>
+                                                  {displayCurriculum}
+                                                </div>
+                                              )}
+                                            </td>
+                                            <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                                              <button
+                                                type="button"
+                                                onClick={() => handleToggleCheckInManual(participant)}
+                                                className={`px-2.5 py-1 rounded-full font-bold text-[10px] transition border cursor-pointer ${
+                                                  participant.checkedIn
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                                    : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                                                }`}
+                                              >
+                                                {participant.checkedIn ? 'เช็คอินแล้ว' : 'ยังไม่เช็คอิน'}
+                                              </button>
+                                            </td>
+                                            <td className="py-2.5 px-3 text-right pr-4 whitespace-nowrap">
+                                              <div className="flex gap-1.5 justify-end">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleStartEditRegistration(participant)}
+                                                  className="px-2.5 py-1 bg-white border border-[#E2E8F0] text-[#071A4B] hover:border-[#071A4B] hover:bg-slate-50 rounded-full text-[10px] font-bold cursor-pointer transition"
+                                                >
+                                                  แก้ไข
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleDeleteRegistrationManual(participant, course)}
+                                                  className="px-2.5 py-1 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 rounded-full text-[10px] font-bold cursor-pointer transition"
+                                                >
+                                                  ลบ
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
                     return (
-                      <div key={course.id} className="bg-white border border-slate-200/85 rounded-2xl p-6 shadow-xs flex flex-col gap-4 font-sans animate-in fade-in duration-150" id={`course-card-${course.id}`}>
+                      <div key={course.id} className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm flex flex-col gap-4 font-sans" id={`course-card-${course.id}`}>
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                           <div className="flex items-start gap-4 flex-1">
                             {course.posterUrl && (
-                              <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden border border-slate-200 shrink-0 bg-slate-100 shadow-xs relative">
+                              <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden border border-[#E2E8F0] shrink-0 bg-[#F5F7FA] shadow-xs relative">
                                 <img 
                                   src={course.posterUrl} 
                                   alt={course.title} 
@@ -5477,83 +5998,83 @@ export default function AdminPortal({
                               </div>
                             )}
                             <div className="space-y-1 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-[10px] px-2 py-0.5 font-bold bg-orange-100 text-orange-850 rounded-full border border-orange-200 flex items-center gap-0.5">
+                            <div className="flex flex-wrap items-center gap-2 tabular-nums">
+                              <span className="text-[10px] px-2.5 py-0.5 font-bold bg-orange-50 text-[#EA580C] rounded-full border border-orange-200 flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 <span>จัดเมื่อ: {course.date}</span>
                               </span>
-                              <span className="text-[10px] px-2 py-0.5 font-bold bg-slate-100 text-slate-700 rounded-full border border-slate-200 flex items-center gap-0.5">
+                              <span className="text-[10px] px-2.5 py-0.5 font-bold bg-[#F5F7FA] text-[#071A4B] rounded-full border border-[#E2E8F0] flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 <span>เวลา {course.time} น.</span>
                               </span>
                               {course.registrationCloseTime && (
-                                <span className="text-[10px] px-2 py-0.5 font-bold bg-rose-50 text-rose-700 rounded-full border border-rose-100 flex items-center gap-0.5">
+                                <span className="text-[10px] px-2.5 py-0.5 font-bold bg-rose-50 text-rose-700 rounded-full border border-rose-200 flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
                                   <span>ปิดเปิดจอง: {new Date(course.registrationCloseTime).toLocaleString('th-TH')}</span>
                                 </span>
                               )}
                               {course.visible !== false ? (
-                                <span className="text-[10px] px-2 py-0.5 font-bold bg-emerald-50 text-emerald-800 rounded-full border border-emerald-200 flex items-center gap-0.5">
+                                <span className="text-[10px] px-2.5 py-0.5 font-bold bg-emerald-50 text-emerald-800 rounded-full border border-emerald-200 flex items-center gap-1">
                                   <Eye className="w-3 h-3 text-emerald-600" />
                                   <span>เปิดแสดงผลทั่วไป (Visible)</span>
                                 </span>
                               ) : (
-                                <span className="text-[10px] px-2 py-0.5 font-bold bg-slate-100 text-slate-500 rounded-full border border-slate-200 flex items-center gap-0.5">
-                                  <EyeOff className="w-3 h-3 text-slate-400" />
+                                <span className="text-[10px] px-2.5 py-0.5 font-bold bg-slate-100 text-slate-600 rounded-full border border-[#E2E8F0] flex items-center gap-1">
+                                  <EyeOff className="w-3 h-3 text-slate-500" />
                                   <span>ซ่อนโครงการ (Hidden)</span>
                                 </span>
                               )}
                               {course.archived === true && (
-                                <span className="text-[10px] px-2 py-0.5 font-bold bg-amber-50 text-amber-800 rounded-full border border-amber-200 flex items-center gap-0.5">
+                                <span className="text-[10px] px-2.5 py-0.5 font-bold bg-amber-50 text-amber-800 rounded-full border border-amber-200 flex items-center gap-1">
                                   <Archive className="w-3 h-3 text-amber-600" />
                                   <span>จัดเก็บแล้ว (Archived)</span>
                                 </span>
                               )}
                               {course.maxSeats ? (
-                                <span className={`text-[10px] px-2 py-0.5 font-bold rounded-full border flex items-center gap-0.5 ${
+                                <span className={`text-[10px] px-2.5 py-0.5 font-bold rounded-full border flex items-center gap-1 ${
                                   registeredLength >= course.maxSeats
-                                    ? 'bg-rose-50 text-rose-800 border-rose-200 animate-pulse'
+                                    ? 'bg-rose-50 text-rose-800 border-rose-200'
                                     : 'bg-amber-50 text-amber-800 border-amber-200'
                                 }`}>
                                   <Users className="w-3 h-3 text-amber-600" />
                                   <span>จำกัด: {registeredLength} / {course.maxSeats} ที่นั่ง {registeredLength >= course.maxSeats ? '(เต็มแล้ว)' : ''}</span>
                                 </span>
                               ) : (
-                                <span className="text-[10px] px-2 py-0.5 font-bold bg-slate-50 text-slate-600 rounded-full border border-slate-155 flex items-center gap-0.5">
-                                  <Users className="w-3 h-3 text-slate-400" />
+                                <span className="text-[10px] px-2.5 py-0.5 font-bold bg-[#F5F7FA] text-slate-600 rounded-full border border-[#E2E8F0] flex items-center gap-1">
+                                  <Users className="w-3 h-3 text-slate-500" />
                                   <span>ที่นั่ง: {registeredLength} (ไม่จำกัด)</span>
                                 </span>
                               )}
                               {course.restrictToTargets === true ? (
-                                <span className="text-[10px] px-2 py-0.5 font-bold bg-purple-50 text-purple-800 rounded-full border border-purple-200 flex items-center gap-0.5" title="เฉพาะผู้ตรงตามตำแหน่งหรือรายชื่อที่เลือกไว้เท่านั้น">
-                                  <Shield className="w-3 h-3 text-purple-600" />
+                                <span className="text-[10px] px-2.5 py-0.5 font-bold bg-[#071A4B] text-white rounded-full flex items-center gap-1" title="เฉพาะผู้ตรงตามตำแหน่งหรือรายชื่อที่เลือกไว้เท่านั้น">
+                                  <Shield className="w-3 h-3 text-[#F97316]" />
                                   <span>🔒 จำกัดกลุ่มเป้าหมายเท่านั้น</span>
                                 </span>
                               ) : (
-                                <span className="text-[10px] px-2 py-0.5 font-bold bg-sky-50 text-sky-850 rounded-full border border-sky-200 flex items-center gap-0.5" title="บุคคลทั่วไปและบุคลากรทุกคนสามารถลงทะเบียนได้">
-                                  <Globe className="w-3 h-3 text-sky-600" />
+                                <span className="text-[10px] px-2.5 py-0.5 font-bold bg-slate-100 text-[#071A4B] rounded-full border border-[#E2E8F0] flex items-center gap-1" title="บุคคลทั่วไปและบุคลากรทุกคนสามารถลงทะเบียนได้">
+                                  <Globe className="w-3 h-3 text-[#071A4B]" />
                                   <span>🔓 เปิดสาธารณะลงได้ทุกคน</span>
                                 </span>
                               )}
                             </div>
                             
-                            <h3 className="font-extrabold text-slate-900 text-sm md:text-base mt-2" id={`card-title-${course.id}`}>{course.title}</h3>
-                            <p className="text-xs text-slate-500 font-medium">วิทยากรวิพากย์: 👨‍🏫 <strong>{course.speaker}</strong> • ห้องจัดงานหลัก: 📍 {course.location}</p>
+                            <h3 className="font-extrabold text-[#071A4B] text-sm md:text-base mt-2" id={`card-title-${course.id}`}>{course.title}</h3>
+                            <p className="text-xs text-slate-600 font-medium">วิทยากรวิพากย์: 👨‍🏫 <strong className="text-[#071A4B]">{course.speaker}</strong> • ห้องจัดงานหลัก: 📍 {course.location}</p>
                             
                             {/* Display specific targets or target badge */}
                             {course.targetPositions && course.targetPositions.length > 0 ? (
                               <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                                <span className="text-[10px] uppercase font-bold text-slate-400 font-sans">กลุ่มเป้าหมายสายงาน:</span>
+                                <span className="text-[10px] uppercase font-bold text-slate-500 font-sans">กลุ่มเป้าหมายสายงาน:</span>
                                 {course.targetPositions.map(pos => (
-                                  <span key={pos} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100">
+                                  <span key={pos} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-50 text-[#EA580C] border border-orange-200">
                                     {pos}
                                   </span>
                                 ))}
                               </div>
                             ) : (
                               <div className="flex items-center gap-1.5 mt-2">
-                                <span className="text-[10px] uppercase font-bold text-slate-400 font-sans">กลุ่มเป้าหมายสายงาน:</span>
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                <span className="text-[10px] uppercase font-bold text-slate-500 font-sans">กลุ่มเป้าหมายสายงาน:</span>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F5F7FA] text-[#071A4B] border border-[#E2E8F0]">
                                   ทุกตำแหน่งงานตามฐานสิทธิ์
                                 </span>
                               </div>
@@ -5561,17 +6082,17 @@ export default function AdminPortal({
 
                             {course.targetPersonnelIds && course.targetPersonnelIds.length > 0 && (
                               <div className="flex flex-wrap items-center gap-1.5 mt-1 font-sans">
-                                <span className="text-[10px] uppercase font-bold text-slate-400">รายชื่อบุคคลที่มีสิทธิ์เพิ่มเติม ({course.targetPersonnelIds.length} ท่าน)</span>
+                                <span className="text-[10px] uppercase font-bold text-slate-500 tabular-nums">รายชื่อบุคคลที่มีสิทธิ์เพิ่มเติม ({course.targetPersonnelIds.length} ท่าน)</span>
                               </div>
                             )}
 
-                            <div className="text-[11px] text-slate-400 pt-3 border-t border-slate-200 flex justify-between items-center mt-4">
+                            <div className="text-[11px] text-slate-500 pt-3 border-t border-[#E2E8F0] flex justify-between items-center mt-4">
                               <span>พิกัดเช็คอินหน้างานตรวจสอบความปลอดภัย</span>
                               <a 
                                 href={`${getCleanOrigin()}/?courseId=${course.id}&action=checkin`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-orange-655 font-extrabold hover:underline"
+                                className="text-[#EA580C] font-extrabold hover:underline"
                               >
                                 เปิดหน้าระบบเช็คอินในแท็ปใหม่ ↗
                               </a>
@@ -5580,12 +6101,12 @@ export default function AdminPortal({
                         </div>
 
                           {/* Course Action Buttons */}
-                          <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-stretch gap-2.5 w-full md:w-auto self-stretch md:self-auto justify-end border-t md:border-t-0 border-slate-100 pt-3 md:pt-0">
+                          <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-stretch gap-2 w-full md:w-auto self-stretch md:self-auto justify-end border-t md:border-t-0 border-[#E2E8F0] pt-3 md:pt-0">
                             <button
                               onClick={() => handleToggleVisibility(course)}
-                              className={`px-4 py-2.5 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs border ${
+                              className={`px-4 py-2 text-xs font-bold rounded-full transition flex items-center justify-center gap-1.5 cursor-pointer border ${
                                 course.visible !== false
-                                  ? 'bg-slate-50 border-slate-250 text-slate-700 hover:bg-slate-100 hover:border-slate-350 hover:text-slate-900'
+                                  ? 'bg-white border-[#E2E8F0] text-[#071A4B] hover:bg-slate-50 hover:border-[#071A4B]'
                                   : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
                               }`}
                               id={`btn-toggle-visibility-${course.id}`}
@@ -5596,28 +6117,39 @@ export default function AdminPortal({
                             </button>
                             <button
                               onClick={() => handleToggleArchive(course)}
-                              className={`px-4 py-2.5 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs border ${
+                              disabled={togglingArchiveId === course.id}
+                              className={`px-4 py-2 text-xs font-bold rounded-full transition flex items-center justify-center gap-1.5 cursor-pointer border disabled:opacity-60 ${
                                 course.archived === true
                                   ? 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100'
-                                  : 'bg-slate-50 border-slate-250 text-slate-700 hover:bg-slate-100'
+                                  : 'bg-white border-[#E2E8F0] text-[#071A4B] hover:bg-slate-50 hover:border-[#071A4B]'
                               }`}
                               id={`btn-toggle-archive-${course.id}`}
                               title={course.archived === true ? "เลิกจัดเก็บโครงการ" : "จัดเก็บโครงการ"}
                             >
-                              <Archive className={`h-4 w-4 ${course.archived === true ? 'text-amber-600' : 'text-slate-500'}`} />
-                              <span>{course.archived === true ? 'เลิกจัดเก็บ (Restore)' : 'จัดเก็บ (Archive)'}</span>
+                              {togglingArchiveId === course.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-[#071A4B]" />
+                              ) : (
+                                <Archive className={`h-4 w-4 ${course.archived === true ? 'text-amber-600' : 'text-slate-500'}`} />
+                              )}
+                              <span>
+                                {togglingArchiveId === course.id
+                                  ? 'กำลังอัปเดต...'
+                                  : course.archived === true
+                                    ? 'เลิกจัดเก็บ (Restore)'
+                                    : 'จัดเก็บ (Archive)'}
+                              </span>
                             </button>
                             <button
                               onClick={() => handleEditCourse(course)}
-                              className="px-4 py-2.5 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-250 hover:bg-slate-100 hover:border-slate-350 hover:text-slate-900 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs"
+                              className="px-4 py-2 text-xs font-bold text-[#071A4B] bg-white border border-[#E2E8F0] hover:bg-slate-50 hover:border-[#071A4B] rounded-full transition flex items-center justify-center gap-1.5 cursor-pointer"
                               id={`btn-edit-course-${course.id}`}
                             >
-                              <Edit className="h-4 w-4 text-orange-600" />
+                              <Edit className="h-4 w-4 text-[#EA580C]" />
                               <span>แก้ไขรายละเอียด</span>
                             </button>
                             <button
                               onClick={() => handleDeleteCourse(course.id)}
-                              className="px-4 py-2.5 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-150 hover:bg-rose-100 hover:border-rose-250 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs"
+                              className="px-4 py-2 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-full transition flex items-center justify-center gap-1.5 cursor-pointer"
                               id={`btn-delete-course-${course.id}`}
                             >
                               <Trash2 className="h-4 w-4 text-rose-600" />
@@ -5629,15 +6161,19 @@ export default function AdminPortal({
                         {/* SUBTAB 2: PARTICIPANT REGISTERED LIST & STATUS */}
                         {activeCourseSubTab === 'attendees' && (
                           <div className="space-y-4 animate-in fade-in duration-200" id="subtab-attendees">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                              <div>
-                                <h4 className="font-extrabold text-slate-805 text-sm flex items-center gap-1.5">
-                                  <Users className="h-4 w-4 text-orange-600" />
-                                  <span>รายชื่อผู้เข้าเรียนในหลักสูตรสำเร็จ ({registeredLength}{course.maxSeats ? ` / ${course.maxSeats}` : ''} คน)</span>
-                                </h4>
-                                <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
-                                  ยืนยันการเช็คอินสแกนเรียบร้อย <strong className="text-emerald-600">{checkedInLength}</strong> คน • ยังไม่เช็คอิน <strong className="text-blue-600">{registeredLength - checkedInLength}</strong> คน
-                                </p>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#F5F7FA] p-4 rounded-2xl border border-[#E2E8F0]">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                                  <Users className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <h4 className="font-extrabold text-[#071A4B] text-sm tabular-nums">
+                                    รายชื่อผู้เข้าเรียนในหลักสูตรสำเร็จ ({registeredLength}{course.maxSeats ? ` / ${course.maxSeats}` : ''} คน)
+                                  </h4>
+                                  <p className="text-[11px] text-slate-500 mt-0.5 font-medium tabular-nums">
+                                    ยืนยันการเช็คอินสแกนเรียบร้อย <strong className="text-emerald-600">{checkedInLength}</strong> คน • ยังไม่เช็คอิน <strong className="text-[#EA580C]">{registeredLength - checkedInLength}</strong> คน
+                                  </p>
+                                </div>
                               </div>
                               
                               <div className="flex items-center gap-2 w-full sm:w-auto font-sans">
@@ -5646,19 +6182,19 @@ export default function AdminPortal({
                                   placeholder="ค้นหาชื่อ / รหัสในคอร์สนี้..."
                                   value={participantSearchTerm}
                                   onChange={(e) => setParticipantSearchTerm(e.target.value)}
-                                  className="bg-white border border-slate-205 text-xs px-3 h-10 rounded-xl max-w-xs focus:outline-none focus:border-orange-500 flex-1 min-w-[200px] shadow-3xs font-semibold"
+                                  className="bg-white border border-[#E2E8F0] text-xs px-3.5 h-10 rounded-xl max-w-xs focus:outline-none focus:border-[#EA580C] flex-1 min-w-[200px] font-semibold text-[#071A4B]"
                                 />
                               </div>
                             </div>
 
                             {/* Retroactive Key-In Form */}
-                            <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-5 space-y-4 font-sans">
+                            <div className="bg-orange-50/40 border border-orange-200/80 rounded-2xl p-5 space-y-4 font-sans">
                               <div>
-                                <h5 className="text-xs font-extrabold text-amber-800 flex items-center gap-1">
-                                  <Plus className="h-4 w-4 text-amber-700" />
+                                <h5 className="text-xs font-extrabold text-[#071A4B] flex items-center gap-1.5">
+                                  <Plus className="h-4 w-4 text-[#EA580C]" />
                                   <span>ป้อนข้อมูลผู้เข้าอบรมย้อนหลัง (Key in Retroactive Attendee)</span>
                                 </h5>
-                                <p className="text-[11px] text-amber-700/85 mt-0.5">เลือกรายชื่ออาจารย์/บุคลากรที่มีในระบบเพื่อดึงข้อมูลอย่างรวดเร็ว หรือคีย์ป้อนข้อมูลบุคลากรใหม่ภายนอกตรงๆ ได้ทันที</p>
+                                <p className="text-[11px] text-slate-600 mt-0.5">เลือกรายชื่ออาจารย์/บุคลากรที่มีในระบบเพื่อดึงข้อมูลอย่างรวดเร็ว หรือคีย์ป้อนข้อมูลบุคลากรใหม่ภายนอกตรงๆ ได้ทันที</p>
                               </div>
                               
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -5683,7 +6219,7 @@ export default function AdminPortal({
                                       }
                                     }}
                                     value={retroForm.personnelId || ''}
-                                    className="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs text-slate-705 focus:outline-none focus:border-amber-500 min-h-[38px] font-bold"
+                                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C] min-h-[38px] font-bold"
                                   >
                                     <option value="">-- เลือกจากฐานรายชื่อที่มี --</option>
                                     {personnel.map(p => (
@@ -5699,7 +6235,7 @@ export default function AdminPortal({
                                     placeholder="รหัสพนักงาน เช่น 10502011"
                                     value={retroForm.personnelId || ''}
                                     onChange={(e) => setRetroForm({...retroForm, personnelId: e.target.value})}
-                                    className="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-amber-505 min-h-[38px]"
+                                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C] min-h-[38px]"
                                   />
                                 </div>
 
@@ -5710,7 +6246,7 @@ export default function AdminPortal({
                                     placeholder="ชื่อ นามสกุลจริง"
                                     value={retroForm.name || ''}
                                     onChange={(e) => setRetroForm({...retroForm, name: e.target.value})}
-                                    className="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-amber-505 min-h-[38px]"
+                                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C] min-h-[38px]"
                                   />
                                 </div>
 
@@ -5721,7 +6257,7 @@ export default function AdminPortal({
                                     placeholder="somchai.t@bu.ac.th"
                                     value={retroForm.email || ''}
                                     onChange={(e) => setRetroForm({...retroForm, email: e.target.value})}
-                                    className="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-amber-505 min-h-[38px]"
+                                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C] min-h-[38px]"
                                   />
                                 </div>
 
@@ -5732,7 +6268,7 @@ export default function AdminPortal({
                                     placeholder="สำนักงานพัฒนาระบบสหกิจฯ"
                                     value={retroForm.department || ''}
                                     onChange={(e) => setRetroForm({...retroForm, department: e.target.value})}
-                                    className="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-amber-505 min-h-[38px]"
+                                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C] min-h-[38px]"
                                   />
                                 </div>
 
@@ -5743,16 +6279,16 @@ export default function AdminPortal({
                                       id={`retro-checked-${course.id}`}
                                       checked={retroForm.checkedIn}
                                       onChange={(e) => setRetroForm({...retroForm, checkedIn: e.target.checked})}
-                                      className="rounded text-orange-600 focus:ring-orange-500 h-4 w-4 shadow-sm cursor-pointer"
+                                      className="rounded text-[#EA580C] focus:ring-[#EA580C] h-4 w-4 cursor-pointer"
                                     />
-                                    <label htmlFor={`retro-checked-${course.id}`} className="text-xs font-bold text-slate-705 cursor-pointer select-none">
+                                    <label htmlFor={`retro-checked-${course.id}`} className="text-xs font-bold text-[#071A4B] cursor-pointer select-none">
                                       ผ่านการเช็คอินเข้าอบรมเรียบร้อยแล้ว
                                     </label>
                                   </div>
                                   <button
                                     type="button"
                                     onClick={() => handleAddRetroAttendee(course)}
-                                    className="w-full bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 min-h-[38px] shadow-sm ml-auto"
+                                    className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 min-h-[38px] shadow-sm cursor-pointer"
                                   >
                                     <Check className="h-4 w-4" />
                                     <span>คีย์ป้อนประวัติผู้เข้าร่วม</span>
@@ -5763,25 +6299,25 @@ export default function AdminPortal({
 
                             {/* Participant Table */}
                             {filteredParticipants.length === 0 ? (
-                              <div className="text-center py-8 text-slate-450 bg-slate-50 border border-slate-100 rounded-xl text-xs">
+                              <div className="text-center py-8 text-slate-500 bg-[#F5F7FA] border border-[#E2E8F0] rounded-2xl text-xs font-medium">
                                 ยังไม่มีรายชื่อผู้ลงทะเบียน/ผู้เข้าอบรมในโครงการจัดสรรนี้ที่ตรงกับหน่วยข้อมูลค้นหา
                               </div>
                             ) : (
-                              <div className="overflow-x-auto border border-slate-150 rounded-2xl bg-white shadow-3xs font-sans">
+                              <div className="overflow-x-auto border border-[#E2E8F0] rounded-2xl bg-white shadow-xs font-sans">
                                 <table className="w-full border-collapse text-left text-xs text-slate-600">
                                   <thead>
-                                    <tr className="bg-slate-50 border-b border-slate-150 text-slate-505 font-bold">
+                                    <tr className="bg-[#F5F7FA] border-b border-[#E2E8F0] text-[#071A4B] font-bold text-[11px]">
                                       <th className="p-3 pl-4">รหัสบุคลากร</th>
                                       <th className="p-3">ชื่อ - นามสกุล</th>
                                       <th className="p-3">ตำแหน่ง</th>
                                       <th className="p-3">อีเมลติดต่อ</th>
                                       <th className="p-3">หน่วยงาน/สังกัด</th>
-                                      <th className="p-3 text-orange-700">หลักสูตร</th>
+                                      <th className="p-3 text-[#EA580C]">หลักสูตร</th>
                                       <th className="p-3 text-center">สถานะการเช็คอิน</th>
                                       <th className="p-3 text-right pr-4">การจัดการรายละเอียด</th>
                                     </tr>
                                   </thead>
-                                  <tbody className="divide-y divide-slate-100">
+                                  <tbody className="divide-y divide-[#E2E8F0]/60">
                                     {filteredParticipants.map(participant => {
                                       const p = personnel.find(x => (participant.personnelId && x.id === participant.personnelId) || (participant.email && x.email && x.email.toLowerCase() === participant.email.toLowerCase()));
                                       const displayId = p?.id || participant.personnelId || '-';
@@ -5792,14 +6328,14 @@ export default function AdminPortal({
                                       const displayCurriculum = getDisplayCurriculum(p?.curriculum, displayDept);
 
                                       return (
-                                        <tr key={participant.id} className="hover:bg-slate-50/55 transition">
-                                          <td className="p-3 pl-4 font-bold text-slate-800 font-mono">{displayId}</td>
-                                          <td className="p-3 font-extrabold text-slate-900">{displayName}</td>
+                                        <tr key={participant.id} className="hover:bg-[#F5F7FA] transition">
+                                          <td className="p-3 pl-4 font-bold text-[#071A4B] font-mono tabular-nums">{displayId}</td>
+                                          <td className="p-3 font-extrabold text-[#071A4B]">{displayName}</td>
                                           <td className="p-3 text-slate-600 font-medium">{displayPosition}</td>
-                                          <td className="p-3 text-slate-505 font-mono">{displayEmail}</td>
-                                          <td className="p-3 text-slate-505 font-semibold">{displayDept}</td>
-                                          <td className="p-3 font-medium text-orange-700">
-                                            <span className="bg-orange-50 border border-orange-100/55 rounded-md px-2.5 py-1 inline-block max-w-[280px] whitespace-normal break-words leading-normal text-[11px]" title={displayCurriculum}>
+                                          <td className="p-3 text-slate-500 font-mono">{displayEmail}</td>
+                                          <td className="p-3 text-slate-600 font-semibold">{displayDept}</td>
+                                          <td className="p-3 font-medium text-[#EA580C]">
+                                            <span className="bg-orange-50 border border-orange-200/70 rounded-lg px-2.5 py-1 inline-block max-w-[280px] whitespace-normal break-words leading-normal text-[11px]" title={displayCurriculum}>
                                               {displayCurriculum}
                                             </span>
                                           </td>
@@ -5807,10 +6343,10 @@ export default function AdminPortal({
                                           <button
                                             type="button"
                                             onClick={() => handleToggleCheckInManual(participant)}
-                                            className={`px-3 py-1 rounded-full font-bold text-[10px] transition shadow-3xs border ${
+                                            className={`px-3 py-1 rounded-full font-bold text-[10px] transition border cursor-pointer ${
                                               participant.checkedIn
-                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-250 hover:bg-emerald-100'
-                                                : 'bg-amber-50 text-amber-700 border-amber-250 hover:bg-amber-100'
+                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                                : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
                                             }`}
                                           >
                                             {participant.checkedIn ? '✅ ผ่านการอบรม (เช็คอินแล้ว)' : '⏳ ยังไม่สมบูรณ์ (รอหน้างาน)'}
@@ -5821,14 +6357,14 @@ export default function AdminPortal({
                                             <button
                                               type="button"
                                               onClick={() => handleStartEditRegistration(participant)}
-                                              className="p-1 px-2.5 bg-amber-50 border border-amber-100 text-amber-600 hover:bg-amber-100/50 rounded text-[10px] font-bold cursor-pointer"
+                                              className="px-3 py-1 bg-white border border-[#E2E8F0] text-[#071A4B] hover:border-[#071A4B] hover:bg-slate-50 rounded-full text-[10px] font-bold cursor-pointer transition"
                                             >
                                               แก้ไข
                                             </button>
                                             <button
                                               type="button"
                                               onClick={() => handleDeleteRegistrationManual(participant, course)}
-                                              className="p-1 px-2.5 bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-100/50 rounded text-[10px] font-bold cursor-pointer"
+                                              className="px-3 py-1 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 rounded-full text-[10px] font-bold cursor-pointer transition"
                                             >
                                               ลบ
                                             </button>
@@ -5846,16 +6382,20 @@ export default function AdminPortal({
 
                         {/* SUBTAB 3: TRAINING EMAIL REMINDER CAMPAIGN */}
                         {activeCourseSubTab === 'reminder' && (
-                          <div className="bg-slate-50 border border-slate-205 p-6 rounded-3xl space-y-4 animate-in fade-in duration-200 font-sans" id="subtab-reminder-email">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
-                                  <Mail className="h-5 w-5 text-orange-600 animate-pulse" />
-                                  <span>ระบบกำหนดข้อความแจ้งข่าวและแจ้งเตือนการอบรมกลุ่ม</span>
-                                </h4>
-                                <p className="text-xs text-slate-500 mt-1">เจ้าหน้าที่สามารถกดจัดส่งแผนการแจ้งเตือนเตือนหลักสูตรการจัดโครงการ ไปหาผู้ลงทะเบียนเพื่อเตือนสติการเข้าห้องเรียน</p>
+                          <div className="bg-[#F5F7FA] border border-[#E2E8F0] p-6 rounded-2xl space-y-4 animate-in fade-in duration-200 font-sans" id="subtab-reminder-email">
+                            <div className="flex justify-between items-start gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                                  <Mail className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <h4 className="text-sm font-extrabold text-[#071A4B]">
+                                    ระบบกำหนดข้อความแจ้งข่าวและแจ้งเตือนการอบรมกลุ่ม
+                                  </h4>
+                                  <p className="text-xs text-slate-500 mt-0.5">เจ้าหน้าที่สามารถกดจัดส่งแผนการแจ้งเตือนหลักสูตรไปยังผู้ลงทะเบียนเพื่อแจ้งเตือนการเข้าอบรม</p>
+                                </div>
                               </div>
-                              <span className="text-[11px] font-bold bg-orange-100 text-orange-850 px-3 py-1 rounded-full shadow-3xs">
+                              <span className="text-[11px] font-bold bg-orange-50 border border-orange-200 text-[#EA580C] px-3 py-1 rounded-full tabular-nums shrink-0">
                                 ผู้สมัครอบรม: {registeredLength} คน
                               </span>
                             </div>
@@ -5867,30 +6407,32 @@ export default function AdminPortal({
                                   type="text"
                                   value={courseReminderSubject}
                                   onChange={(e) => setCourseReminderSubject(e.target.value)}
-                                  className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500 min-h-[38px]"
+                                  className="w-full bg-white border border-[#E2E8F0] p-3 rounded-xl text-xs font-bold text-[#071A4B] focus:outline-none focus:border-[#EA580C] min-h-[38px]"
                                 />
                               </div>
 
-                              <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 block">เนื้อหารายละเอียดเนื้อความหลัก (Email Message Body)</label>
-                                <textarea
-                                  rows={8}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 block">เนื้อหารายละเอียดเนื้อความหลัก (Visual Editor & HTML)</label>
+                                <VisualHtmlEditor
                                   value={courseReminderMessage}
-                                  onChange={(e) => setCourseReminderMessage(e.target.value)}
-                                  className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-orange-500 leading-relaxed font-semibold"
+                                  onChange={setCourseReminderMessage}
+                                  variables={COURSE_DISPATCH_VARIABLES}
+                                  defaultValue=""
+                                  minHeightClass="min-h-[190px]"
+                                  maxHeightClass="max-h-[360px]"
                                   placeholder="เขียนกำหนดการสัมมนาที่จะแจ้งให้ผู้เข้าอบรมรับทราบที่นี่..."
                                 />
                                 <ImageToHtmlHelper onInsert={(htmlImg) => setCourseReminderMessage(prev => prev + "\n" + htmlImg + "\n")} />
-                                <div className="mt-1 bg-orange-50/50 border border-orange-100 p-3 rounded-xl text-[11px] text-slate-600 space-y-1">
-                                  <p className="font-bold text-slate-700 flex items-center gap-1">✨ เคล็ดลับการแต่งข้อความและแทรกรูปภาพ:</p>
-                                  <p className="pl-4">• <strong>ตัวแปรอัตโนมัติ:</strong> <code className="text-orange-600 bg-white px-1 py-0.5 rounded font-mono font-bold">{`{course_title}`}</code>, <code className="text-orange-600 bg-white px-1 py-0.5 rounded font-mono font-bold">{`{date_time}`}</code>, <code className="text-orange-600 bg-white px-1 py-0.5 rounded font-mono font-bold">{`{location}`}</code>, <code className="text-orange-600 bg-white px-1 py-0.5 rounded font-mono font-bold">{`{speaker}`}</code>, <code className="text-orange-600 bg-white px-1 py-0.5 rounded font-mono font-bold">{`{register_link}`}</code></p>
-                                  <p className="pl-4">• <strong>🖼️ แทรกรูปโปสเตอร์คอร์สอัตโนมัติ:</strong> พิมพ์ <code className="text-blue-600 bg-white px-1.5 py-0.5 rounded font-mono font-extrabold">{`{course_poster}`}</code> ในตำแหน่งที่ต้องการวางรูปภาพของคอร์สนี้</p>
+                                <div className="mt-1 bg-orange-50/50 border border-orange-200/70 p-3 rounded-xl text-[11px] text-slate-600 space-y-1">
+                                  <p className="font-bold text-[#071A4B] flex items-center gap-1">✨ เคล็ดลับการแต่งข้อความและแทรกรูปภาพ:</p>
+                                  <p className="pl-4">• <strong>ตัวแปรอัตโนมัติ:</strong> <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold">{`{course_title}`}</code>, <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold">{`{date_time}`}</code>, <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold">{`{location}`}</code>, <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold">{`{speaker}`}</code>, <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold">{`{register_link}`}</code></p>
+                                  <p className="pl-4">• <strong>🖼️ แทรกรูปโปสเตอร์คอร์สอัตโนมัติ:</strong> พิมพ์ <code className="text-[#071A4B] bg-white px-1.5 py-0.5 rounded font-mono font-extrabold">{`{course_poster}`}</code> ในตำแหน่งที่ต้องการวางรูปภาพของคอร์สนี้</p>
                                   <p className="pl-4">• <strong>🔗 ดึงรูปจากภายนอกด้วย HTML:</strong> พิมพ์ <code className="text-slate-700 bg-white px-1.5 py-0.5 rounded font-mono">{`<img src="ใส่ลิงก์รูปภาพที่นี่" style="max-width:100%; border-radius:8px;"/>`}</code></p>
                                 </div>
                               </div>
 
-                              <div className="flex justify-between items-center pt-3 border-t border-slate-200">
-                                <span className="text-[10px] text-slate-400">
+                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-3 border-t border-[#E2E8F0]">
+                                <span className="text-[10px] text-slate-500 tabular-nums">
                                   💡 จดหมายข่าวสารนี้ จะกระจายไปยังอีเมลที่เชื่อมโยงกับโครงการทั้งสิ้น {registeredLength} ท่าน
                                 </span>
                                 <button
@@ -5912,7 +6454,7 @@ export default function AdminPortal({
                                           action: 'bulk',
                                           emails: registeredEmails,
                                           courseTitle: course.title,
-                                          messageText: `[จดหมายข่าวแจ้งเตือนกำหนดเกณฑ์การเข้าเรียน]\n\n${courseReminderMessage}`
+                                          messageText: `[จดหมายข่าวแจ้งเตือนกำหนดเกณฑ์การเข้าเรียน]<br/><br/>${formatMessageForHtml(courseReminderMessage)}`
                                         });
                                         const actualSuccess = typeof gasRes.count === 'number' ? gasRes.count : (registeredEmails.length - (gasRes.failedCount || 0));
                                         const failedCount = gasRes.failedCount || 0;
@@ -5933,9 +6475,12 @@ export default function AdminPortal({
                                     }
                                   }}
                                   disabled={sendingBulkEmail || registeredLength === 0}
-                                  className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-extrabold px-6 py-2.5 rounded-xl text-xs transition duration-150 shadow-md flex items-center gap-1.5 min-h-[38px] cursor-pointer"
+                                  className="bg-[#F97316] hover:bg-[#EA580C] disabled:opacity-50 text-white font-bold pl-5 pr-2 py-1.5 rounded-full text-xs transition duration-150 shadow-sm inline-flex items-center gap-2.5 min-h-[40px] cursor-pointer"
                                 >
-                                  {sendingBulkEmail ? 'กำลังจัดส่งจดหมายเตือน...' : `✉️ เริ่มส่งจดหมายถึงผู้จองสิทธิ์ (${registeredLength} คน)`}
+                                  <span>{sendingBulkEmail ? 'กำลังจัดส่งจดหมายเตือน...' : `เริ่มส่งจดหมายถึงผู้จองสิทธิ์ (${registeredLength} คน)`}</span>
+                                  <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                  </span>
                                 </button>
                               </div>
                             </div>
@@ -5944,31 +6489,35 @@ export default function AdminPortal({
 
                         {/* SUBTAB 4: FEEDBACK SURVEY CAMPAIGN */}
                         {activeCourseSubTab === 'feedback' && (
-                          <div className="bg-slate-50 border border-slate-205 p-6 rounded-3xl space-y-4 animate-in fade-in duration-200 font-sans" id="subtab-feedback-email">
+                          <div className="bg-[#F5F7FA] border border-[#E2E8F0] p-6 rounded-2xl space-y-4 animate-in fade-in duration-200 font-sans" id="subtab-feedback-email">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                              <div>
-                                <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
-                                  <Mail className="h-5 w-5 text-orange-600 animate-pulse" />
-                                  <span>ระบบติดตามผลการประเมินความพึงพอใจและสถิติสะสม</span>
-                                </h4>
-                                <p className="text-xs text-slate-500 mt-1">ประมวลผลประเมินผลผู้ตรวจสัมภาษณ์รายหลักสูตร</p>
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                                  <Mail className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <h4 className="text-sm font-extrabold text-[#071A4B]">
+                                    ระบบติดตามผลการประเมินความพึงพอใจและสถิติสะสม
+                                  </h4>
+                                  <p className="text-xs text-slate-500 mt-0.5">ประมวลผลประเมินผลผู้เข้ารับการอบรมรายหลักสูตร</p>
+                                </div>
                               </div>
-                              <span className="self-start sm:self-center text-[11px] font-bold bg-emerald-100 text-emerald-850 px-3 py-1 rounded-full shadow-3xs">
+                              <span className="self-start sm:self-center text-[11px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1 rounded-full tabular-nums">
                                 ผู้เช็คอินผ่านสำเร็จแล้ว: {checkedInLength} คน
                               </span>
                             </div>
 
                             {/* Aggregated Quick Metrics */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white border border-slate-200 rounded-2xl p-4 shadow-3xs">
-                              <div className="text-center p-2 border-r border-slate-100 last:border-0 flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 font-bold uppercase block">ส่งผลประเมินสุทธิ</span>
-                                <span className="text-lg font-extrabold text-orange-600">{matchedRegs.filter(r => r.feedback).length} / {checkedInLength} คน</span>
-                                <span className="text-[10px] text-slate-400 mt-0.5">คิดประมวลผลเป็น {checkedInLength > 0 ? Math.round((matchedRegs.filter(r => r.feedback).length / checkedInLength) * 100) : 0}%</span>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-xs">
+                              <div className="text-center p-2 border-r border-[#E2E8F0] last:border-0 flex flex-col justify-center">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase block">ส่งผลประเมินสุทธิ</span>
+                                <span className="text-lg font-extrabold text-[#EA580C] tabular-nums">{matchedRegs.filter(r => r.feedback).length} / {checkedInLength} คน</span>
+                                <span className="text-[10px] text-slate-400 mt-0.5 tabular-nums">คิดประมวลผลเป็น {checkedInLength > 0 ? Math.round((matchedRegs.filter(r => r.feedback).length / checkedInLength) * 100) : 0}%</span>
                               </div>
 
-                              <div className="text-center p-2 border-r border-slate-100 last:border-0 flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 font-bold uppercase block">คะแนนสะสมสุทธิ (เฉลี่ย)</span>
-                                <span className="text-lg font-extrabold text-emerald-600">
+                              <div className="text-center p-2 border-r border-[#E2E8F0] last:border-0 flex flex-col justify-center">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase block">คะแนนสะสมสุทธิ (เฉลี่ย)</span>
+                                <span className="text-lg font-extrabold text-emerald-600 tabular-nums">
                                   {(() => {
                                     const feedList = matchedRegs.filter(r => r.feedback);
                                     if (feedList.length === 0) return 'รอประเมิน';
@@ -5980,8 +6529,8 @@ export default function AdminPortal({
                               </div>
 
                               <div className="text-center p-2 last:border-0 flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 font-bold uppercase block">อัตราแนะนำจัดเพิ่มปีหน้า</span>
-                                <span className="text-lg font-extrabold text-blue-600">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase block">อัตราแนะนำจัดเพิ่มปีหน้า</span>
+                                <span className="text-lg font-extrabold text-[#071A4B] tabular-nums">
                                   {(() => {
                                     const feedList = matchedRegs.filter(r => r.feedback && r.feedback.recommendation);
                                     if (feedList.length === 0) return 'รอประเมิน';
@@ -6001,30 +6550,32 @@ export default function AdminPortal({
                                   type="text"
                                   value={courseEvaluationSubject}
                                   onChange={(e) => setCourseEvaluationSubject(e.target.value)}
-                                  className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500 min-h-[38px]"
+                                  className="w-full bg-white border border-[#E2E8F0] p-3 rounded-xl text-xs font-bold text-[#071A4B] focus:outline-none focus:border-[#EA580C] min-h-[38px]"
                                 />
                               </div>
 
-                              <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 block">เนื้อจดหมายข่าวชวนประเมินความพึงพอใจการอบรม (Email Body Content)</label>
-                                <textarea
-                                  rows={8}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 block">เนื้อจดหมายข่าวชวนประเมินความพึงพอใจการอบรม (Visual Editor & HTML)</label>
+                                <VisualHtmlEditor
                                   value={courseEvaluationMessage}
-                                  onChange={(e) => setCourseEvaluationMessage(e.target.value)}
-                                  className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-orange-500 leading-relaxed font-semibold"
+                                  onChange={setCourseEvaluationMessage}
+                                  variables={COURSE_DISPATCH_VARIABLES}
+                                  defaultValue=""
+                                  minHeightClass="min-h-[190px]"
+                                  maxHeightClass="max-h-[360px]"
                                   placeholder="เขียนเนื้อหาขอความอนุเคราะห์ตอบประเมินที่นี่..."
                                 />
                                 <ImageToHtmlHelper onInsert={(htmlImg) => setCourseEvaluationMessage(prev => prev + "\n" + htmlImg + "\n")} />
-                                <div className="mt-1 bg-orange-50/50 border border-orange-100 p-3 rounded-xl text-[11px] text-slate-600 space-y-1">
-                                  <p className="font-bold text-slate-700 flex items-center gap-1">✨ เคล็ดลับการแต่งข้อความและแทรกรูปภาพ:</p>
-                                  <p className="pl-4">• <strong>ตัวแปรอัตโนมัติ:</strong> <code className="text-orange-600 bg-white px-1 py-0.5 rounded font-mono font-bold">{`{course_title}`}</code>, <code className="text-orange-600 bg-white px-1 py-0.5 rounded font-mono font-bold">{`{date_time}`}</code>, <code className="text-orange-600 bg-white px-1 py-0.5 rounded font-mono font-bold">{`{survey_link}`}</code></p>
-                                  <p className="pl-4">• <strong>🖼️ แทรกรูปโปสเตอร์คอร์สอัตโนมัติ:</strong> พิมพ์ <code className="text-blue-600 bg-white px-1.5 py-0.5 rounded font-mono font-extrabold">{`{course_poster}`}</code> ในตำแหน่งที่ต้องการวางรูปภาพของคอร์สนี้</p>
+                                <div className="mt-1 bg-orange-50/50 border border-orange-200/70 p-3 rounded-xl text-[11px] text-slate-600 space-y-1">
+                                  <p className="font-bold text-[#071A4B] flex items-center gap-1">✨ เคล็ดลับการแต่งข้อความและแทรกรูปภาพ:</p>
+                                  <p className="pl-4">• <strong>ตัวแปรอัตโนมัติ:</strong> <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold">{`{course_title}`}</code>, <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold">{`{date_time}`}</code>, <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold">{`{survey_link}`}</code></p>
+                                  <p className="pl-4">• <strong>🖼️ แทรกรูปโปสเตอร์คอร์สอัตโนมัติ:</strong> พิมพ์ <code className="text-[#071A4B] bg-white px-1.5 py-0.5 rounded font-mono font-extrabold">{`{course_poster}`}</code> ในตำแหน่งที่ต้องการวางรูปภาพของคอร์สนี้</p>
                                   <p className="pl-4">• <strong>🔗 ดึงรูปจากภายนอกด้วย HTML:</strong> พิมพ์ <code className="text-slate-700 bg-white px-1.5 py-0.5 rounded font-mono">{`<img src="ใส่ลิงก์รูปภาพที่นี่" style="max-width:100%; border-radius:8px;"/>`}</code></p>
                                 </div>
                               </div>
 
-                              <div className="flex justify-between items-center pt-3 border-t border-slate-200">
-                                <span className="text-[10px] text-slate-400">
+                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-3 border-t border-[#E2E8F0]">
+                                <span className="text-[10px] text-slate-500 tabular-nums">
                                   👉 ข้อเสนอแนะความพึงพอใจนี้ จะกระจายส่งไปยัง {checkedInLength} ท่านที่บันทึกข้อมูลเข้าร่วมเช็คอินแล้วเท่านั้น
                                 </span>
                                 <button
@@ -6046,7 +6597,7 @@ export default function AdminPortal({
                                           action: 'bulk',
                                           emails: checkedInEmails,
                                           courseTitle: course.title,
-                                          messageText: `[เรียนเชิญส่งเสียงแบบประเมินโครงการจัดสรร]\n\n${courseEvaluationMessage}`
+                                          messageText: `[เรียนเชิญส่งเสียงแบบประเมินโครงการจัดสรร]<br/><br/>${formatMessageForHtml(courseEvaluationMessage)}`
                                         });
                                         const actualSuccess = typeof gasRes.count === 'number' ? gasRes.count : (checkedInEmails.length - (gasRes.failedCount || 0));
                                         const failedCount = gasRes.failedCount || 0;
@@ -6067,9 +6618,12 @@ export default function AdminPortal({
                                     }
                                   }}
                                   disabled={sendingBulkEmail || checkedInLength === 0}
-                                  className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold px-6 py-2.5 rounded-xl text-xs transition duration-150 shadow-md flex items-center gap-1.5 min-h-[38px] cursor-pointer"
+                                  className="bg-[#071A4B] hover:bg-[#0D2566] disabled:opacity-50 text-white font-bold pl-5 pr-2 py-1.5 rounded-full text-xs transition duration-150 shadow-sm inline-flex items-center gap-2.5 min-h-[40px] cursor-pointer"
                                 >
-                                  {sendingBulkEmail ? 'กำลังกระจายคำชวนประเมิน...' : `✉️ ปล่อยลิงก์ส่งแบบประเมินความพึงพอใจ (${checkedInLength} คน)`}
+                                  <span>{sendingBulkEmail ? 'กำลังกระจายคำชวนประเมิน...' : `ส่งแบบประเมินความพึงพอใจ (${checkedInLength} คน)`}</span>
+                                  <span className="w-7 h-7 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                  </span>
                                 </button>
                               </div>
                             </div>
@@ -6077,16 +6631,16 @@ export default function AdminPortal({
                             {/* Feedbacks comments list */}
                             {matchedRegs.filter(r => r.feedback).length > 0 && (
                               <div className="space-y-2 mt-5">
-                                <h5 className="text-xs font-bold text-slate-700 uppercase">ความคิดเห็นจากแบบประเมินความพึงพอใจล่าสุด ({matchedRegs.filter(r => r.feedback).length} รายการ)</h5>
+                                <h5 className="text-xs font-bold text-[#071A4B] uppercase tabular-nums">ความคิดเห็นจากแบบประเมินความพึงพอใจล่าสุด ({matchedRegs.filter(r => r.feedback).length} รายการ)</h5>
                                 <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
                                   {matchedRegs.filter(r => r.feedback).map((r, idx) => (
-                                    <div key={idx} className="bg-white p-3 rounded-xl border border-slate-200 text-xs shadow-3xs transition hover:bg-slate-50/50">
-                                      <div className="flex justify-between font-bold text-slate-800">
+                                    <div key={idx} className="bg-white p-3 rounded-xl border border-[#E2E8F0] text-xs transition hover:bg-[#F5F7FA]">
+                                      <div className="flex justify-between font-bold text-[#071A4B]">
                                         <span>{r.name} ({r.department})</span>
-                                        <div className="flex gap-1.5 items-center">
-                                          <span className="text-amber-500 font-extrabold">⭐ {r.feedback?.satisfaction} / 5</span>
+                                        <div className="flex gap-1.5 items-center tabular-nums">
+                                          <span className="text-[#EA580C] font-extrabold">⭐ {r.feedback?.satisfaction} / 5</span>
                                           {r.feedback?.recommendation && (
-                                            <span className="text-blue-600 font-extrabold">| ความประสงค์แนะนำ: {r.feedback.recommendation} ดาว</span>
+                                            <span className="text-[#071A4B] font-extrabold">| ความประสงค์แนะนำ: {r.feedback.recommendation} ดาว</span>
                                           )}
                                         </div>
                                       </div>
@@ -6154,13 +6708,17 @@ export default function AdminPortal({
          return String(idx + 1).padStart(2, '0');
        };
 
-       const isAllSelected = filteredRegs.length > 0 && filteredRegs.every(r => selectedRegIds[r.id]);
+       const selectedIds = courseRegs
+         .filter(r => Boolean(selectedRegIds[r.id]))
+         .map(r => r.id);
+
+       const isAllSelected = filteredRegs.length > 0 && filteredRegs.every(r => Boolean(selectedRegIds[r.id]));
 
        const handleSelectAllToggle = () => {
          if (isAllSelected) {
            const updated = { ...selectedRegIds };
            filteredRegs.forEach(r => {
-             updated[r.id] = false;
+             delete updated[r.id];
            });
            setSelectedRegIds(updated);
          } else {
@@ -6173,26 +6731,96 @@ export default function AdminPortal({
        };
 
        const handleSelectRowToggle = (id: string) => {
-         setSelectedRegIds(prev => ({
-           ...prev,
-           [id]: !prev[id]
-         }));
+         setSelectedRegIds(prev => {
+           const next = { ...prev };
+           if (next[id]) {
+             delete next[id];
+           } else {
+             next[id] = true;
+           }
+           return next;
+         });
+       };
+
+       const handleConfirmBulkDelete = async () => {
+         if (selectedIds.length === 0 || !selectedCourse) return;
+         setBulkDeleting(true);
+         setBulkDeleteError('');
+
+         try {
+           const CHUNK_SIZE = 450;
+           const selectedSet = new Set(selectedIds);
+           const remainingCount = registrations.filter(
+             r => r.courseId === selectedCourse.id && !selectedSet.has(r.id) && r.source !== 'imported'
+           ).length;
+
+           const totalChunks = Math.ceil(selectedIds.length / CHUNK_SIZE);
+           for (let i = 0; i < selectedIds.length; i += CHUNK_SIZE) {
+             const chunkIndex = Math.floor(i / CHUNK_SIZE);
+             const chunk = selectedIds.slice(i, i + CHUNK_SIZE);
+             const batch = writeBatch(db);
+
+             chunk.forEach(regId => {
+               batch.delete(doc(db, 'registrations', regId));
+             });
+
+             if (chunkIndex === totalChunks - 1) {
+               batch.update(doc(db, 'courses', selectedCourse.id), {
+                 registeredCount: remainingCount
+               });
+             }
+
+             await batch.commit();
+           }
+
+           const deletedCount = selectedIds.length;
+           setSelectedRegIds({});
+           setShowBulkDeleteModal(false);
+           setApplicantToast({
+             type: 'success',
+             message: `ลบข้อมูลผู้ลงทะเบียนสำเร็จ ${deletedCount} รายการ`
+           });
+         } catch (err) {
+           console.error('Bulk delete registrations failed:', err);
+           let errMsg = err instanceof Error ? err.message : 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้';
+           try {
+             handleFirestoreError(err, OperationType.DELETE, 'registrations');
+           } catch {
+             // Structured error logged by handleFirestoreError; keep user-facing Thai message concise
+           }
+           if (errMsg.toLowerCase().includes('permission')) {
+             errMsg = 'ไม่มีสิทธิ์ลบข้อมูล (เฉพาะผู้ดูแลระบบที่ได้รับสิทธิ์เท่านั้น)';
+           }
+           const displayError = `เกิดข้อผิดพลาดในการลบข้อมูลที่เลือก: ${errMsg}`;
+           setBulkDeleteError(displayError);
+           setApplicantToast({
+             type: 'error',
+             message: displayError
+           });
+         } finally {
+           setBulkDeleting(false);
+         }
        };
 
        return (
          <div className="space-y-6" id="applicants-tab-content">
            {/* Title & Buttons Grid Block */}
-           <div className="bg-white border border-slate-200/80 p-6 rounded-3xl shadow-sm flex flex-col xl:flex-row justify-between items-start gap-6">
+           <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] p-6 rounded-2xl shadow-sm flex flex-col xl:flex-row justify-between items-start gap-6">
              {/* Left Column: Title Block */}
              <div>
-               <h1 className="text-3xl font-light text-slate-850 tracking-tight leading-none">รายชื่อ</h1>
-               <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1.5">ผู้ลงทะเบียน</h1>
-               <p className="text-xs text-slate-500 font-semibold mt-3 max-w-sm leading-relaxed">
+               <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-2">
+                 <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                 Participant Registry
+               </p>
+               <h1 className="text-2xl md:text-3xl font-extrabold text-[#071A4B] tracking-tight leading-tight mt-1">
+                 รายชื่อ<span className="text-[#F97316]">ผู้ลงทะเบียน</span>
+               </h1>
+               <p className="text-xs text-slate-500 font-semibold mt-2 max-w-sm leading-relaxed">
                  ตรวจสอบและจัดการรายชื่อบุคลากรที่สมัครเข้าร่วมอบรม
                </p>
              </div>
              
-             {/* Right Column: Custom Button Action Matrix from Mockup */}
+             {/* Right Column: Action Matrix */}
              <div className="flex flex-col gap-3 items-end w-full xl:w-auto">
                {/* Row 1 of buttons: Cert, Notification, Feedback, Download Actual, Download Eval */}
                <div className="flex flex-wrap gap-2 justify-end w-full">
@@ -6208,9 +6836,9 @@ export default function AdminPortal({
                      );
                      setShowCertificateModal(true);
                    }}
-                   className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-750 font-bold rounded-xl text-xs transition hover:bg-slate-50 min-h-[38px] shadow-sm cursor-pointer"
+                   className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs transition hover:bg-slate-50 min-h-[38px] shadow-xs cursor-pointer"
                  >
-                   <Award className="h-3.5 w-3.5 text-amber-500" />
+                   <Award className="h-3.5 w-3.5 text-[#EA580C]" />
                    <span>ส่งใบ Certificate</span>
                  </button>
 
@@ -6226,9 +6854,9 @@ export default function AdminPortal({
                      );
                      setShowReminderModal(true);
                    }}
-                   className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-755 font-bold rounded-xl text-xs transition hover:bg-slate-50 min-h-[38px] shadow-sm cursor-pointer"
+                   className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs transition hover:bg-slate-50 min-h-[38px] shadow-xs cursor-pointer"
                  >
-                   <Mail className="h-3.5 w-3.5 text-blue-500" />
+                   <Mail className="h-3.5 w-3.5 text-[#071A4B]" />
                    <span>ส่งอีเมลแจ้งเตือน</span>
                  </button>
 
@@ -6244,9 +6872,9 @@ export default function AdminPortal({
                      );
                      setShowEvaluationModal(true);
                    }}
-                   className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-755 font-bold rounded-xl text-xs transition hover:bg-slate-50 min-h-[38px] shadow-sm cursor-pointer"
+                   className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs transition hover:bg-slate-50 min-h-[38px] shadow-xs cursor-pointer"
                  >
-                   <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+                   <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
                    <span>ส่งแบบประเมินผล</span>
                  </button>
 
@@ -6254,9 +6882,9 @@ export default function AdminPortal({
                  <button
                    type="button"
                    onClick={handleDownloadActualAttendees}
-                   className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-755 font-bold rounded-xl text-xs transition hover:bg-slate-50 min-h-[38px] shadow-sm cursor-pointer"
+                   className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs transition hover:bg-slate-50 min-h-[38px] shadow-xs cursor-pointer"
                  >
-                   <Download className="h-3.5 w-3.5 text-slate-400" />
+                   <Download className="h-3.5 w-3.5 text-slate-500" />
                    <span>ดาวน์โหลดที่มาอบรมจริง</span>
                  </button>
 
@@ -6264,9 +6892,9 @@ export default function AdminPortal({
                  <button
                    type="button"
                    onClick={handleDownloadEvaluations}
-                   className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-755 font-bold rounded-xl text-xs transition hover:bg-slate-50 min-h-[38px] shadow-sm cursor-pointer"
+                   className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs transition hover:bg-slate-50 min-h-[38px] shadow-xs cursor-pointer"
                  >
-                   <Download className="h-3.5 w-3.5 text-indigo-400" />
+                   <Download className="h-3.5 w-3.5 text-[#071A4B]" />
                    <span>ดาวน์โหลดผลประเมิน</span>
                  </button>
                </div>
@@ -6274,14 +6902,14 @@ export default function AdminPortal({
                {/* Row 2 of buttons: Filter all / checkedIn, Export CSV, Refresh/Update index, QR Code Check-in */}
                <div className="flex flex-wrap gap-2 justify-end items-center w-full">
                  {/* Segmented Control filters */}
-                 <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+                 <div className="flex bg-[#F5F7FA] p-1 rounded-full border border-[#E2E8F0]">
                    <button
                      type="button"
                      onClick={() => setApplicantStatusFilter('all')}
-                     className={`px-4 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer ${
+                     className={`px-4 py-1.5 rounded-full text-xs font-extrabold transition cursor-pointer ${
                        applicantStatusFilter === 'all'
-                         ? 'bg-rose-700 text-white shadow-sm'
-                         : 'text-slate-500 hover:text-slate-800'
+                         ? 'bg-[#071A4B] text-white shadow-xs'
+                         : 'text-slate-600 hover:text-[#071A4B]'
                      }`}
                    >
                      ทั้งหมด
@@ -6289,10 +6917,10 @@ export default function AdminPortal({
                    <button
                      type="button"
                      onClick={() => setApplicantStatusFilter('checkedIn')}
-                     className={`px-4 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer ${
+                     className={`px-4 py-1.5 rounded-full text-xs font-extrabold transition cursor-pointer ${
                        applicantStatusFilter === 'checkedIn'
-                         ? 'bg-rose-700 text-white shadow-sm'
-                         : 'text-slate-500 hover:text-slate-800'
+                         ? 'bg-[#071A4B] text-white shadow-xs'
+                         : 'text-slate-600 hover:text-[#071A4B]'
                      }`}
                    >
                      มาอบรมจริง
@@ -6341,9 +6969,9 @@ export default function AdminPortal({
                      const selCourse = courses.find(c => c.id === selectedCourseId);
                      downloadCSV(`registrations_${selCourse?.title || 'course'}.csv`, csvHeaders, csvRows);
                    }}
-                   className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-755 font-bold rounded-xl text-xs transition hover:bg-slate-50 min-h-[38px] shadow-sm cursor-pointer"
+                   className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs transition hover:bg-slate-50 min-h-[38px] shadow-xs cursor-pointer"
                  >
-                   <Download className="h-3.5 w-3.5 text-rose-500" />
+                   <Download className="h-3.5 w-3.5 text-[#EA580C]" />
                    <span>ส่งออก รายชื่อสมัคร (CSV)</span>
                  </button>
 
@@ -6353,7 +6981,7 @@ export default function AdminPortal({
                    onClick={() => {
                      alert('ระบบได้อัปเดตและจัดระเบียบลำดับการสมัครและเช็คอินเรียบร้อยแล้วค่ะ');
                    }}
-                   className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-755 font-bold rounded-xl text-xs transition hover:bg-slate-50 min-h-[38px] shadow-sm cursor-pointer"
+                   className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs transition hover:bg-slate-50 min-h-[38px] shadow-xs cursor-pointer"
                  >
                    <RotateCw className="h-3.5 w-3.5 text-slate-500" />
                    <span>ปรับปรุงลำดับที่</span>
@@ -6371,9 +6999,9 @@ export default function AdminPortal({
                      setQrCourse(selCourse);
                      setShowQrModal(true);
                    }}
-                   className="flex items-center gap-1.5 px-4 py-2 bg-[#5D5FEF] hover:bg-[#4E50DE] text-white font-extrabold rounded-xl text-xs transition min-h-[38px] shadow-md cursor-pointer"
+                   className="flex items-center gap-1.5 px-4 py-2 bg-[#071A4B] hover:bg-[#0D2566] text-white font-bold rounded-full text-xs transition min-h-[38px] shadow-sm cursor-pointer"
                  >
-                   <QrCode className="h-4 w-4" />
+                   <QrCode className="h-4 w-4 text-[#F97316]" />
                    <span>QR Code Check-in</span>
                   </button>
 
@@ -6389,9 +7017,9 @@ export default function AdminPortal({
                       setQrCourse(selCourse);
                       setShowEvalQrModal(true);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs transition min-h-[38px] shadow-md cursor-pointer"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs transition min-h-[38px] shadow-xs cursor-pointer"
                   >
-                    <QrCode className="h-4 w-4" />
+                    <QrCode className="h-4 w-4 text-emerald-600" />
                     <span>QR Code แบบประเมิน</span>
                   </button>
                   <button
@@ -6407,51 +7035,53 @@ export default function AdminPortal({
                       setManualSearchQuery('');
                       setShowManualRegisterModal(true);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs transition min-h-[38px] shadow-md cursor-pointer ml-2"
+                    className="flex items-center gap-2 pl-4 pr-1.5 py-1.5 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold rounded-full text-xs transition min-h-[38px] shadow-sm cursor-pointer"
                     id="btn-add-participant-manual"
                   >
-                    <PlusCircle className="h-4 w-4" />
-                    <span>เพิ่มผู้เข้าอบรมด้วยตนเอง (Manual)</span>
+                    <span>เพิ่มผู้เข้าอบรม (Manual)</span>
+                    <span className="w-6 h-6 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
                  </button>
                </div>
              </div>
            </div>
 
            {/* Search & Selector Row */}
-           <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white border border-slate-200/85 p-4 rounded-3xl shadow-sm">
+           <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white border border-[#E2E8F0] p-4 rounded-2xl shadow-sm">
              {/* Search input on left */}
              <div className="relative w-full md:w-96">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                <input
                  type="text"
                  placeholder="ค้นหาชื่อ, รหัส หรือหน่วยงาน..."
                  value={applicantSearchQuery}
                  onChange={(e) => setApplicantSearchQuery(e.target.value)}
-                 className="w-full bg-slate-50 border border-slate-200 pl-10 pr-4 py-2.5 rounded-2xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 min-h-[40px]"
+                 className="w-full bg-[#F5F7FA] border border-[#E2E8F0] pl-10 pr-4 py-2.5 rounded-full text-xs text-[#071A4B] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20 focus:border-[#EA580C] min-h-[40px]"
                />
              </div>
 
              {/* Select course & Count on right */}
              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-               <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-2xl hover:bg-slate-100 transition cursor-pointer select-none">
+               <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 bg-[#F5F7FA] border border-[#E2E8F0] px-3.5 py-2 rounded-full hover:bg-slate-100 transition cursor-pointer select-none">
                  <input
                    type="checkbox"
                    checked={showArchivedInDropdown}
                    onChange={(e) => setShowArchivedInDropdown(e.target.checked)}
-                   className="rounded text-rose-600 focus:ring-rose-500 h-3.5 w-3.5 cursor-pointer"
+                   className="rounded text-[#EA580C] focus:ring-[#EA580C] h-3.5 w-3.5 cursor-pointer"
                  />
-                 <span>แสดงหลักสูตรที่จัดเก็บแล้ว ({courses.filter(c => c.archived).length})</span>
+                 <span className="tabular-nums">แสดงหลักสูตรที่จัดเก็บแล้ว ({courses.filter(c => c.archived).length})</span>
                </label>
 
-               <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-2xl shadow-sm">
-                 <Filter className="h-3.5 w-3.5 text-slate-400" />
+               <div className="flex items-center gap-2 bg-white border border-[#E2E8F0] px-4 py-2 rounded-full shadow-xs">
+                 <Filter className="h-3.5 w-3.5 text-[#EA580C]" />
                  <select
                    value={selectedCourseId}
                    onChange={(e) => {
                      setSelectedCourseId(e.target.value);
                      setSelectedRegIds({}); // Clear selection on course change
                    }}
-                   className="bg-transparent border-none p-0 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer max-w-xs md:max-w-md"
+                   className="bg-transparent border-none p-0 text-xs font-bold text-[#071A4B] focus:outline-none cursor-pointer max-w-xs md:max-w-md"
                  >
                    <option value="">-- เลือกหลักสูตรฝึกอบรมสัมมนา --</option>
                    {courses.filter(c => !c.archived || c.id === selectedCourseId || showArchivedInDropdown).map(c => (
@@ -6462,35 +7092,52 @@ export default function AdminPortal({
                  </select>
                </div>
                
-               <span className="text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-2 rounded-2xl">
+               <span className="text-xs font-bold text-[#071A4B] bg-[#F5F7FA] border border-[#E2E8F0] px-3.5 py-2 rounded-full tabular-nums">
                  พบ {filteredRegs.length} รายการ
                </span>
+
+               {selectedIds.length > 0 && (
+                 <button
+                   type="button"
+                   onClick={() => {
+                     setBulkDeleteError('');
+                     setShowBulkDeleteModal(true);
+                   }}
+                   className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-full text-xs transition shadow-sm min-h-[38px] cursor-pointer tabular-nums"
+                   id="btn-bulk-delete-registrations"
+                 >
+                   <Trash2 className="h-3.5 w-3.5" />
+                   <span>ลบที่เลือก ({selectedIds.length} รายการ)</span>
+                 </button>
+               )}
              </div>
            </div>
 
            {/* Main Registration Table list */}
-           <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden">
+           <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-sm overflow-hidden">
              {!selectedCourseId ? (
-               <div className="py-20 text-center text-slate-400 space-y-3">
-                 <FileSpreadsheet className="h-10 w-10 text-slate-300 mx-auto animate-bounce" />
-                 <p className="text-xs font-bold">กรุณาเลือกหลักสูตรฝึกอบรมสัมนาด้านบน เพื่อตรวจสอบรายชื่อและจัดการเข้างานค่ะ</p>
+               <div className="py-16 text-center text-slate-500 space-y-3">
+                 <div className="w-12 h-12 rounded-full bg-[#F5F7FA] border border-[#E2E8F0] flex items-center justify-center mx-auto">
+                   <FileSpreadsheet className="h-6 w-6 text-[#071A4B]" />
+                 </div>
+                 <p className="text-xs font-bold text-[#071A4B]">กรุณาเลือกหลักสูตรฝึกอบรมสัมมนาด้านบน เพื่อตรวจสอบรายชื่อและจัดการเข้างานค่ะ</p>
                </div>
              ) : filteredRegs.length === 0 ? (
-               <div className="py-20 text-center text-slate-400 space-y-2">
-                 <p className="text-xs font-bold">ไม่พบข้อมูลรายชื่อผู้ลงทะเบียนที่ตรงกับข้อจำกัดการค้นหาของคุณค่ะ</p>
+               <div className="py-16 text-center text-slate-500 space-y-2">
+                 <p className="text-xs font-bold text-[#071A4B]">ไม่พบข้อมูลรายชื่อผู้ลงทะเบียนที่ตรงกับข้อจำกัดการค้นหาของคุณค่ะ</p>
                  <p className="text-[11px] text-slate-400">กรุณากรอกข้อมูลสแกนใหม่ หรือเปลี่ยนประเภทการคัดกรอง</p>
                </div>
              ) : (
                <div className="overflow-x-auto">
                  <table className="w-full text-left border-collapse">
                    <thead>
-                     <tr className="bg-slate-50/70 text-[10px] font-black uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                     <tr className="bg-[#F5F7FA] text-[10px] font-black uppercase tracking-wider text-[#071A4B] border-b border-[#E2E8F0]">
                        <th className="py-4 px-5 text-center w-12">
                          <input
                            type="checkbox"
                            checked={isAllSelected}
                            onChange={handleSelectAllToggle}
-                           className="rounded text-rose-600 focus:ring-rose-500 h-4 w-4 shadow-sm cursor-pointer"
+                           className="rounded text-[#EA580C] focus:ring-[#EA580C] h-4 w-4 shadow-sm cursor-pointer"
                          />
                        </th>
                        <th className="py-4 px-3 text-center w-24">ลำดับสมัคร</th>
@@ -6499,13 +7146,13 @@ export default function AdminPortal({
                        <th className="py-4 px-3">ชื่อ-นามสกุล</th>
                        <th className="py-4 px-3">ตำแหน่ง</th>
                        <th className="py-4 px-3">หน่วยงาน</th>
-                       <th className="py-4 px-3 text-orange-700">หลักสูตร</th>
+                       <th className="py-4 px-3 text-[#EA580C]">หลักสูตร</th>
                        <th className="py-4 px-3">อีเมล</th>
                        <th className="py-4 px-3 text-center w-40">สถานะ</th>
                        <th className="py-4 px-5 text-right w-24">การจัดการ</th>
                      </tr>
                    </thead>
-                   <tbody className="divide-y divide-slate-150 text-xs text-slate-700">
+                   <tbody className="divide-y divide-[#E2E8F0] text-xs text-slate-700 tabular-nums">
                      {filteredRegs.map((participant, idx) => {
                        const checkInNum = getCheckInNumber(participant.id);
                        const appNum = getApplicationNumber(idx);
@@ -6518,25 +7165,25 @@ export default function AdminPortal({
                        const displayCurriculum = getDisplayCurriculum(p?.curriculum, displayDept);
                        
                        return (
-                         <tr key={participant.id} className="hover:bg-slate-50/60 transition duration-75">
+                         <tr key={participant.id} className="hover:bg-slate-50/70 transition duration-75">
                            <td className="py-3 px-5 text-center">
                              <input
                                type="checkbox"
                                checked={!!selectedRegIds[participant.id]}
                                onChange={() => handleSelectRowToggle(participant.id)}
-                               className="rounded text-rose-600 focus:ring-rose-500 h-4 w-4 shadow-sm cursor-pointer"
+                               className="rounded text-[#EA580C] focus:ring-[#EA580C] h-4 w-4 shadow-sm cursor-pointer"
                              />
                            </td>
                            <td className="py-3 px-3 text-center font-mono font-bold text-slate-400">{appNum}</td>
-                           <td className="py-3 px-3 text-center font-mono font-bold text-rose-600">
+                           <td className="py-3 px-3 text-center font-mono font-bold text-[#EA580C]">
                              {participant.checkedIn ? checkInNum : '-'}
                            </td>
-                           <td className="py-3 px-3 font-mono font-bold text-slate-800">{displayId}</td>
-                           <td className="py-3 px-3 font-extrabold text-slate-900">{displayName}</td>
+                           <td className="py-3 px-3 font-mono font-bold text-[#071A4B]">{displayId}</td>
+                           <td className="py-3 px-3 font-extrabold text-[#071A4B]">{displayName}</td>
                            <td className="py-3 px-3 text-slate-600 font-medium">{displayPosition}</td>
                            <td className="py-3 px-3 text-slate-600 font-semibold">{displayDept}</td>
-                           <td className="py-3 px-3 font-medium text-orange-700">
-                             <span className="bg-orange-50 border border-orange-100/55 rounded-md px-2.5 py-1 inline-block max-w-[280px] whitespace-normal break-words leading-normal text-[11px]" title={displayCurriculum}>
+                           <td className="py-3 px-3 font-medium text-[#EA580C]">
+                             <span className="bg-orange-50 border border-orange-200 rounded-md px-2.5 py-1 inline-block max-w-[280px] whitespace-normal break-words leading-normal text-[11px]" title={displayCurriculum}>
                                {displayCurriculum}
                              </span>
                            </td>
@@ -6545,10 +7192,10 @@ export default function AdminPortal({
                              <button
                                type="button"
                                onClick={() => handleToggleCheckInManual(participant)}
-                               className={`px-3 py-1 rounded-xl font-bold text-[10px] transition border cursor-pointer ${
+                               className={`px-3 py-1 rounded-full font-bold text-[10px] transition border cursor-pointer ${
                                  participant.checkedIn
-                                   ? 'bg-emerald-50 text-emerald-750 border-emerald-200 hover:bg-emerald-100'
-                                   : 'bg-slate-50 text-slate-550 border-slate-200 hover:bg-slate-100'
+                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                   : 'bg-[#F5F7FA] text-slate-600 border-[#E2E8F0] hover:bg-slate-100'
                                }`}
                              >
                                {participant.checkedIn ? '✅ เช็คอินสำเร็จ' : '⏳ ยังไม่ได้เช็คอิน'}
@@ -6559,14 +7206,14 @@ export default function AdminPortal({
                                <button
                                  type="button"
                                  onClick={() => handleStartEditRegistration(participant)}
-                                 className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-650 border border-slate-200 rounded-lg font-bold text-[10px] transition cursor-pointer"
+                                 className="px-3 py-1 bg-white hover:bg-slate-50 text-[#071A4B] border border-[#E2E8F0] hover:border-[#071A4B] rounded-full font-bold text-[10px] transition cursor-pointer"
                                >
                                  แก้ไข
                                </button>
                                <button
                                  type="button"
                                  onClick={() => selectedCourse && handleDeleteRegistrationManual(participant, selectedCourse)}
-                                 className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                                 className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition cursor-pointer"
                                  title="ลบรายชื่อ"
                                >
                                  <Trash2 className="h-4 w-4" />
@@ -6581,6 +7228,114 @@ export default function AdminPortal({
                </div>
              )}
            </div>
+
+           {/* Bulk Delete Confirmation Modal */}
+           {showBulkDeleteModal && (
+             <div
+               className="fixed inset-0 z-[999] bg-[#071A4B]/75 backdrop-blur-xs flex items-center justify-center p-4"
+               onClick={() => {
+                 if (!bulkDeleting) setShowBulkDeleteModal(false);
+               }}
+             >
+               <div
+                 className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md p-6 space-y-5 animate-in fade-in duration-200"
+                 onClick={(e) => e.stopPropagation()}
+               >
+                 <div className="flex items-start gap-4">
+                   <div className="w-11 h-11 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                     <Trash2 className="h-5 w-5" />
+                   </div>
+                   <div className="space-y-1.5">
+                     <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-rose-600 block">
+                       Confirm Bulk Deletion
+                     </span>
+                     <h3 className="text-base font-extrabold text-[#071A4B]">
+                       ยืนยันการลบผู้ลงทะเบียนแบบกลุ่ม
+                     </h3>
+                     <p className="text-xs text-slate-600 font-medium leading-relaxed tabular-nums">
+                       คุณต้องการลบรายชื่อผู้ลงทะเบียนที่เลือกทั้งหมด{' '}
+                       <strong className="text-rose-600">{selectedIds.length} รายการ</strong>{' '}
+                       ออกจากหลักสูตร{' '}
+                       <strong className="text-[#071A4B]">{selectedCourse?.title}</strong>{' '}
+                       อย่างถาวรใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้
+                     </p>
+                   </div>
+                 </div>
+
+                 {bulkDeleteError && (
+                   <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-start gap-2.5 text-rose-800 text-xs font-semibold">
+                     <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                     <span>{bulkDeleteError}</span>
+                   </div>
+                 )}
+
+                 <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-[#E2E8F0]">
+                   <button
+                     type="button"
+                     disabled={bulkDeleting}
+                     onClick={() => setShowBulkDeleteModal(false)}
+                     className="px-5 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] rounded-full text-xs font-bold transition min-h-[38px] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+                   >
+                     ยกเลิก (Cancel)
+                   </button>
+                   <button
+                     type="button"
+                     disabled={bulkDeleting}
+                     onClick={handleConfirmBulkDelete}
+                     className="px-5 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-full text-xs font-bold transition shadow-sm flex items-center gap-2 min-h-[38px] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                     id="btn-confirm-bulk-delete-registrations"
+                   >
+                     {bulkDeleting ? (
+                       <>
+                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                         <span>กำลังลบข้อมูล...</span>
+                       </>
+                     ) : (
+                       <>
+                         <Trash2 className="h-3.5 w-3.5" />
+                         <span>ยืนยันการลบ (Confirm Delete)</span>
+                       </>
+                     )}
+                   </button>
+                 </div>
+               </div>
+             </div>
+           )}
+
+           {/* Floating Toast Notification */}
+           {applicantToast && (
+             <div
+               className={`fixed bottom-6 right-6 z-[999] max-w-md rounded-2xl border p-4 shadow-xl flex items-start gap-3 animate-in fade-in duration-200 ${
+                 applicantToast.type === 'success'
+                   ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
+                   : 'bg-rose-50 border-rose-200 text-rose-950'
+               }`}
+               role="status"
+             >
+               <div
+                 className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white ${
+                   applicantToast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
+                 }`}
+               >
+                 {applicantToast.type === 'success' ? (
+                   <CheckCircle className="h-4 w-4" />
+                 ) : (
+                   <AlertTriangle className="h-4 w-4" />
+                 )}
+               </div>
+               <div className="flex-1 text-xs font-bold leading-relaxed pt-1 tabular-nums">
+                 {applicantToast.message}
+               </div>
+               <button
+                 type="button"
+                 onClick={() => setApplicantToast(null)}
+                 className="p-1 rounded-full hover:bg-black/5 text-slate-500 transition cursor-pointer"
+                 aria-label="ปิดการแจ้งเตือน"
+               >
+                 <X className="h-4 w-4" />
+               </button>
+             </div>
+           )}
          </div>
        );
     })()
@@ -6592,56 +7347,64 @@ export default function AdminPortal({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Left form & CSV box */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-6">
-              <div>
-                <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-1.5">
-                  <Upload className="h-5 w-5 text-orange-600" />
-                  <span>นำเข้าข้อมูลบุคลากรผ่าน CSV</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">นำเข้ารายชื่ออาจารย์และสายวิชาการผ่าน CSV อัตโนมัติ ป้องกันการสะสมข้อมูลลงทะเบียนตกหล่น</p>
+            <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] rounded-2xl p-6 shadow-sm space-y-6">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                  <Upload className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-2">
+                    <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                    Data Import & Directory
+                  </span>
+                  <h3 className="font-extrabold text-[#071A4B] text-base mt-0.5">
+                    นำเข้าข้อมูลบุคลากรผ่าน <span className="text-[#F97316]">CSV</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">นำเข้ารายชื่ออาจารย์และสายวิชาการผ่าน CSV อัตโนมัติ ป้องกันการสะสมข้อมูลลงทะเบียนตกหล่น</p>
+                </div>
               </div>
 
               {/* Encoding selection helper */}
-              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-xs space-y-1.5">
-                <span className="font-bold text-slate-750 flex items-center gap-1.5">
-                  <Globe className="h-3.5 w-3.5 text-orange-600" />
+              <div className="bg-[#F5F7FA] border border-[#E2E8F0] rounded-2xl p-3.5 text-xs space-y-2">
+                <span className="font-bold text-[#071A4B] flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 text-[#EA580C]" />
                   <span>ระบบถอดรหัสภาษาไฟล์ (Encoding):</span>
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[11px]">
                   <button
                     type="button"
                     onClick={() => setCsvEncoding('auto')}
-                    className={`py-1.5 px-2 rounded-lg font-medium text-center border transition cursor-pointer ${
+                    className={`py-1.5 px-2.5 rounded-full font-bold text-center border transition cursor-pointer ${
                       csvEncoding === 'auto' 
-                        ? 'bg-orange-600 text-white border-orange-600 shadow-xs font-bold' 
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#071A4B] text-white border-[#071A4B] shadow-xs' 
+                        : 'bg-white text-[#071A4B] border-[#E2E8F0] hover:border-[#071A4B]'
                     }`}
                   >
-                    ⚡ ตรวจจับอัตโนมัติ (แนะนำ)
+                    ⚡ อัตโนมัติ
                   </button>
                   <button
                     type="button"
                     onClick={() => setCsvEncoding('windows-874')}
-                    className={`py-1.5 px-2 rounded-lg font-medium text-center border transition cursor-pointer ${
+                    className={`py-1.5 px-2.5 rounded-full font-bold text-center border transition cursor-pointer ${
                       csvEncoding === 'windows-874' 
-                        ? 'bg-orange-600 text-white border-orange-600 shadow-xs font-bold' 
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#071A4B] text-white border-[#071A4B] shadow-xs' 
+                        : 'bg-white text-[#071A4B] border-[#E2E8F0] hover:border-[#071A4B]'
                     }`}
                     title="สำหรับไฟล์ที่ Save เป็น CSV จาก Microsoft Excel ภาษาไทย"
                   >
-                    🇹🇭 Windows-874 (Excel ไทย)
+                    🇹🇭 Windows-874
                   </button>
                   <button
                     type="button"
                     onClick={() => setCsvEncoding('utf-8')}
-                    className={`py-1.5 px-2 rounded-lg font-medium text-center border transition cursor-pointer ${
+                    className={`py-1.5 px-2.5 rounded-full font-bold text-center border transition cursor-pointer ${
                       csvEncoding === 'utf-8' 
-                        ? 'bg-orange-600 text-white border-orange-600 shadow-xs font-bold' 
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#071A4B] text-white border-[#071A4B] shadow-xs' 
+                        : 'bg-white text-[#071A4B] border-[#E2E8F0] hover:border-[#071A4B]'
                     }`}
                     title="สำหรับไฟล์ CSV ที่เป็น UTF-8 สากล"
                   >
-                    🌐 UTF-8 (สากล)
+                    🌐 UTF-8
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-400">
@@ -6659,13 +7422,15 @@ export default function AdminPortal({
                   const file = e.dataTransfer.files?.[0];
                   if (file) processCsvFile(file);
                 }}
-                className={`border-2 border-dashed rounded-xl p-5 text-center flex flex-col items-center justify-center cursor-pointer transition ${
-                  isDragging ? 'border-orange-600 bg-orange-50/50' : 'border-slate-200 hover:border-slate-300'
+                className={`border-2 border-dashed rounded-2xl p-5 text-center flex flex-col items-center justify-center cursor-pointer transition ${
+                  isDragging ? 'border-[#EA580C] bg-orange-50/50' : 'border-[#E2E8F0] bg-[#F5F7FA] hover:border-[#071A4B]'
                 }`}
                 id="drag-csv-box"
               >
-                <Landmark className="h-8 w-8 text-slate-300 mb-2" />
-                <p className="text-xs font-bold text-slate-700">ลากและวางไฟล์ CSV ของท่านที่นี่</p>
+                <div className="w-10 h-10 rounded-full bg-[#071A4B]/10 text-[#071A4B] flex items-center justify-center mb-2">
+                  <Landmark className="h-5 w-5" />
+                </div>
+                <p className="text-xs font-bold text-[#071A4B]">ลากและวางไฟล์ CSV ของท่านที่นี่</p>
                 <p className="text-[10px] text-slate-400 mt-1">รองรับทั้งไฟล์ Excel ภาษาไทย (Windows-874/TIS-620) และ UTF-8</p>
                 
                 <input
@@ -6678,33 +7443,35 @@ export default function AdminPortal({
                 <button
                   type="button"
                   onClick={() => document.getElementById('csv-hidden-input')?.click()}
-                  className="mt-3 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 rounded text-[10px] text-slate-600 font-semibold relative cursor-pointer"
+                  className="mt-3 px-4 py-1.5 bg-white border border-[#E2E8F0] hover:border-[#071A4B] hover:bg-slate-50 rounded-full text-[11px] text-[#071A4B] font-bold relative cursor-pointer transition"
                 >
-                  เลือกไฟล์เครื่องคอมพิวเตอร์
+                  เลือกไฟล์จากเครื่องคอมพิวเตอร์
                 </button>
               </div>
 
               {/* CSV Import layout guide */}
-              <div className="text-[10px] text-slate-500 bg-white border border-slate-100 p-3.5 rounded-xl space-y-1">
-                <strong>📝 โครงสร้างหัวตารางไฟล์ Excel/CSV ที่ตรงตามระบบ (8 คอลัมน์):</strong>
-                <code className="block bg-slate-50 p-2 rounded text-amber-800 font-mono text-[9px] overflow-x-auto whitespace-pre">
+              <div className="text-[10px] text-slate-500 bg-[#F5F7FA] border border-[#E2E8F0] p-3.5 rounded-xl space-y-1">
+                <strong className="text-[#071A4B]">📝 โครงสร้างหัวตารางไฟล์ Excel/CSV ที่ตรงตามระบบ (8 คอลัมน์):</strong>
+                <code className="block bg-white border border-[#E2E8F0] p-2 rounded-lg text-[#071A4B] font-mono text-[9px] overflow-x-auto whitespace-pre">
                   รหัสบุคคล, ชื่อ-นามสกุล, ตำแหน่ง, หลักสูตร, ภาควิชา, หน่วยงาน, อีเมล, โทรศัพท์<br />
                   10502041, สมจิตร์ ใจบุญ, อาจารย์, เทคโนโลยีสารสนเทศ, เทคโนโลยีสารสนเทศ, คณะเทคโนโลยีสารสนเทศและนวัตกรรม, somjit.j@bu.ac.th, 02-350-3500
                 </code>
               </div>
 
               {importReport && (
-                <div className="p-3.5 rounded-xl text-xs font-bold bg-white border border-slate-100 shadow-sm" id="import-report">
+                <div className="p-3.5 rounded-xl text-xs font-bold bg-white border border-[#E2E8F0] shadow-xs" id="import-report">
                   {importReport}
                 </div>
               )}
 
-              <hr className="border-slate-200" />
+              <hr className="border-[#E2E8F0]" />
 
               {/* Individual additions action */}
               <div>
-                <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-1.5">
-                  <Plus className="h-4.5 w-4.5 text-orange-600" />
+                <h3 className="font-extrabold text-[#071A4B] text-sm flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                    <Plus className="h-3.5 w-3.5" />
+                  </span>
                   <span>เพิ่มบุคลากรรายบุคคล (Individual CRUD)</span>
                 </h3>
                 <button
@@ -6714,7 +7481,7 @@ export default function AdminPortal({
                     setEditingPersonnelId(null);
                     setShowPersonnelForm(!showPersonnelForm);
                   }}
-                  className="w-full mt-3 h-10 border border-orange-200 hover:bg-orange-50 text-orange-700 font-semibold rounded-lg text-xs transition duration-150 flex items-center justify-center gap-1 relative"
+                  className="w-full mt-3 h-10 border border-[#E2E8F0] bg-white hover:border-[#071A4B] hover:bg-slate-50 text-[#071A4B] font-bold rounded-full text-xs transition duration-150 flex items-center justify-center gap-1 relative cursor-pointer"
                   id="btn-personnel-crud-toggle"
                 >
                   {showPersonnelForm ? 'ปิดหน้าต่างกรอก' : 'เขียนลงทะเบียนเป็นรายคน'}
@@ -6723,7 +7490,7 @@ export default function AdminPortal({
 
               {/* Individual additions Form */}
               {showPersonnelForm && (
-                <form onSubmit={handleSavePersonnel} className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl" id="form-save-personnel">
+                <form onSubmit={handleSavePersonnel} className="space-y-3 bg-[#F5F7FA] p-4 border border-[#E2E8F0] rounded-2xl" id="form-save-personnel">
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase font-bold text-slate-500">รหัสบุคคล / รหัสบุคลากร * {editingPersonnelId && '(ไม่สามารถแก้ไขได้)'}</label>
                     <input
@@ -6733,7 +7500,7 @@ export default function AdminPortal({
                       placeholder="เช่น 10502011"
                       value={personnelForm.id || ''}
                       onChange={(e) => setPersonnelForm({...personnelForm, id: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 p-2 rounded text-xs text-slate-800 focus:outline-none focus:border-orange-500 disabled:bg-slate-100 disabled:text-slate-400"
+                      className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C] disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
                   <div className="space-y-1">
@@ -6744,7 +7511,7 @@ export default function AdminPortal({
                       placeholder="สมชาย แก้วเจริญ"
                       value={personnelForm.name || ''}
                       onChange={(e) => setPersonnelForm({...personnelForm, name: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 p-2 rounded text-xs text-slate-800"
+                      className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -6756,7 +7523,7 @@ export default function AdminPortal({
                       value={personnelForm.position || ''}
                       onChange={(e) => setPersonnelForm({...personnelForm, position: e.target.value})}
                       list="preset-positions"
-                      className="w-full bg-slate-50 border border-slate-200 p-2 rounded text-xs text-slate-800 focus:outline-none focus:border-orange-500"
+                      className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     />
                     <datalist id="preset-positions">
                       <option value="คณบดี" />
@@ -6778,7 +7545,7 @@ export default function AdminPortal({
                       placeholder="เช่น เทคโนโลยีสารสนเทศ หรือ ใส่เครื่องหมาย - หากไม่มี"
                       value={personnelForm.curriculum || ''}
                       onChange={(e) => setPersonnelForm({...personnelForm, curriculum: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 p-2 rounded text-xs text-slate-800"
+                      className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -6788,7 +7555,7 @@ export default function AdminPortal({
                       placeholder="เช่น เทคโนโลยีสารสนเทศ หรือ ใส่เครื่องหมาย - หากไม่มี"
                       value={personnelForm.academicDepartment || ''}
                       onChange={(e) => setPersonnelForm({...personnelForm, academicDepartment: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 p-2 rounded text-xs text-slate-800"
+                      className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -6799,7 +7566,7 @@ export default function AdminPortal({
                       placeholder="เช่น คณะเทคโนโลยีสารสนเทศและนวัตกรรม"
                       value={personnelForm.department || ''}
                       onChange={(e) => setPersonnelForm({...personnelForm, department: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 p-2 rounded text-xs text-slate-800"
+                      className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -6810,7 +7577,7 @@ export default function AdminPortal({
                       placeholder="somchai.k@bu.ac.th"
                       value={personnelForm.email || ''}
                       onChange={(e) => setPersonnelForm({...personnelForm, email: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 p-2 rounded text-xs text-slate-800"
+                      className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -6820,14 +7587,17 @@ export default function AdminPortal({
                       placeholder="02-350-3500 หรือ หมายเลขภายใน"
                       value={personnelForm.phone || ''}
                       onChange={(e) => setPersonnelForm({...personnelForm, phone: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 p-2 rounded text-xs text-slate-800"
+                      className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="w-full h-10 bg-orange-655 hover:bg-orange-700 text-white font-bold rounded text-xs shadow-sm transition"
+                    className="w-full h-10 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold rounded-full text-xs shadow-sm transition inline-flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {editingPersonnelId ? '💾 บันทึกการแก้ไขข้อมูลบุคลากร' : '➕ ยืนยันการเพิ่มบุคลากรรายบุคคล'}
+                    <span>{editingPersonnelId ? 'บันทึกการแก้ไขข้อมูลบุคลากร' : 'ยืนยันการเพิ่มบุคลากรรายบุคคล'}</span>
+                    <span className="w-6 h-6 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
                   </button>
                 </form>
               )}
@@ -6835,20 +7605,21 @@ export default function AdminPortal({
 
           </div>
             {/* Right List Panel with search pagination */}
-            <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm col-span-2 overflow-hidden flex flex-col justify-between" id="personnel-database-list font-sans">
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm col-span-2 overflow-hidden flex flex-col justify-between" id="personnel-database-list font-sans">
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div>
-                    <h3 className="font-extrabold text-slate-800 text-base">ฐานแฟ้มบัญชีรายชื่อบุคลากรตรวจสอบสะสม</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">จัดการ ตรวจสอบ และส่งออกรายชื่อทั้งหมดเพื่อใช้ในงานสถิติและงานบริหารหลักสูตร</p>
+                    <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">Personnel Registry</span>
+                    <h3 className="font-extrabold text-[#071A4B] text-base">ฐานแฟ้มบัญชีรายชื่อบุคลากรตรวจสอบสะสม</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">จัดการ ตรวจสอบ และส่งออกรายชื่อทั้งหมดเพื่อใช้ในงานสถิติและงานบริหารหลักสูตร</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full font-bold">บุคลากรทั้งหมด {personnel.length} คน</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs bg-[#F5F7FA] border border-[#E2E8F0] text-[#071A4B] px-3 py-1.5 rounded-full font-bold tabular-nums">บุคลากรทั้งหมด {personnel.length} คน</span>
                     {corruptedPersonnelCount > 0 && (
                       <button
                         type="button"
                         onClick={handleCleanCorruptedPersonnel}
-                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl transition duration-150 flex items-center gap-1.5 cursor-pointer border border-rose-200"
+                        className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-full transition duration-150 flex items-center gap-1.5 cursor-pointer border border-rose-200 tabular-nums"
                         id="btn-clean-corrupted"
                         title="ลบข้อมูลบุคลากรที่มีอักขระเพี้ยน/สัญลักษณ์  ออกจากฐานข้อมูล"
                       >
@@ -6859,7 +7630,7 @@ export default function AdminPortal({
                     <button
                       type="button"
                       onClick={handleCleanSystemDuplicates}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition duration-150 flex items-center gap-1.5 cursor-pointer border border-slate-200"
+                      className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-[#071A4B] font-bold text-xs rounded-full transition duration-150 flex items-center gap-1.5 cursor-pointer border border-[#E2E8F0] hover:border-[#071A4B]"
                       id="btn-clean-duplicates"
                       title="ตรวจจับและคัดกรองลบข้อมูลซ้ำในฐานข้อมูล"
                     >
@@ -6869,7 +7640,7 @@ export default function AdminPortal({
                     <button
                       type="button"
                       onClick={handleClearAllPersonnel}
-                      className="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 font-semibold text-xs rounded-xl transition duration-150 flex items-center gap-1 cursor-pointer border border-slate-200"
+                      className="px-3 py-1.5 bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-semibold text-xs rounded-full transition duration-150 flex items-center gap-1 cursor-pointer border border-[#E2E8F0] hover:border-rose-200"
                       id="btn-clear-all"
                       title="ล้างฐานข้อมูลบุคลากรทั้งหมดเพื่อนำเข้าใหม่"
                     >
@@ -6879,10 +7650,10 @@ export default function AdminPortal({
                     <button
                       type="button"
                       onClick={handleDownloadPersonnelDatabase}
-                      className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs rounded-xl shadow-xs transition duration-150 flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-1.5 bg-[#071A4B] hover:bg-[#0D2566] text-white font-bold text-xs rounded-full shadow-xs transition duration-150 flex items-center gap-1.5 cursor-pointer"
                       id="btn-export-personnel-csv"
                     >
-                      <Download className="h-3.5 w-3.5" />
+                      <Download className="h-3.5 w-3.5 text-[#EA580C]" />
                       <span>ส่งออก CSV</span>
                     </button>
                   </div>
@@ -6890,11 +7661,11 @@ export default function AdminPortal({
 
                 {/* Corrupted Data Alert Banner */}
                 {corruptedPersonnelCount > 0 && (
-                  <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-start gap-2.5">
                       <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                       <div>
-                        <div className="font-bold">⚠️ ตรวจพบข้อมูลบุคลากรที่มีอักขระเพี้ยน / ตัวอักษรต่างดาว ({corruptedPersonnelCount} รายการ)</div>
+                        <div className="font-bold tabular-nums">⚠️ ตรวจพบข้อมูลบุคลากรที่มีอักขระเพี้ยน / ตัวอักษรต่างดาว ({corruptedPersonnelCount} รายการ)</div>
                         <div className="text-amber-700 text-[11px] mt-0.5">
                           เกิดจากไฟล์ CSV เดิมถูกบันทึกด้วยรหัสภาษา Windows-874 ของ Excel ท่านสามารถกด <strong>"ลบข้อมูลที่เพี้ยน"</strong> หรือลากไฟล์ CSV เดิมมานำเข้าใหม่ได้ทันที ระบบจะถอดรหัสภาษาไทยถูกต้อง 100% และอัปเดตตำแหน่งล่าสุดให้ครบถ้วนค่ะ
                         </div>
@@ -6904,7 +7675,7 @@ export default function AdminPortal({
                       <button
                         type="button"
                         onClick={handleCleanCorruptedPersonnel}
-                        className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shadow-xs transition duration-150 flex items-center gap-1 cursor-pointer"
+                        className="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-full text-xs shadow-xs transition duration-150 flex items-center gap-1 cursor-pointer"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                         <span>ลบเฉพาะรายการที่เพี้ยน</span>
@@ -6915,13 +7686,13 @@ export default function AdminPortal({
 
                 {/* Filter Personnel input search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
                     type="text"
                     placeholder="ดักจับค้นหาตามชื่อสกุล, รหัสสาขาวิชา, สังกัดหน่วยงาน, หรือตำแหน่งอีเมล..."
                     value={searchQuery}
                     onChange={(e) => { setSearchQuery(e.target.value); setPersonnelPage(1); }}
-                    className="w-full bg-slate-50 border border-slate-100 text-slate-800 py-2.5 pl-10 pr-4 rounded-xl text-xs focus:outline-none"
+                    className="w-full bg-[#F5F7FA] border border-[#E2E8F0] text-[#071A4B] py-2.5 pl-10 pr-4 rounded-xl text-xs focus:outline-none focus:border-[#EA580C]"
                     id="input-personnel-search"
                   />
                 </div>
@@ -6929,58 +7700,58 @@ export default function AdminPortal({
                 {paginatedPersonnel.length === 0 ? (
                   <div className="text-center py-16 text-slate-400 text-xs">ไม่พบบุคลากรหรืออาจารย์ตามเงื่อนไขค้นหาของท่าน</div>
                 ) : (
-                  <div className="overflow-x-auto overflow-y-auto max-h-[550px] border border-slate-100/80 rounded-xl shadow-inner scrollbar-thin scrollbar-thumb-slate-200">
+                  <div className="overflow-x-auto overflow-y-auto max-h-[550px] border border-[#E2E8F0] rounded-2xl scrollbar-thin scrollbar-thumb-slate-200">
                     <table className="w-full border-collapse text-left text-xs text-slate-600">
-                      <thead className="sticky top-0 bg-white z-10 shadow-[0_1px_0_0_rgba(241,245,249,1)]">
-                        <tr className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                      <thead className="sticky top-0 bg-[#F5F7FA] z-10 border-b border-[#E2E8F0]">
+                        <tr className="text-[#071A4B] font-bold uppercase tracking-wider text-[10px]">
                           <th 
-                            className="py-3 px-3 bg-white cursor-pointer select-none text-orange-700 font-bold hover:bg-orange-50/60 transition duration-150 rounded-lg group"
+                            className="py-3 px-3 bg-[#F5F7FA] cursor-pointer select-none text-[#EA580C] font-bold hover:bg-orange-50/60 transition duration-150 group"
                             onClick={() => setPersonnelSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                             title="คลิกเพื่อสลับการเรียงลำดับรหัสบุคคล (น้อยไปมาก / มากไปน้อย)"
                           >
                             <div className="flex items-center gap-1">
                               <span>รหัสบุคคล</span>
                               {personnelSortOrder === 'asc' ? (
-                                <ArrowUp className="h-3.5 w-3.5 text-orange-600 transition duration-150" />
+                                <ArrowUp className="h-3.5 w-3.5 text-[#EA580C] transition duration-150" />
                               ) : (
-                                <ArrowDown className="h-3.5 w-3.5 text-orange-600 transition duration-150" />
+                                <ArrowDown className="h-3.5 w-3.5 text-[#EA580C] transition duration-150" />
                               )}
                             </div>
                           </th>
-                          <th className="py-3 px-3 bg-white">ชื่อ-นามสกุล</th>
-                          <th className="py-3 px-3 bg-white">ตำแหน่ง</th>
-                          <th className="py-3 px-3 bg-white font-semibold">หลักสูตร</th>
-                          <th className="py-3 px-3 bg-white">ภาควิชา</th>
-                          <th className="py-3 px-3 bg-white">หน่วยงาน</th>
-                          <th className="py-3 px-3 bg-white">อีเมล</th>
-                          <th className="py-3 px-3 bg-white">โทรศัพท์</th>
-                          <th className="py-3 px-3 text-right bg-white">ควบคุม</th>
+                          <th className="py-3 px-3 bg-[#F5F7FA]">ชื่อ-นามสกุล</th>
+                          <th className="py-3 px-3 bg-[#F5F7FA]">ตำแหน่ง</th>
+                          <th className="py-3 px-3 bg-[#F5F7FA] font-semibold">หลักสูตร</th>
+                          <th className="py-3 px-3 bg-[#F5F7FA]">ภาควิชา</th>
+                          <th className="py-3 px-3 bg-[#F5F7FA]">หน่วยงาน</th>
+                          <th className="py-3 px-3 bg-[#F5F7FA]">อีเมล</th>
+                          <th className="py-3 px-3 bg-[#F5F7FA]">โทรศัพท์</th>
+                          <th className="py-3 px-3 text-right bg-[#F5F7FA]">ควบคุม</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody className="divide-y divide-[#E2E8F0]/60">
                         {paginatedPersonnel.map(person => (
-                          <tr key={person.id} className="hover:bg-slate-50 duration-100 font-medium">
-                            <td className="py-3 px-3 font-mono font-bold text-slate-900">{person.id}</td>
-                            <td className="py-3 px-3 font-semibold text-slate-900">{person.name}</td>
-                            <td className="py-3 px-3 text-slate-500">{person.position || '-'}</td>
-                            <td className="py-3 px-3 font-medium text-orange-700">
-                              <span className="bg-orange-50 border border-orange-100/55 rounded-md px-2.5 py-1 inline-block max-w-[200px] whitespace-normal break-words leading-normal text-[11px]" title={getDisplayCurriculum(person.curriculum, person.department)}>
+                          <tr key={person.id} className="hover:bg-[#F5F7FA] duration-100 font-medium">
+                            <td className="py-3 px-3 font-mono font-bold text-[#071A4B] tabular-nums">{person.id}</td>
+                            <td className="py-3 px-3 font-semibold text-[#071A4B]">{person.name}</td>
+                            <td className="py-3 px-3 text-slate-600">{person.position || '-'}</td>
+                            <td className="py-3 px-3 font-medium text-[#EA580C]">
+                              <span className="bg-orange-50 border border-orange-200/70 rounded-lg px-2.5 py-1 inline-block max-w-[200px] whitespace-normal break-words leading-normal text-[11px]" title={getDisplayCurriculum(person.curriculum, person.department)}>
                                 {getDisplayCurriculum(person.curriculum, person.department)}
                               </span>
                             </td>
                             <td className="py-3 px-3 text-slate-600">
-                              <span className="bg-slate-50 border border-slate-200/70 rounded-md px-2 py-0.5 inline-block text-[11px] max-w-[180px] whitespace-normal break-words">
+                              <span className="bg-[#F5F7FA] border border-[#E2E8F0] rounded-lg px-2 py-0.5 inline-block text-[11px] max-w-[180px] whitespace-normal break-words">
                                 {person.academicDepartment && person.academicDepartment !== '-' ? person.academicDepartment : '-'}
                               </span>
                             </td>
-                            <td className="py-3 px-3 text-slate-500">{person.department}</td>
-                            <td className="py-3 px-3 text-slate-500">{person.email}</td>
-                            <td className="py-3 px-3 text-slate-500">{person.phone || '-'}</td>
+                            <td className="py-3 px-3 text-slate-600">{person.department}</td>
+                            <td className="py-3 px-3 text-slate-500 font-mono">{person.email}</td>
+                            <td className="py-3 px-3 text-slate-500 tabular-nums">{person.phone || '-'}</td>
                             <td className="py-3 px-3 text-right">
                               <div className="flex justify-end items-center gap-1">
                                 <button
                                   onClick={() => handleEditPersonnel(person)}
-                                  className="p-1.5 hover:bg-orange-50 text-orange-650 hover:text-orange-700 rounded transition"
+                                  className="p-1.5 hover:bg-orange-50 text-[#EA580C] hover:text-[#EA580C] rounded-full transition cursor-pointer"
                                   id={`btn-edit-personnel-${person.id}`}
                                   title="แก้ไขข้อมูล"
                                 >
@@ -6988,7 +7759,7 @@ export default function AdminPortal({
                                 </button>
                                 <button
                                   onClick={() => handleDeletePersonnel(person.id)}
-                                  className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded transition"
+                                  className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-full transition cursor-pointer"
                                   id={`btn-delete-personnel-${person.id}`}
                                   title="ลบข้อมูล"
                                 >
@@ -7006,20 +7777,20 @@ export default function AdminPortal({
 
               {/* Pagination indicators footer */}
               {totalPersonnelPages > 1 && (
-                <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-6 text-xs text-slate-500">
+                <div className="flex justify-between items-center border-t border-[#E2E8F0] pt-4 mt-6 text-xs text-slate-500 tabular-nums">
                   <span>แสดงผลลัพธ์หน้า {personnelPage} จาก {totalPersonnelPages} หน้า</span>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setPersonnelPage(p => Math.max(1, p - 1))}
                       disabled={personnelPage === 1}
-                      className="px-3 py-1 bg-slate-50 text-slate-600 border border-slate-100 rounded disabled:opacity-40 font-bold transition duration-150 relative min-h-[44px]"
+                      className="px-4 py-1.5 bg-white text-[#071A4B] border border-[#E2E8F0] hover:border-[#071A4B] rounded-full disabled:opacity-40 font-bold transition duration-150 relative min-h-[38px] cursor-pointer"
                     >
                       หน้าก่อน
                     </button>
                     <button
                       onClick={() => setPersonnelPage(p => Math.min(totalPersonnelPages, p + 1))}
                       disabled={personnelPage === totalPersonnelPages}
-                      className="px-3 py-1 bg-slate-50 text-slate-600 border border-slate-100 rounded disabled:opacity-40 font-bold transition duration-150 relative min-h-[44px]"
+                      className="px-4 py-1.5 bg-white text-[#071A4B] border border-[#E2E8F0] hover:border-[#071A4B] rounded-full disabled:opacity-40 font-bold transition duration-150 relative min-h-[38px] cursor-pointer"
                     >
                       หน้าถัดไป
                     </button>
@@ -7035,13 +7806,21 @@ export default function AdminPortal({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Admin Add view left */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
-              <div>
-                <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-1.5">
-                  <Shield className="h-5 w-5 text-orange-600" />
-                  <span>แต่งตั้งแอดมินเจ้าหน้าที่</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">กำหนดระดับสิทธิ์ให้บุคคลภายใน เพื่อให้สามารถเข้าจัดการข้อมูลกิจกรรม รายชื่อผู้ประเมินผลสัมมนา นำเข้า และ Export CSV ได้</p>
+            <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <Shield className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-2">
+                    <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                    Role Access Control
+                  </span>
+                  <h3 className="font-extrabold text-[#071A4B] text-base mt-0.5">
+                    แต่งตั้ง<span className="text-[#F97316]">แอดมินเจ้าหน้าที่</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">กำหนดระดับสิทธิ์ให้บุคคลภายใน เพื่อให้สามารถเข้าจัดการข้อมูลกิจกรรม รายชื่อผู้ประเมินผลสัมมนา นำเข้า และ Export CSV ได้</p>
+                </div>
               </div>
 
               <form onSubmit={handleAddAdmin} className="space-y-3" id="form-save-admin">
@@ -7053,7 +7832,7 @@ export default function AdminPortal({
                     placeholder="เช่น deans.office@bu.ac.th"
                     value={adminForm.email || ''}
                     onChange={(e) => setAdminForm({...adminForm, email: e.target.value})}
-                    className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-xs"
+                    className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     id="admin-form-email"
                   />
                 </div>
@@ -7065,7 +7844,7 @@ export default function AdminPortal({
                     placeholder="ปณิสรา ลิ้มเลิศวิบูลย์ (กุมารินทร์)"
                     value={adminForm.name || ''}
                     onChange={(e) => setAdminForm({...adminForm, name: e.target.value})}
-                    className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-xs"
+                    className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     id="admin-form-name"
                   />
                 </div>
@@ -7076,7 +7855,7 @@ export default function AdminPortal({
                     placeholder="เช่น 10502011"
                     value={adminForm.staffId || ''}
                     onChange={(e) => setAdminForm({...adminForm, staffId: e.target.value})}
-                    className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-xs"
+                    className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     id="admin-form-staffid"
                   />
                 </div>
@@ -7087,7 +7866,7 @@ export default function AdminPortal({
                     placeholder="เช่น รองอธิการบดีฝ่ายวิชาการ"
                     value={adminForm.position || ''}
                     onChange={(e) => setAdminForm({...adminForm, position: e.target.value})}
-                    className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-xs"
+                    className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     id="admin-form-position"
                   />
                 </div>
@@ -7098,7 +7877,7 @@ export default function AdminPortal({
                     placeholder="เช่น สำนักบริหารวิชาการ"
                     value={adminForm.department || ''}
                     onChange={(e) => setAdminForm({...adminForm, department: e.target.value})}
-                    className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-xs"
+                    className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     id="admin-form-department"
                   />
                 </div>
@@ -7109,28 +7888,31 @@ export default function AdminPortal({
                     placeholder="เช่น 02-407-3888 ต่อ 2411"
                     value={adminForm.phone || ''}
                     onChange={(e) => setAdminForm({...adminForm, phone: e.target.value})}
-                    className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-xs"
+                    className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                     id="admin-form-phone"
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-500 block">สิทธิ์การใช้งาน (Role)</label>
-                  <div className="w-full bg-slate-100 border border-slate-250 p-2.5 rounded-lg text-xs font-bold text-slate-700">
+                  <div className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs font-bold text-[#071A4B]">
                     Admin (ผู้ดูแลระบบ)
                   </div>
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold h-11 rounded-lg text-xs shadow-sm transition"
+                  className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold h-11 rounded-full text-xs shadow-sm transition inline-flex items-center justify-center gap-2 cursor-pointer"
                   id="btn-admin-submit"
                 >
-                  อนุมัติสิทธิ์เข้าถึงระบบแอดมิน
+                  <span>อนุมัติสิทธิ์เข้าถึงระบบแอดมิน</span>
+                  <span className="w-6 h-6 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
                 </button>
               </form>
 
-              <div className="border-t border-slate-200/80 pt-4 mt-2 space-y-3">
+              <div className="border-t border-[#E2E8F0] pt-4 mt-2 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block flex items-center gap-1">
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                     <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
                     <span>หรือ นำเข้าแอดมินผ่าน CSV</span>
                   </span>
@@ -7144,13 +7926,13 @@ export default function AdminPortal({
                       ];
                       downloadCSV('admin_import_template.csv', headers, demoRows);
                     }}
-                    className="text-[10px] text-orange-600 hover:text-orange-700 font-bold flex items-center gap-1"
+                    className="text-[10px] text-[#EA580C] hover:text-[#EA580C] font-bold flex items-center gap-1 cursor-pointer"
                   >
                     📥 ดาวน์โหลดเทมเพลต CSV
                   </button>
                 </div>
 
-                <div className="border border-dashed border-slate-250 rounded-xl p-4 bg-white hover:bg-slate-50 text-center cursor-pointer hover:border-orange-350 transition duration-150 relative">
+                <div className="border border-dashed border-[#E2E8F0] rounded-2xl p-4 bg-[#F5F7FA] hover:bg-slate-50 text-center cursor-pointer hover:border-[#071A4B] transition duration-150 relative">
                   <input
                     type="file"
                     accept=".csv"
@@ -7164,7 +7946,7 @@ export default function AdminPortal({
                     <div className="text-slate-400 flex justify-center">
                       <Upload className="h-6 w-6 stroke-[1.5]" />
                     </div>
-                    <p className="text-[11px] font-bold text-slate-700">คลิก หรือลากไฟล์ CSV เพื่อนำเข้าที่นี่</p>
+                    <p className="text-[11px] font-bold text-[#071A4B]">คลิก หรือลากไฟล์ CSV เพื่อนำเข้าที่นี่</p>
                     <p className="text-[9px] text-slate-400">คอลัมน์ข้อมูล: อีเมล, ชื่อ-นามสกุล, รหัสบุคลากร, ตำแหน่ง, หน่วยงาน, โทรศัพท์</p>
                   </div>
                 </div>
@@ -7172,23 +7954,24 @@ export default function AdminPortal({
             </div>
 
             {/* Right Admin List */}
-            <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm col-span-2 space-y-4" id="admins-list-container">
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm col-span-2 space-y-4" id="admins-list-container">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                  <h3 className="font-extrabold text-slate-800 text-base" id="admins-list-title">
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">Authorized Personnel</span>
+                  <h3 className="font-extrabold text-[#071A4B] text-base" id="admins-list-title">
                     ประธานคณะกรรมการและเจ้าหน้าที่ผู้บริหาร (Authorized Admins)
                   </h3>
-                  <p className="text-slate-400 text-xs mt-0.5">รายชื่อและสิทธิ์การเข้าดูแลระบบของเจ้าหน้าที่แต่ละฝ่าย</p>
+                  <p className="text-slate-500 text-xs mt-0.5">รายชื่อและสิทธิ์การเข้าดูแลระบบของเจ้าหน้าที่แต่ละฝ่าย</p>
                 </div>
-                <span className="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-bold whitespace-nowrap">
+                <span className="text-xs bg-[#F5F7FA] border border-[#E2E8F0] text-[#071A4B] px-3 py-1 rounded-full font-bold whitespace-nowrap tabular-nums">
                   ทั้งหมด {adminsList.length} บัญชี
                 </span>
               </div>
               
-              <div className="overflow-x-auto" id="admin-table-wrapper">
+              <div className="overflow-x-auto border border-[#E2E8F0] rounded-2xl" id="admin-table-wrapper">
                 <table className="w-full border-collapse text-left text-xs text-slate-600" id="admin-table-element">
                   <thead>
-                    <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                    <tr className="bg-[#F5F7FA] border-b border-[#E2E8F0] text-[#071A4B] font-bold uppercase tracking-wider text-[10px]">
                       <th className="py-3 px-3">รหัสบุคลากร</th>
                       <th className="py-3 px-3">ชื่อ-นามสกุล</th>
                       <th className="py-3 px-3">ตำแหน่ง</th>
@@ -7199,7 +7982,7 @@ export default function AdminPortal({
                       <th className="py-3 px-3 text-right">ควบคุม</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-[#E2E8F0]/60">
                     {adminsList.length === 0 ? (
                       <tr>
                         <td colSpan={8} className="text-center py-10 text-slate-400 font-medium font-sans">
@@ -7210,40 +7993,40 @@ export default function AdminPortal({
                       adminsList.map(adm => (
                         <tr 
                           key={adm.email} 
-                          className="hover:bg-slate-50 duration-100 font-medium"
+                          className="hover:bg-[#F5F7FA] duration-100 font-medium"
                           id={`admin-row-${adm.email.replace(/\./g, '_')}`}
                         >
-                          <td className="py-3 px-3 font-mono font-bold text-slate-900">
+                          <td className="py-3 px-3 font-mono font-bold text-[#071A4B] tabular-nums">
                             {adm.staffId || <span className="text-slate-300 italic font-sans font-normal">-</span>}
                           </td>
-                          <td className="py-3 px-3 font-semibold text-slate-900">
+                          <td className="py-3 px-3 font-semibold text-[#071A4B]">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span>{adm.name}</span>
-                              <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-orange-100 text-orange-850">
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-orange-50 border border-orange-200 text-[#EA580C]">
                                 Admin
                               </span>
                             </div>
                           </td>
-                          <td className="py-3 px-3 text-slate-500">
+                          <td className="py-3 px-3 text-slate-600">
                             {adm.position || <span className="text-slate-300 italic font-normal">-</span>}
                           </td>
-                          <td className="py-3 px-3 text-slate-500">
+                          <td className="py-3 px-3 text-slate-600">
                             {adm.department || <span className="text-slate-300 italic font-normal">-</span>}
                           </td>
                           <td className="py-3 px-3 text-slate-500 font-mono text-[11px]">
                             {adm.email}
                           </td>
-                          <td className="py-3 px-3 text-slate-500">
+                          <td className="py-3 px-3 text-slate-500 tabular-nums">
                             {adm.phone || <span className="text-slate-300 italic font-normal">-</span>}
                           </td>
-                          <td className="py-3 px-3 text-slate-500 text-center whitespace-nowrap">
+                          <td className="py-3 px-3 text-slate-500 text-center whitespace-nowrap tabular-nums">
                             {adm.assignedAt ? new Date(adm.assignedAt).toLocaleDateString('th-TH') : '-'}
                           </td>
                           <td className="py-3 px-3 text-right whitespace-nowrap">
                             <div className="flex gap-1.5 items-center justify-end">
                               <button
                                 onClick={() => handleStartEditAdmin(adm)}
-                                className="p-1.5 hover:bg-amber-50 text-amber-500 hover:text-amber-700 rounded transition"
+                                className="p-1.5 hover:bg-orange-50 text-[#EA580C] hover:text-[#EA580C] rounded-full transition cursor-pointer"
                                 id={`btn-edit-admin-${adm.email.replace(/\./g, '_')}`}
                                 title="แก้ไขข้อมูลเจ้าหน้าที่"
                               >
@@ -7251,7 +8034,7 @@ export default function AdminPortal({
                               </button>
                               <button
                                 onClick={() => handleDeleteAdmin(adm.email)}
-                                className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded transition"
+                                className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-full transition cursor-pointer"
                                 id={`btn-delete-admin-${adm.email.replace(/\./g, '_')}`}
                                 title="ลบสิทธิ์เจ้าหน้าที่"
                               >
@@ -7273,17 +8056,25 @@ export default function AdminPortal({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Left Form: Select Course, Recipients, Subject, Message */}
-            <div id="email-campaign-form" className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4 scroll-mt-6">
-              <div>
-                <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-1.5">
-                  <Mail className="h-5 w-5 text-orange-600" />
-                  <span>ตั้งค่าแคมเปญส่งจดหมายเชิญ</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">กำหนดกลุ่มเป้าหมาย หัวข้อ และข้อความจดหมายประชาสัมพันธ์เชิญชวนเข้าร่วมโครงการอบรม</p>
+            <div id="email-campaign-form" className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] rounded-2xl p-6 shadow-sm space-y-4 scroll-mt-6">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                  <Mail className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-2">
+                    <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                    Campaign Studio
+                  </span>
+                  <h3 className="font-extrabold text-[#071A4B] text-base mt-0.5">
+                    ตั้งค่าแคมเปญ<span className="text-[#F97316]">ส่งจดหมายเชิญ</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">กำหนดกลุ่มเป้าหมาย หัวข้อ และข้อความจดหมายประชาสัมพันธ์เชิญชวนเข้าร่วมโครงการอบรม</p>
+                </div>
               </div>
 
               {campaignReuseNotification && (
-                <div id="campaign-reuse-notification-banner" className="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-3.5 flex items-start justify-between gap-3 text-emerald-900 shadow-sm transition-all duration-200">
+                <div id="campaign-reuse-notification-banner" className="bg-emerald-50 border border-emerald-300 rounded-2xl p-3.5 flex items-start justify-between gap-3 text-emerald-900 shadow-sm transition-all duration-200">
                   <div className="flex items-start gap-2.5">
                     <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
@@ -7298,7 +8089,7 @@ export default function AdminPortal({
                   <button
                     type="button"
                     onClick={() => setCampaignReuseNotification(null)}
-                    className="text-emerald-700 hover:text-emerald-900 font-bold text-xs p-1 rounded-md hover:bg-emerald-100 transition duration-150 cursor-pointer"
+                    className="text-emerald-700 hover:text-emerald-900 font-bold text-xs p-1 rounded-full hover:bg-emerald-100 transition duration-150 cursor-pointer"
                     title="ปิดข้อความแจ้งเตือน"
                   >
                     ✕
@@ -7309,13 +8100,13 @@ export default function AdminPortal({
               <div className="space-y-3">
                 {/* Quick Reuse Previous Group Selector */}
                 {campaignLogs.length > 0 && (
-                  <div className="bg-orange-50/80 border border-orange-200/90 rounded-xl p-3 space-y-1.5 shadow-2xs">
+                  <div className="bg-orange-50/70 border border-orange-200 rounded-2xl p-3.5 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-extrabold text-orange-950 flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5 text-orange-600" />
+                      <label className="text-[10px] font-extrabold text-[#071A4B] flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 text-[#EA580C]" />
                         <span>ดึงรายชื่อกลุ่มที่เคยส่งในอดีต (ดึงมาส่งครั้งต่อไป)</span>
                       </label>
-                      <span className="text-[9px] font-extrabold text-orange-700 bg-orange-100/90 px-1.5 py-0.5 rounded">
+                      <span className="text-[9px] font-extrabold text-[#EA580C] bg-white border border-orange-200 px-2 py-0.5 rounded-full tabular-nums">
                         มี {campaignLogs.length} บันทึก
                       </span>
                     </div>
@@ -7330,7 +8121,7 @@ export default function AdminPortal({
                         e.target.value = '';
                       }}
                       defaultValue=""
-                      className="w-full bg-white border border-orange-250 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 font-semibold focus:ring-2 focus:ring-orange-500 focus:outline-none cursor-pointer"
+                      className="w-full bg-white border border-[#E2E8F0] text-[#071A4B] text-xs rounded-xl px-2.5 py-2 font-semibold focus:border-[#EA580C] focus:outline-none cursor-pointer"
                     >
                       <option value="" disabled>-- คลิกเลือกกลุ่มจากประวัติที่ผ่านมาเพื่อดึงรายชื่อผู้รับทั้งหมด --</option>
                       {campaignLogs.map(l => {
@@ -7466,7 +8257,7 @@ export default function AdminPortal({
                           placeholder="ค้นหาชื่อ, รหัส, สังกัด หรือตำแหน่ง..."
                           value={personnelSearchQuery}
                           onChange={(e) => setPersonnelSearchQuery(e.target.value)}
-                          className="w-full bg-white border border-slate-250 pl-8 pr-3 py-1.5 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                          className="w-full bg-white border border-[#E2E8F0] pl-8 pr-3 py-1.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                         />
                       </div>
 
@@ -7477,7 +8268,7 @@ export default function AdminPortal({
                           <select
                             value={campaignSpecificDeptFilter}
                             onChange={(e) => setCampaignSpecificDeptFilter(e.target.value)}
-                            className="w-full bg-white border border-slate-200 px-2 py-1 rounded-md text-[10px] font-semibold text-slate-700 focus:outline-none focus:border-orange-500"
+                            className="w-full bg-white border border-[#E2E8F0] px-2 py-1 rounded-lg text-[10px] font-semibold text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                           >
                             <option value="">ทั้งหมด</option>
                             {Array.from(new Set(personnel.map(p => p.department).filter(Boolean))).sort().map(dept => (
@@ -7490,7 +8281,7 @@ export default function AdminPortal({
                           <select
                             value={campaignSpecificPosFilter}
                             onChange={(e) => setCampaignSpecificPosFilter(e.target.value)}
-                            className="w-full bg-white border border-slate-200 px-2 py-1 rounded-md text-[10px] font-semibold text-slate-700 focus:outline-none focus:border-orange-500"
+                            className="w-full bg-white border border-[#E2E8F0] px-2 py-1 rounded-lg text-[10px] font-semibold text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                           >
                             <option value="">ทั้งหมด</option>
                             <option value="คณบดี">คณบดี</option>
@@ -7544,9 +8335,9 @@ export default function AdminPortal({
 
                       return (
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold bg-white/70 p-1.5 rounded-lg border border-slate-150">
-                            <span>กรองเจอ: <strong className="text-orange-600">{filteredForSelection.length}</strong> คน</span>
-                            <span>เลือกอยู่: <strong className="text-green-600">{selectedInFilter.length}</strong> คน</span>
+                          <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold bg-white p-1.5 rounded-lg border border-[#E2E8F0] tabular-nums">
+                            <span>กรองเจอ: <strong className="text-[#EA580C]">{filteredForSelection.length}</strong> คน</span>
+                            <span>เลือกอยู่: <strong className="text-emerald-600">{selectedInFilter.length}</strong> คน</span>
                           </div>
 
                           <div className="flex flex-wrap gap-1">
@@ -7554,7 +8345,7 @@ export default function AdminPortal({
                               type="button"
                               onClick={handleSelectFilteredAll}
                               disabled={filteredForSelection.length === 0}
-                              className="flex-1 min-w-[70px] bg-orange-600 hover:bg-orange-700 disabled:bg-slate-300 text-white font-extrabold py-1 px-1.5 rounded text-[9px] transition-all text-center flex items-center justify-center gap-0.5 cursor-pointer"
+                              className="flex-1 min-w-[70px] bg-[#F97316] hover:bg-[#EA580C] disabled:bg-slate-300 text-white font-bold py-1.5 px-2 rounded-full text-[9px] transition-all text-center flex items-center justify-center gap-0.5 cursor-pointer tabular-nums"
                             >
                               <span>เลือกทั้งหมด {filteredForSelection.length} คน</span>
                             </button>
@@ -7562,7 +8353,7 @@ export default function AdminPortal({
                               type="button"
                               onClick={handleDeselectFilteredAll}
                               disabled={selectedInFilter.length === 0}
-                              className="flex-1 min-w-[70px] bg-rose-50 hover:bg-rose-100 disabled:bg-slate-50 disabled:text-slate-400 text-rose-600 border border-rose-200 disabled:border-slate-150 font-extrabold py-1 px-1.5 rounded text-[9px] transition-all text-center flex items-center justify-center gap-0.5 cursor-pointer"
+                              className="flex-1 min-w-[70px] bg-rose-50 hover:bg-rose-100 disabled:bg-slate-50 disabled:text-slate-400 text-rose-600 border border-rose-200 disabled:border-[#E2E8F0] font-bold py-1.5 px-2 rounded-full text-[9px] transition-all text-center flex items-center justify-center gap-0.5 cursor-pointer"
                             >
                               <span>ยกเลิกกลุ่มนี้</span>
                             </button>
@@ -7570,7 +8361,7 @@ export default function AdminPortal({
                               type="button"
                               onClick={() => setCampaignCustomRecipients([])}
                               disabled={campaignCustomRecipients.length === 0}
-                              className="bg-slate-250 hover:bg-slate-300 disabled:bg-slate-100 text-slate-600 disabled:text-slate-400 font-extrabold py-1 px-2 rounded text-[9px] transition-all text-center flex items-center justify-center cursor-pointer"
+                              className="bg-white border border-[#E2E8F0] hover:border-[#071A4B] disabled:bg-slate-100 text-[#071A4B] disabled:text-slate-400 font-bold py-1.5 px-2.5 rounded-full text-[9px] transition-all text-center flex items-center justify-center cursor-pointer"
                             >
                               <span>ล้างทั้งหมด</span>
                             </button>
@@ -7658,8 +8449,8 @@ export default function AdminPortal({
                           return (
                             <div 
                               key={cr.id} 
-                              className={`flex items-center gap-1 border pl-2.5 pr-1.5 py-1 rounded-full text-[10px] font-semibold shadow-3xs ${
-                                hasEmail ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-rose-50 border-rose-200 text-rose-800'
+                              className={`flex items-center gap-1 border pl-2.5 pr-1.5 py-1 rounded-full text-[10px] font-semibold ${
+                                hasEmail ? 'bg-[#F5F7FA] border-[#E2E8F0] text-[#071A4B]' : 'bg-rose-50 border-rose-200 text-rose-800'
                               }`}
                             >
                               <span>{cr.name} ({cr.position || 'ทั่วไป'})</span>
@@ -7667,7 +8458,7 @@ export default function AdminPortal({
                                 <button
                                   type="button"
                                   onClick={() => setEditingQuickEmailPersonnel({ id: cr.id, name: cr.name, email: '' })}
-                                  className="bg-rose-100 hover:bg-rose-200 text-rose-800 px-1.5 py-0.2 rounded text-[9px] font-bold cursor-pointer transition"
+                                  className="bg-rose-100 hover:bg-rose-200 text-rose-800 px-1.5 py-0.2 rounded-full text-[9px] font-bold cursor-pointer transition"
                                   title="คลิกเพื่อกรอกอีเมลให้ท่านนี้"
                                 >
                                   ⚠️ ไม่มีเมล (คลิกกรอก)
@@ -7692,18 +8483,18 @@ export default function AdminPortal({
                 {/* Campaign Send Type Toggle */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-500 block">รูปแบบการจัดส่ง (Email Dispatch Method) *</label>
-                  <div className="grid grid-cols-2 gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                  <div className="grid grid-cols-2 gap-1.5 bg-[#F5F7FA] p-1 rounded-full border border-[#E2E8F0]">
                     <button
                       type="button"
                       onClick={() => setCampaignSendType('individual')}
-                      className={`py-1.5 px-2 rounded-md text-center text-xs font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
+                      className={`py-1.5 px-2.5 rounded-full text-center text-xs font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                         campaignSendType === 'individual'
-                          ? 'bg-white text-orange-600 shadow-2xs border border-slate-200/50'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                          ? 'bg-[#071A4B] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-[#071A4B]'
                       }`}
                     >
                       <span className="truncate">✉️ ส่งแยกรายบุคคล</span>
-                      <span className="text-[8px] opacity-75 font-normal">ระบุชื่อรายคน (เรียน อาจารย์ [ชื่อ])</span>
+                      <span className="text-[8px] opacity-80 font-normal">ระบุชื่อรายคน (เรียน อาจารย์ [ชื่อ])</span>
                     </button>
                     <button
                       type="button"
@@ -7715,23 +8506,23 @@ export default function AdminPortal({
                               .replace(/เรียน\s*อาจารย์\s*\/\s*บุคลากรทุกท่าน/g, 'เรียน อาจารย์ทุกท่าน')
                         );
                       }}
-                      className={`py-1.5 px-2 rounded-md text-center text-xs font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
+                      className={`py-1.5 px-2.5 rounded-full text-center text-xs font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                         campaignSendType === 'group_to'
-                          ? 'bg-white text-orange-600 shadow-2xs border border-slate-200/50'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                          ? 'bg-[#071A4B] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-[#071A4B]'
                       }`}
                     >
                       <span className="truncate">📬 ส่งกลุ่ม To ทุกคน</span>
-                      <span className="text-[8px] opacity-75 font-normal">To ทุกคน (เรียน อาจารย์ทุกท่าน)</span>
+                      <span className="text-[8px] opacity-80 font-normal">To ทุกคน (เรียน อาจารย์ทุกท่าน)</span>
                     </button>
                   </div>
                 </div>
 
                 {/* CC Admin Toggle */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between p-2.5 bg-slate-50/50 rounded-lg border border-slate-150/50">
+                  <div className="flex items-center justify-between p-3 bg-[#F5F7FA] rounded-xl border border-[#E2E8F0]">
                     <div className="space-y-0.5">
-                      <span className="text-xs font-semibold text-slate-700 block">สำเนาถึงผู้ดูแลระบบ (CC to Admin)</span>
+                      <span className="text-xs font-semibold text-[#071A4B] block">สำเนาถึงผู้ดูแลระบบ (CC to Admin)</span>
                       <span className="text-[10px] text-slate-500 block">ส่งสำเนาอีเมลแคมเปญนี้เพื่อใช้เก็บหลักฐาน</span>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer select-none">
@@ -7747,12 +8538,12 @@ export default function AdminPortal({
                         }}
                         className="sr-only peer"
                       />
-                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#F97316]"></div>
                     </label>
                   </div>
 
                   {campaignCcAdmin && (
-                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2 max-h-48 overflow-y-auto animate-fadeIn">
+                    <div className="p-3 bg-[#F5F7FA] border border-[#E2E8F0] rounded-xl space-y-2 max-h-48 overflow-y-auto animate-fadeIn">
                       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">เลือกรายชื่อผู้รับ CC (Admins to CC):</p>
                       {adminsList.length === 0 ? (
                         <p className="text-[11px] text-slate-400 italic">ไม่พบรายชื่อแอดมินในระบบ</p>
@@ -7761,7 +8552,7 @@ export default function AdminPortal({
                           {adminsList.map(adm => {
                             const isCurrentUser = adm.email.toLowerCase() === (userEmail || '').toLowerCase();
                             return (
-                              <label key={adm.email} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-slate-100 p-1 rounded transition-colors">
+                              <label key={adm.email} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white p-1.5 rounded-lg transition-colors">
                                 <input
                                   type="checkbox"
                                   checked={campaignCcEmails.includes(adm.email.toLowerCase())}
@@ -7773,10 +8564,10 @@ export default function AdminPortal({
                                       setCampaignCcEmails(prev => prev.filter(em => em !== email));
                                     }
                                   }}
-                                  className="rounded text-orange-500 focus:ring-orange-500 h-3.5 w-3.5 border-slate-300"
+                                  className="rounded text-[#EA580C] focus:ring-[#EA580C] h-3.5 w-3.5 border-slate-300"
                                 />
                                 <span className="truncate">
-                                  <strong>{adm.name}</strong> <span className="text-slate-400 font-mono text-[10px]">({adm.email})</span> {isCurrentUser && <span className="ml-1 text-[10px] px-1 bg-orange-100 text-orange-700 font-bold rounded">คุณ</span>}
+                                  <strong className="text-[#071A4B]">{adm.name}</strong> <span className="text-slate-400 font-mono text-[10px]">({adm.email})</span> {isCurrentUser && <span className="ml-1 text-[10px] px-1.5 bg-orange-50 text-[#EA580C] border border-orange-200 font-bold rounded-full">คุณ</span>}
                                 </span>
                               </label>
                             );
@@ -7795,7 +8586,7 @@ export default function AdminPortal({
                     required
                     value={campaignSubject}
                     onChange={(e) => setCampaignSubject(e.target.value)}
-                    className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-xs text-slate-850"
+                    className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                   />
                 </div>
 
@@ -7803,33 +8594,34 @@ export default function AdminPortal({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-[10px] font-bold text-slate-500 block">เนื้อหาจดหมาย (รองรับ {"{name}"}, {"{course_title}"}, {"{speaker}"}, {"{date_time}"}) *</label>
-                    <span className="text-[9px] text-orange-600 font-semibold bg-orange-50 px-2 py-0.5 rounded border border-orange-100">
-                      {campaignSendType === 'individual' ? '✉️ ส่งรายบุคคล: ระบุชื่อรายคน' : '📬 ส่ง To ทุกคน: ขึ้นต้น "เรียน อาจารย์ทุกท่าน"'}
+                    <span className="text-[9px] text-[#EA580C] font-semibold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
+                      {campaignSendType === 'individual' ? '✉️ ส่งรายบุคคล' : '📬 ส่ง To ทุกคน'}
                     </span>
                   </div>
 
-                  <textarea
-                    rows={6}
-                    required
+                  <VisualHtmlEditor
                     value={campaignMessage}
-                    onChange={(e) => setCampaignMessage(e.target.value)}
-                    className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-xs text-slate-850 leading-relaxed font-mono focus:ring-1 focus:ring-orange-500 focus:outline-none"
-                    placeholder="พิมพ์เนื้อหาที่นี่..."
+                    onChange={setCampaignMessage}
+                    variables={CAMPAIGN_VARIABLES}
+                    defaultValue={DEFAULT_CAMPAIGN_MESSAGE}
+                    minHeightClass="min-h-[210px]"
+                    maxHeightClass="max-h-[360px]"
+                    placeholder="พิมพ์เนื้อหาจดหมายเชิญอบรมที่นี่..."
                   />
                 </div>
 
                 {/* Actions */}
-                <div className="grid grid-cols-3 gap-2 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
                   <button
                     type="button"
                     onClick={() => setShowCampaignRecipientsModal(true)}
-                    className={`font-bold h-10 rounded-lg text-xs transition flex items-center justify-center gap-1 cursor-pointer border ${
+                    className={`font-bold h-10 rounded-full text-xs transition flex items-center justify-center gap-1 cursor-pointer border px-3 tabular-nums ${
                       getCampaignRecipients().some(r => !r.email || !r.email.trim().includes('@'))
                         ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                        : 'bg-white hover:bg-slate-50 text-[#071A4B] border-[#E2E8F0] hover:border-[#071A4B]'
                     }`}
                   >
-                    <Users className="h-3.5 w-3.5 text-orange-600" />
+                    <Users className="h-3.5 w-3.5 text-[#EA580C] shrink-0" />
                     <span className="truncate">รายชื่อ ({getCampaignRecipients().length})</span>
                     {getCampaignRecipients().some(r => !r.email || !r.email.trim().includes('@')) && (
                       <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap">
@@ -7841,18 +8633,18 @@ export default function AdminPortal({
                   <button
                     type="button"
                     onClick={() => setShowPreSendModal(true)}
-                    className="bg-amber-500 hover:bg-amber-600 text-white font-extrabold h-10 rounded-lg text-xs transition flex items-center justify-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                    className="bg-[#071A4B] hover:bg-[#0D2566] text-white font-bold h-10 rounded-full text-xs transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer px-3"
                     title="ดูตัวอย่างการแสดงผลก่อนส่งจริง"
                   >
-                    <Eye className="h-3.5 w-3.5" />
-                    <span className="truncate">👁️ ดูตัวอย่างก่อนส่ง</span>
+                    <Eye className="h-3.5 w-3.5 text-[#EA580C]" />
+                    <span className="truncate">ดูตัวอย่างก่อนส่ง</span>
                   </button>
                   
                   <button
                     type="button"
                     onClick={() => setShowPreSendModal(true)}
                     disabled={sendingCampaignMessage || getCampaignRecipients().length === 0}
-                    className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-bold h-10 rounded-lg text-xs shadow-sm transition flex items-center justify-center gap-1 cursor-pointer"
+                    className="bg-[#F97316] hover:bg-[#EA580C] disabled:opacity-50 text-white font-bold h-10 rounded-full text-xs shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer px-3"
                   >
                     {sendingCampaignMessage ? (
                       <span>กำลังจัดส่ง...</span>
@@ -7868,24 +8660,24 @@ export default function AdminPortal({
             </div>
 
             {/* Right Panel: Live Simulated Email Preview */}
-            <div className="bg-white border border-slate-100 rounded-2xl shadow-sm col-span-2 overflow-hidden flex flex-col justify-between" id="campaign-preview-container">
-              <div className="flex-1 flex flex-col">
-                <div className="flex flex-wrap justify-between items-center gap-2 bg-slate-850 p-3.5 text-white">
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-sm col-span-2 overflow-hidden flex flex-col justify-between" id="campaign-preview-container">
+              <div className="flex-1 min-h-0 flex flex-col">
+                <div className="flex flex-wrap justify-between items-center gap-2 bg-[#071A4B] p-3.5 text-white shrink-0">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="w-2 h-2 rounded-full bg-[#F97316]"></span>
                     <span className="font-extrabold text-xs">ตัวอย่างจดหมายจริง (Live Preview)</span>
                   </div>
 
                   {/* Viewport Width Controls, Height Expansion & Full Preview Modal Trigger */}
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <div className="bg-slate-800 p-0.5 rounded-lg flex items-center gap-1 border border-slate-700 text-[10px]">
+                    <div className="bg-[#0D2566] p-0.5 rounded-full flex items-center gap-1 border border-slate-700 text-[10px]">
                       <button
                         type="button"
                         onClick={() => setPreviewViewport('desktop')}
-                        className={`px-2 py-0.5 rounded font-bold transition cursor-pointer ${
+                        className={`px-2.5 py-0.5 rounded-full font-bold transition cursor-pointer ${
                           previewViewport === 'desktop'
-                            ? 'bg-orange-600 text-white shadow-2xs'
-                            : 'text-slate-400 hover:text-white'
+                            ? 'bg-[#F97316] text-white'
+                            : 'text-slate-300 hover:text-white'
                         }`}
                         title="มุมมองจอคอมพิวเตอร์ (600px)"
                       >
@@ -7894,10 +8686,10 @@ export default function AdminPortal({
                       <button
                         type="button"
                         onClick={() => setPreviewViewport('mobile')}
-                        className={`px-2 py-0.5 rounded font-bold transition cursor-pointer ${
+                        className={`px-2.5 py-0.5 rounded-full font-bold transition cursor-pointer ${
                           previewViewport === 'mobile'
-                            ? 'bg-orange-600 text-white shadow-2xs'
-                            : 'text-slate-400 hover:text-white'
+                            ? 'bg-[#F97316] text-white'
+                            : 'text-slate-300 hover:text-white'
                         }`}
                         title="มุมมองจอมือถือ (375px)"
                       >
@@ -7906,10 +8698,10 @@ export default function AdminPortal({
                       <button
                         type="button"
                         onClick={() => setPreviewViewport('narrow')}
-                        className={`px-2 py-0.5 rounded font-bold transition cursor-pointer ${
+                        className={`px-2.5 py-0.5 rounded-full font-bold transition cursor-pointer ${
                           previewViewport === 'narrow'
-                            ? 'bg-orange-600 text-white shadow-2xs'
-                            : 'text-slate-400 hover:text-white'
+                            ? 'bg-[#F97316] text-white'
+                            : 'text-slate-300 hover:text-white'
                         }`}
                         title="มุมมองจอแคบพิเศษ (320px) สำหรับทดสอบบนจอเล็ก"
                       >
@@ -7918,13 +8710,13 @@ export default function AdminPortal({
                     </div>
 
                     {/* Height & Scroll Action Helpers */}
-                    <div className="bg-slate-800 p-0.5 rounded-lg flex items-center gap-0.5 border border-slate-700 text-[10px]">
+                    <div className="bg-[#0D2566] p-0.5 rounded-full flex items-center gap-0.5 border border-slate-700 text-[10px]">
                       <button
                         type="button"
                         onClick={() => setPreviewExpandedHeight(!previewExpandedHeight)}
-                        className={`px-2 py-0.5 rounded font-bold transition cursor-pointer ${
+                        className={`px-2.5 py-0.5 rounded-full font-bold transition cursor-pointer ${
                           previewExpandedHeight
-                            ? 'bg-amber-500 text-slate-950 font-extrabold shadow-2xs'
+                            ? 'bg-[#F97316] text-white font-extrabold'
                             : 'text-slate-300 hover:text-white'
                         }`}
                         title={previewExpandedHeight ? 'คลิกเพื่อย่อกลับเป็นกล่องเลื่อนปกติ' : 'คลิกเพื่อขยายจดหมายเต็มความยาวโดยไม่จำกัดความสูง'}
@@ -7938,7 +8730,7 @@ export default function AdminPortal({
                             mainPreviewScrollRef.current.scrollTo({ top: mainPreviewScrollRef.current.scrollHeight, behavior: 'smooth' });
                           }
                         }}
-                        className="px-1.5 py-0.5 rounded text-slate-300 hover:text-white transition cursor-pointer font-bold"
+                        className="px-2 py-0.5 rounded-full text-slate-300 hover:text-white transition cursor-pointer font-bold"
                         title="เลื่อนดูเนื้อหาท้ายจดหมาย"
                       >
                         ⬇️ ล่างสุด
@@ -7950,7 +8742,7 @@ export default function AdminPortal({
                             mainPreviewScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
                           }
                         }}
-                        className="px-1.5 py-0.5 rounded text-slate-300 hover:text-white transition cursor-pointer font-bold"
+                        className="px-2 py-0.5 rounded-full text-slate-300 hover:text-white transition cursor-pointer font-bold"
                         title="เลื่อนขึ้นบนสุด"
                       >
                         ⬆️ บนสุด
@@ -7960,17 +8752,17 @@ export default function AdminPortal({
                 </div>
 
                 {/* Email visual envelope & typography quick bar */}
-                <div className="p-3.5 bg-slate-100 border-b border-slate-200 text-xs text-slate-600 space-y-1.5 font-mono">
-                  <div className="flex flex-wrap items-center justify-between gap-1 pb-1.5 border-b border-slate-250/70 text-[10px] font-sans">
-                    <div className="flex items-center gap-1 text-slate-700 font-bold">
+                <div className="p-3.5 bg-[#F5F7FA] border-b border-[#E2E8F0] text-xs text-slate-600 space-y-1.5 font-mono shrink-0">
+                  <div className="flex flex-wrap items-center justify-between gap-1 pb-1.5 border-b border-[#E2E8F0] text-[10px] font-sans">
+                    <div className="flex items-center gap-1 text-[#071A4B] font-bold">
                       <span>🎨 ปรับการแสดงผล:</span>
-                      <div className="inline-flex bg-white rounded border border-slate-250 p-0.5 text-[9px]">
+                      <div className="inline-flex bg-white rounded-full border border-[#E2E8F0] p-0.5 text-[9px]">
                         {(['13px', '14px', '15px'] as const).map(size => (
                           <button
                             key={size}
                             type="button"
                             onClick={() => setEmailTextFontSize(size)}
-                            className={`px-1.5 py-0.5 rounded transition ${emailTextFontSize === size ? 'bg-orange-600 text-white font-bold' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`px-2 py-0.5 rounded-full transition cursor-pointer ${emailTextFontSize === size ? 'bg-[#F97316] text-white font-bold' : 'text-slate-600 hover:text-[#071A4B]'}`}
                             title={`ขนาดตัวอักษร ${size}`}
                           >
                             {size}
@@ -7978,11 +8770,11 @@ export default function AdminPortal({
                         ))}
                       </div>
 
-                      <div className="inline-flex bg-white rounded border border-slate-250 p-0.5 text-[9px]">
+                      <div className="inline-flex bg-white rounded-full border border-[#E2E8F0] p-0.5 text-[9px]">
                         <button
                           type="button"
                           onClick={() => setEmailTextAlign('left')}
-                          className={`px-1.5 py-0.5 rounded transition ${emailTextAlign === 'left' ? 'bg-orange-600 text-white font-bold' : 'text-slate-600 hover:text-slate-900'}`}
+                          className={`px-2 py-0.5 rounded-full transition cursor-pointer ${emailTextAlign === 'left' ? 'bg-[#F97316] text-white font-bold' : 'text-slate-600 hover:text-[#071A4B]'}`}
                           title="จัดชิดซ้าย (ค่าเริ่มต้น)"
                         >
                           ชิดซ้าย
@@ -7990,18 +8782,18 @@ export default function AdminPortal({
                         <button
                           type="button"
                           onClick={() => setEmailTextAlign('justify')}
-                          className={`px-1.5 py-0.5 rounded transition ${emailTextAlign === 'justify' ? 'bg-orange-600 text-white font-bold' : 'text-slate-600 hover:text-slate-900'}`}
+                          className={`px-2 py-0.5 rounded-full transition cursor-pointer ${emailTextAlign === 'justify' ? 'bg-[#F97316] text-white font-bold' : 'text-slate-600 hover:text-[#071A4B]'}`}
                           title="จัดกระจายเต็มบรรทัด (Thai Justified)"
                         >
                           เต็มบรรทัด
                         </button>
                       </div>
 
-                      <div className="inline-flex bg-white rounded border border-slate-250 p-0.5 text-[9px]">
+                      <div className="inline-flex bg-white rounded-full border border-[#E2E8F0] p-0.5 text-[9px]">
                         <button
                           type="button"
                           onClick={() => setEmailWrapMode('natural')}
-                          className={`px-1.5 py-0.5 rounded transition ${emailWrapMode === 'natural' ? 'bg-orange-600 text-white font-bold' : 'text-slate-600 hover:text-slate-900'}`}
+                          className={`px-2 py-0.5 rounded-full transition cursor-pointer ${emailWrapMode === 'natural' ? 'bg-[#F97316] text-white font-bold' : 'text-slate-600 hover:text-[#071A4B]'}`}
                           title="ตัดคำตามพจนานุกรมไทยอัตโนมัติ"
                         >
                           คำไทยธรรมชาติ
@@ -8009,7 +8801,7 @@ export default function AdminPortal({
                         <button
                           type="button"
                           onClick={() => setEmailWrapMode('keep_all')}
-                          className={`px-1.5 py-0.5 rounded transition ${emailWrapMode === 'keep_all' ? 'bg-orange-600 text-white font-bold' : 'text-slate-600 hover:text-slate-900'}`}
+                          className={`px-2 py-0.5 rounded-full transition cursor-pointer ${emailWrapMode === 'keep_all' ? 'bg-[#F97316] text-white font-bold' : 'text-slate-600 hover:text-[#071A4B]'}`}
                           title="ไม่แยกคำย่อย (Keep All)"
                         >
                           ไม่แยกคำ
@@ -8017,14 +8809,14 @@ export default function AdminPortal({
                       </div>
                     </div>
 
-                    <span className="text-[9px] text-slate-400">
+                    <span className="text-[9px] text-slate-500 tabular-nums">
                       กว้าง: {previewViewport === 'narrow' ? '320px' : previewViewport === 'mobile' ? '375px' : '600px'}
                     </span>
                   </div>
 
                   <p className="flex shrink-0">
                     <span className="text-slate-400 w-16">จาก:</span>
-                    <strong className="text-slate-850">สำนักมาตรฐานคุณภาพการศึกษา ม.กรุงเทพ &lt;buqa@bu.ac.th&gt;</strong>
+                    <strong className="text-[#071A4B]">สำนักมาตรฐานคุณภาพการศึกษา ม.กรุงเทพ &lt;buqa@bu.ac.th&gt;</strong>
                   </p>
                   {(() => {
                     const previewList = getCampaignRecipients();
@@ -8046,7 +8838,7 @@ export default function AdminPortal({
                                 : '[ส่งกลุ่ม To ทุกคน - เรียน อาจารย์ทุกท่าน]'}
                             </span>
                             {campaignSendType === 'individual' && hasRecipients && (
-                              <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-0.5 text-xs shadow-2xs">
+                              <div className="flex items-center gap-1 bg-white border border-[#E2E8F0] rounded-lg px-2 py-0.5 text-xs shadow-xs">
                                 <span className="text-slate-500 text-[10px] font-bold">เลื่อนดูตัวอย่าง:</span>
                                 <button
                                   type="button"
@@ -8114,8 +8906,8 @@ export default function AdminPortal({
                   return (
                     <div 
                       ref={mainPreviewScrollRef} 
-                      className={`p-4 sm:p-6 bg-slate-50/60 overflow-y-auto overscroll-contain transition-all duration-300 flex justify-center pb-20 ${
-                        previewExpandedHeight ? 'max-h-none min-h-[500px]' : 'max-h-[720px] min-h-[460px]'
+                      className={`p-4 sm:p-6 bg-slate-50/60 overflow-y-auto overflow-x-hidden overscroll-contain transition-all duration-300 flex justify-center items-start pb-12 ${
+                        previewExpandedHeight ? 'max-h-none min-h-[500px]' : 'max-h-[75vh] min-h-[460px]'
                       }`}
                     >
                       <div 
@@ -8123,21 +8915,22 @@ export default function AdminPortal({
                           width: previewViewport === 'narrow' ? '320px' : previewViewport === 'mobile' ? '375px' : '100%',
                           maxWidth: previewViewport === 'narrow' ? '320px' : previewViewport === 'mobile' ? '375px' : '600px'
                         }}
-                        className="transition-all duration-200 border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white"
+                        className="transition-all duration-200 border border-slate-200 rounded-2xl overflow-x-hidden shadow-sm bg-white shrink-0 h-fit"
                       >
                         {/* Brand Banner */}
-                        <div className="bg-gradient-to-r from-orange-600 to-amber-500 text-white p-5 text-center relative">
-                          <Landmark className="h-8 w-8 text-white/90 mx-auto" />
-                          <h4 className="text-xs font-mono tracking-widest text-orange-100 font-bold uppercase mt-1">Bangkok University</h4>
-                          <h3 className="text-sm font-extrabold mt-1 tracking-tight">สำนักมาตรฐานคุณภาพการศึกษา</h3>
-                          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-white/40 animate-pulse"></div>
+                        <div className="bg-[#071A4B] text-white p-5 text-center relative border-b-2 border-b-[#F97316] rounded-t-2xl">
+                          <div className="w-11 h-11 rounded-full bg-[#F97316] text-white flex items-center justify-center mx-auto">
+                            <Landmark className="h-5 w-5" />
+                          </div>
+                          <h4 className="text-[10px] font-mono tracking-[0.2em] text-orange-300 font-bold uppercase mt-2">Bangkok University</h4>
+                          <h3 className="text-sm font-extrabold mt-0.5 tracking-tight">สำนักมาตรฐานคุณภาพการศึกษา</h3>
                         </div>
 
                         {/* Letter Body */}
                         <div className="p-5 space-y-4">
                           {/* Interactive personalized text rendering with proper Thai wrapping */}
                           <div 
-                            className="text-slate-800 font-medium"
+                            className="text-slate-800 font-medium [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_table]:max-w-full"
                             style={{
                               fontSize: emailTextFontSize,
                               textAlign: emailTextAlign,
@@ -8163,23 +8956,23 @@ export default function AdminPortal({
                           <img 
                             src={courses.find(c => c.id === campaignCourseId)?.posterUrl} 
                             alt="โปสเตอร์ประชาสัมพันธ์" 
-                            className="max-h-72 max-w-full rounded-lg mx-auto shadow-sm border border-slate-200"
+                            className="max-w-full h-auto rounded-xl mx-auto shadow-sm border border-[#E2E8F0]"
                           />
                         </div>
                       )}
 
-                      <hr className="border-slate-100" />
+                      <hr className="border-[#E2E8F0]" />
                       
                       {/* Target Course Info Card Inside Mail */}
-                      <div className="bg-slate-50 border border-slate-150 p-4 rounded-xl space-y-2.5 text-xs text-slate-700">
-                        <p className="font-extrabold text-slate-900 border-b border-slate-100 pb-1.5 flex items-center justify-between">
+                      <div className="bg-[#F5F7FA] border border-[#E2E8F0] p-4 rounded-xl space-y-2.5 text-xs text-slate-700">
+                        <p className="font-extrabold text-[#071A4B] border-b border-[#E2E8F0] pb-1.5 flex items-center justify-between">
                           <span>📋 สรุปรายละเอียดกำหนดการสัมมนา:</span>
-                          <span className="text-[9px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded font-extrabold">รอบจองสิทธิ์ด่วน</span>
+                          <span className="text-[9px] bg-orange-50 border border-orange-200 text-[#EA580C] px-2 py-0.5 rounded-full font-extrabold">รอบจองสิทธิ์ด่วน</span>
                         </p>
                         
                         {courses.find(c => c.id === campaignCourseId) ? (
                           <>
-                            <p className="font-bold text-slate-850">
+                            <p className="font-bold text-[#071A4B]">
                               หัวข้อ: {courses.find(c => c.id === campaignCourseId)?.title}
                             </p>
                             <p>วิทยากรบรรยาย: 👨‍🏫 <strong>{courses.find(c => c.id === campaignCourseId)?.speaker}</strong></p>
@@ -8195,14 +8988,16 @@ export default function AdminPortal({
                       <div className="text-center pt-2">
                         <button
                           type="button"
-                          className="w-full bg-orange-600 hover:bg-orange-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition shadow-md flex items-center justify-center gap-1 min-h-[44px] cursor-default"
+                          className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold py-2.5 pl-5 pr-3 rounded-full text-xs transition shadow-sm flex items-center justify-center gap-2.5 min-h-[44px] cursor-default"
                         >
-                          <span>👉 คลิกที่นี่เพื่อลงทะเบียนจองสิทธิ์เข้าร่วมอบรม</span>
-                          <ArrowRight className="h-4 w-4" />
+                          <span>คลิกที่นี่เพื่อลงทะเบียนจองสิทธิ์เข้าร่วมอบรม</span>
+                          <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </span>
                         </button>
                       </div>
 
-                      <div className="text-[10px] text-slate-400 text-center leading-normal pt-2 border-t border-slate-100">
+                      <div className="text-[10px] text-slate-400 text-center leading-normal pt-2 border-t border-[#E2E8F0]">
                         จดหมายฉบับนี้ส่งถึงคุณโดยระบบอัตโนมัติภายใต้โครงข่ายความรู้ส่วนกลาง มหาวิทยาลัยกรุงเทพ<br />
                         สำนักมาตรฐานคุณภาพการศึกษา
                       </div>
@@ -8215,13 +9010,13 @@ export default function AdminPortal({
 
               {/* Real-time Dispatch Progress & System Logs */}
               {campaignProgress && (
-                <div className="bg-slate-900 text-slate-200 border border-slate-850 p-5 rounded-2xl shadow-lg space-y-4 font-mono">
-                  <div className="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                <div className="bg-[#071A4B] text-slate-200 border border-[#0D2566] p-5 rounded-2xl shadow-lg space-y-4 font-mono m-4">
+                  <div className="flex justify-between items-center border-b border-slate-700 pb-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="inline-block w-2.5 h-2.5 bg-yellow-500 rounded-full animate-pulse"></span>
-                      <h4 className="text-xs font-bold text-slate-100">ความคืบหน้าการกระจายสิทธิ์ (Invites Transmission)</h4>
+                      <span className="inline-block w-2.5 h-2.5 bg-[#F97316] rounded-full"></span>
+                      <h4 className="text-xs font-bold text-white">ความคืบหน้าการกระจายสิทธิ์ (Invites Transmission)</h4>
                     </div>
-                    <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">
+                    <span className="text-[10px] bg-[#0D2566] text-slate-300 px-2.5 py-0.5 rounded-full tabular-nums">
                       {campaignProgress.sent} / {campaignProgress.total} คน
                     </span>
                   </div>
@@ -8271,15 +9066,16 @@ export default function AdminPortal({
           </div>
 
           {/* Campaign Dispatch History Logs */}
-          <div className="bg-white border border-slate-200/85 rounded-2xl p-6 shadow-xs mt-6 space-y-4" id="email-history-management-section">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between border-b border-slate-100 pb-4 gap-4">
-              <div className="flex items-center gap-2">
-                <div className="bg-orange-50 p-2 rounded-xl text-orange-600">
-                  <Clock className="h-5 w-5" />
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm mt-6 space-y-4" id="email-history-management-section">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between border-b border-[#E2E8F0] pb-4 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <Clock className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-800">ประวัติการจัดส่งจดหมายเชิญและบันทึกผู้รับ ({filteredCampaignLogs.length} รายการ)</h3>
-                  <p className="text-[10px] text-slate-400">แก้ไข ลบ จัดเก็บ และจัดการข้อมูลประวัติจดหมายเชิญเข้าอบรมทางอิเล็กทรอนิกส์</p>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">Dispatch Archive</span>
+                  <h3 className="text-sm font-extrabold text-[#071A4B] tabular-nums">ประวัติการจัดส่งจดหมายเชิญและบันทึกผู้รับ ({filteredCampaignLogs.length} รายการ)</h3>
+                  <p className="text-[11px] text-slate-500">แก้ไข ลบ จัดเก็บ และจัดการข้อมูลประวัติจดหมายเชิญเข้าอบรมทางอิเล็กทรอนิกส์</p>
                 </div>
               </div>
               
@@ -8292,38 +9088,38 @@ export default function AdminPortal({
                     value={campaignSearchQuery || ''}
                     onChange={(e) => setCampaignSearchQuery(e.target.value)}
                     placeholder="ค้นหาตามชื่อหลักสูตร, หัวข้อ..."
-                    className="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:border-orange-500 w-44 min-h-[32px]"
+                    className="pl-8 pr-3 py-1.5 bg-[#F5F7FA] border border-[#E2E8F0] rounded-full text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C] w-48 min-h-[34px]"
                   />
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="bg-slate-100 p-1 rounded-lg flex gap-1">
+                <div className="bg-[#F5F7FA] border border-[#E2E8F0] p-1 rounded-full flex gap-1">
                   <button
                     onClick={() => setCampaignLogFilter('active')}
-                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${
+                    className={`px-3 py-1 text-[10px] font-bold rounded-full transition cursor-pointer tabular-nums ${
                       campaignLogFilter === 'active'
-                        ? 'bg-white text-slate-800 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800'
+                        ? 'bg-[#071A4B] text-white'
+                        : 'text-slate-600 hover:text-[#071A4B]'
                     }`}
                   >
                     ใช้งานอยู่ ({campaignLogs.filter(l => !l.archived).length})
                   </button>
                   <button
                     onClick={() => setCampaignLogFilter('archived')}
-                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${
+                    className={`px-3 py-1 text-[10px] font-bold rounded-full transition cursor-pointer tabular-nums ${
                       campaignLogFilter === 'archived'
-                        ? 'bg-white text-slate-800 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800'
+                        ? 'bg-[#071A4B] text-white'
+                        : 'text-slate-600 hover:text-[#071A4B]'
                     }`}
                   >
                     จัดเก็บแล้ว ({campaignLogs.filter(l => l.archived).length})
                   </button>
                   <button
                     onClick={() => setCampaignLogFilter('all')}
-                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${
+                    className={`px-3 py-1 text-[10px] font-bold rounded-full transition cursor-pointer tabular-nums ${
                       campaignLogFilter === 'all'
-                        ? 'bg-white text-slate-800 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800'
+                        ? 'bg-[#071A4B] text-white'
+                        : 'text-slate-600 hover:text-[#071A4B]'
                     }`}
                   >
                     ทั้งหมด ({campaignLogs.length})
@@ -8351,7 +9147,7 @@ export default function AdminPortal({
                     });
                     setShowAddCampaignModal(true);
                   }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition shadow-xs flex items-center gap-1 min-h-[32px] cursor-pointer"
+                  className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-3.5 py-1.5 rounded-full text-[11px] transition shadow-xs flex items-center gap-1 min-h-[34px] cursor-pointer"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>บันทึกส่งแมนนวล</span>
@@ -8360,26 +9156,26 @@ export default function AdminPortal({
             </div>
 
             {filteredCampaignLogs.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 text-xs italic border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+              <div className="text-center py-10 text-slate-400 text-xs italic border border-dashed border-[#E2E8F0] rounded-2xl bg-[#F5F7FA]">
                 {campaignLogs.length === 0 
                   ? 'ยังไม่มีการบันทึกประวัติการส่งจดหมายอบรมในระบบเลยค่ะ' 
                   : 'ไม่พบประวัติการจัดส่งตามตัวกรองหรือคำค้นหานี้ค่ะ'}
               </div>
             ) : (
-              <div className="overflow-x-auto border border-slate-150 rounded-xl bg-white">
+              <div className="overflow-x-auto border border-[#E2E8F0] rounded-2xl bg-white">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-150">
-                      <th className="p-3 font-semibold text-[11px]">วันเวลาที่จัดส่ง (Sent At)</th>
-                      <th className="p-3 font-semibold text-[11px]">หลักสูตรอบรม (Course Activity)</th>
-                      <th className="p-3 font-semibold text-[11px]">หัวข้ออีเมล (Subject Line)</th>
-                      <th className="p-3 font-semibold text-[11px]">กลุ่มเป้าหมาย (Target Group)</th>
-                      <th className="p-3 font-semibold text-[11px] text-center">สถิติการจัดส่ง (Success Rate)</th>
-                      <th className="p-3 font-semibold text-[11px] text-center">สถานะ</th>
-                      <th className="p-3 font-semibold text-[11px] text-center">การจัดการ</th>
+                    <tr className="bg-[#F5F7FA] text-[#071A4B] font-bold border-b border-[#E2E8F0]">
+                      <th className="p-3 font-bold text-[11px]">วันเวลาที่จัดส่ง (Sent At)</th>
+                      <th className="p-3 font-bold text-[11px]">หลักสูตรอบรม (Course Activity)</th>
+                      <th className="p-3 font-bold text-[11px]">หัวข้ออีเมล (Subject Line)</th>
+                      <th className="p-3 font-bold text-[11px]">กลุ่มเป้าหมาย (Target Group)</th>
+                      <th className="p-3 font-bold text-[11px] text-center">สถิติการจัดส่ง (Success Rate)</th>
+                      <th className="p-3 font-bold text-[11px] text-center">สถานะ</th>
+                      <th className="p-3 font-bold text-[11px] text-center">การจัดการ</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-750">
+                  <tbody className="divide-y divide-[#E2E8F0]/60 text-slate-700">
                     {filteredCampaignLogs.map((log) => {
                       const successPercent = log.recipientsCount > 0 ? Math.round((log.successCount / log.recipientsCount) * 100) : 0;
                       const formattedDate = new Date(log.sentAt).toLocaleString('th-TH', {
@@ -8397,33 +9193,33 @@ export default function AdminPortal({
 
                       return (
                         <React.Fragment key={log.id}>
-                          <tr className={`hover:bg-slate-50/50 transition ${log.archived ? 'opacity-60 bg-slate-50/20' : ''}`}>
-                            <td className="p-3 font-semibold text-slate-655 font-mono whitespace-nowrap">{formattedDate} น.</td>
-                            <td className="p-3 font-bold text-slate-800 max-w-xs truncate" title={log.courseTitle}>
+                          <tr className={`hover:bg-[#F5F7FA] transition ${log.archived ? 'opacity-60 bg-slate-50/30' : ''}`}>
+                            <td className="p-3 font-semibold text-slate-600 font-mono whitespace-nowrap tabular-nums">{formattedDate} น.</td>
+                            <td className="p-3 font-bold text-[#071A4B] max-w-xs truncate" title={log.courseTitle}>
                               {log.courseTitle}
                             </td>
                             <td className="p-3 text-slate-600 max-w-xs truncate" title={displaySubject}>
                               {displaySubject}
                             </td>
                             <td className="p-3 whitespace-nowrap">
-                              <span className="inline-block bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">
+                              <span className="inline-block bg-[#F5F7FA] border border-[#E2E8F0] text-[#071A4B] px-2.5 py-0.5 rounded-full text-[10px] font-bold">
                                 {log.targetDetails}
                               </span>
                             </td>
                             <td className="p-3">
-                              <div className="flex flex-col items-center gap-1">
-                                <span className="font-extrabold text-slate-800 text-[11px]">
+                              <div className="flex flex-col items-center gap-1 tabular-nums">
+                                <span className="font-extrabold text-[#071A4B] text-[11px]">
                                   {log.successCount} / {log.recipientsCount} สำเร็จ
                                 </span>
                                 <div className="w-20 bg-slate-100 h-1.5 rounded-full overflow-hidden">
                                   <div
-                                    className={`h-full ${successPercent === 100 ? 'bg-green-500' : 'bg-orange-500'}`}
+                                    className={`h-full ${successPercent === 100 ? 'bg-emerald-500' : 'bg-[#F97316]'}`}
                                     style={{ width: `${successPercent}%` }}
                                   ></div>
                                 </div>
                                 <span className="text-[9px] text-slate-400">({successPercent}%)</span>
                                 {log.successCount < log.recipientsCount && (
-                                  <span className="text-[9px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded whitespace-nowrap">
+                                  <span className="text-[9px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full whitespace-nowrap">
                                     ⚠️ ไม่สำเร็จ {log.recipientsCount - log.successCount} คน
                                   </span>
                                 )}
@@ -8431,11 +9227,11 @@ export default function AdminPortal({
                             </td>
                             <td className="p-3 text-center whitespace-nowrap">
                               {log.archived ? (
-                                <span className="px-2 py-0.5 text-[9px] font-bold bg-slate-100 text-slate-500 border border-slate-200 rounded-md">
+                                <span className="px-2.5 py-0.5 text-[9px] font-bold bg-slate-100 text-slate-600 border border-[#E2E8F0] rounded-full">
                                   📁 จัดเก็บแล้ว
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 text-[9px] font-bold bg-green-50 text-green-700 border border-green-100 rounded-md">
+                                <span className="px-2.5 py-0.5 text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
                                   🟢 ใช้งานอยู่
                                 </span>
                               )}
@@ -8447,7 +9243,7 @@ export default function AdminPortal({
                                     type="button"
                                     title="ส่งซ้ำเฉพาะผู้ที่จัดส่งไม่สำเร็จหรือไม่มีอีเมล"
                                     onClick={() => handleRetryFailedRecipients(log)}
-                                    className="px-2 py-1 text-[10px] font-extrabold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 hover:border-rose-300 rounded-md transition duration-150 flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95"
+                                    className="px-2.5 py-1 text-[10px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-full transition duration-150 flex items-center gap-1 cursor-pointer tabular-nums"
                                   >
                                     <RotateCw className="h-3 w-3 text-rose-600" />
                                     <span>ส่งซ้ำ ({log.recipientsCount - log.successCount})</span>
@@ -8458,9 +9254,9 @@ export default function AdminPortal({
                                   type="button"
                                   title="ดึงรายชื่อกลุ่มนี้สำหรับการส่งครั้งต่อไป"
                                   onClick={() => handleReuseCampaignTargetGroup(log)}
-                                  className="px-2 py-1 text-[10px] font-extrabold text-orange-700 bg-orange-100 hover:bg-orange-200 border border-orange-250 hover:border-orange-300 rounded-md transition duration-150 flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95"
+                                  className="px-2.5 py-1 text-[10px] font-bold text-[#EA580C] bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-full transition duration-150 flex items-center gap-1 cursor-pointer"
                                 >
-                                  <Users className="h-3 w-3 text-orange-600" />
+                                  <Users className="h-3 w-3 text-[#EA580C]" />
                                   <span>ดึงกลุ่มนี้</span>
                                 </button>
 
@@ -8468,10 +9264,10 @@ export default function AdminPortal({
                                   type="button"
                                   title="ดูบันทึกส่ง"
                                   onClick={() => setSelectedCampaignLogIdForDetails(isExpanded ? null : log.id)}
-                                  className={`px-2 py-1 text-[10px] font-bold rounded-md border transition cursor-pointer ${
+                                  className={`px-2.5 py-1 text-[10px] font-bold rounded-full border transition cursor-pointer ${
                                     isExpanded 
-                                      ? 'bg-orange-600 text-white border-orange-600 hover:bg-orange-700' 
-                                      : 'text-orange-600 bg-orange-50 border-orange-100 hover:bg-orange-100'
+                                      ? 'bg-[#071A4B] text-white border-[#071A4B]' 
+                                      : 'text-[#071A4B] bg-white border-[#E2E8F0] hover:border-[#071A4B]'
                                   }`}
                                 >
                                   {isExpanded ? 'ย่อบันทึก' : 'ดูบันทึก'}
@@ -8481,7 +9277,7 @@ export default function AdminPortal({
                                   type="button"
                                   title="แก้ไขประวัติ"
                                   onClick={() => handleStartEditCampaignLog(log)}
-                                  className="p-1.5 text-[10px] text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md border border-blue-100 transition cursor-pointer"
+                                  className="p-1.5 text-[10px] text-[#071A4B] bg-white hover:bg-slate-50 rounded-full border border-[#E2E8F0] transition cursor-pointer"
                                 >
                                   <Edit className="h-3 w-3" />
                                 </button>
@@ -8490,7 +9286,7 @@ export default function AdminPortal({
                                   type="button"
                                   title={log.archived ? 'เลิกจัดเก็บ' : 'จัดเก็บ'}
                                   onClick={() => handleToggleArchiveCampaignLog(log)}
-                                  className="p-1.5 text-[10px] text-slate-600 bg-slate-50 hover:bg-slate-150 rounded-md border border-slate-200 transition cursor-pointer"
+                                  className="p-1.5 text-[10px] text-slate-600 bg-white hover:bg-slate-100 rounded-full border border-[#E2E8F0] transition cursor-pointer"
                                 >
                                   <Archive className="h-3 w-3" />
                                 </button>
@@ -8499,7 +9295,7 @@ export default function AdminPortal({
                                   type="button"
                                   title="ลบออกจากระบบอย่างถาวร"
                                   onClick={() => handleDeleteCampaignLog(log.id)}
-                                  className="p-1.5 text-[10px] text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-md border border-rose-100 transition cursor-pointer"
+                                  className="p-1.5 text-[10px] text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-full border border-rose-200 transition cursor-pointer"
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </button>
@@ -8508,13 +9304,13 @@ export default function AdminPortal({
                           </tr>
                           {isExpanded && (
                             <tr>
-                              <td colSpan={7} className="bg-slate-50/70 p-4 border-t border-b border-slate-150">
+                              <td colSpan={7} className="bg-[#F5F7FA] p-4 border-t border-b border-[#E2E8F0]">
                                 <div className="space-y-3 font-mono text-[10px] text-slate-700">
-                                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-3 rounded-xl border border-slate-200 gap-3">
+                                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-3.5 rounded-2xl border border-[#E2E8F0] gap-3">
                                     <div>
                                       <p>👨‍💻 <strong>ผู้ดำเนินการส่ง:</strong> {log.sentBy}</p>
-                                      <p className="mt-1">
-                                        📦 <strong>ความต้องการสำเร็จ/ล้มเหลว:</strong> สำเร็จ {log.successCount} | ล้มเหลว/ไม่มีอีเมล {log.recipientsCount - log.successCount} (รวม {log.recipientsCount} คน)
+                                      <p className="mt-1 tabular-nums">
+                                        📦 <strong>สรุปผลการส่ง:</strong> สำเร็จ {log.successCount} | ล้มเหลว/ไม่มีอีเมล {log.recipientsCount - log.successCount} (รวม {log.recipientsCount} คน)
                                       </p>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -8522,7 +9318,7 @@ export default function AdminPortal({
                                         <button
                                           type="button"
                                           onClick={() => handleRetryFailedRecipients(log)}
-                                          className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-extrabold text-xs rounded-lg shadow-sm transition duration-150 flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                                          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-full shadow-sm transition duration-150 flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                                         >
                                           <RotateCw className="h-4 w-4" />
                                           <span>ส่งซ้ำเฉพาะผู้ที่ไม่สำเร็จ ({log.recipientsCount - log.successCount} คน)</span>
@@ -8535,7 +9331,7 @@ export default function AdminPortal({
                                           e.stopPropagation();
                                           handleReuseCampaignTargetGroup(log);
                                         }}
-                                        className="w-full md:w-auto px-3.5 py-2 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-extrabold text-xs rounded-lg shadow-sm transition duration-150 flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                                        className="w-full md:w-auto px-4 py-2 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-xs rounded-full shadow-sm transition duration-150 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 tabular-nums"
                                         title="คลิกเพื่อนำกลุ่มเป้าหมายนี้ไปตั้งค่าส่งจดหมายเชิญในฟอร์มด้านบน"
                                       >
                                         <Users className="h-4 w-4" />
@@ -8546,16 +9342,16 @@ export default function AdminPortal({
 
                                   {/* List of failed recipients if any */}
                                   {failedList.length > 0 && (
-                                    <div className="bg-rose-50/80 border border-rose-200 rounded-xl p-3.5 space-y-2.5">
+                                    <div className="bg-rose-50/80 border border-rose-200 rounded-2xl p-3.5 space-y-2.5">
                                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                        <h5 className="text-xs font-bold text-rose-900 flex items-center gap-1.5">
+                                        <h5 className="text-xs font-bold text-rose-900 flex items-center gap-1.5 tabular-nums">
                                           <AlertTriangle className="h-4 w-4 text-rose-600" />
                                           <span>รายชื่อผู้รับที่จัดส่งไม่สำเร็จ / ไม่มีอีเมล ({failedList.length} คน):</span>
                                         </h5>
                                         <button
                                           type="button"
                                           onClick={() => handleRetryFailedRecipients(log)}
-                                          className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-xs flex items-center justify-center gap-1 cursor-pointer transition active:scale-95 self-start sm:self-auto"
+                                          className="px-3.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-full shadow-xs flex items-center justify-center gap-1 cursor-pointer transition self-start sm:self-auto"
                                         >
                                           <RotateCw className="h-3.5 w-3.5" />
                                           <span>โหลดเฉพาะกลุ่มนี้เพื่อส่งซ้ำทันที</span>
@@ -8563,9 +9359,9 @@ export default function AdminPortal({
                                       </div>
                                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                                         {failedList.map((f, fidx) => (
-                                          <div key={f.id || fidx} className="bg-white p-2.5 rounded-lg border border-rose-200/80 shadow-3xs flex flex-col justify-between text-[11px]">
+                                          <div key={f.id || fidx} className="bg-white p-2.5 rounded-xl border border-rose-200 flex flex-col justify-between text-[11px]">
                                             <div>
-                                              <div className="font-bold text-slate-850 flex items-center justify-between">
+                                              <div className="font-bold text-[#071A4B] flex items-center justify-between">
                                                 <span className="truncate pr-1">{f.name}</span>
                                                 <span className="text-[9px] text-rose-600 font-bold shrink-0">{f.reason || 'ส่งไม่สำเร็จ'}</span>
                                               </div>
@@ -8583,7 +9379,7 @@ export default function AdminPortal({
                                               onClick={() => {
                                                 setEditingQuickEmailPersonnel({ id: f.id, name: f.name, email: f.email || '', department: f.department });
                                               }}
-                                              className="mt-2 text-[10px] text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 py-1 px-2 rounded font-semibold text-center border border-blue-200/60 transition cursor-pointer"
+                                              className="mt-2 text-[10px] text-[#071A4B] hover:text-white hover:bg-[#071A4B] bg-[#F5F7FA] py-1 px-2 rounded-full font-semibold text-center border border-[#E2E8F0] transition cursor-pointer"
                                             >
                                               ✏️ {f.email ? 'แก้ไขอีเมล' : 'กรอกอีเมลให้ท่านนี้'}
                                             </button>
@@ -8593,8 +9389,8 @@ export default function AdminPortal({
                                     </div>
                                   )}
 
-                                  <div className="bg-slate-950 p-3 rounded-lg text-slate-300 max-h-48 overflow-y-auto space-y-1 scrollbar-thin">
-                                    <h4 className="text-orange-400 font-bold text-[11px] mb-1.5 pb-1 border-b border-slate-800">รายละเอียดสถานะส่งเมลเชิญรายบุคคล:</h4>
+                                  <div className="bg-[#071A4B] p-3 rounded-xl text-slate-300 max-h-48 overflow-y-auto space-y-1 scrollbar-thin">
+                                    <h4 className="text-orange-400 font-bold text-[11px] mb-1.5 pb-1 border-b border-slate-700">รายละเอียดสถานะส่งเมลเชิญรายบุคคล:</h4>
                                     {log.logs && log.logs.length > 0 ? (
                                       log.logs.map((logLine, lidx) => (
                                         <p key={lidx} className="leading-relaxed whitespace-pre-wrap">{logLine}</p>
@@ -8620,42 +9416,50 @@ export default function AdminPortal({
         /* EVALUATIONS TAB (ผลการประเมินและการจัดการแบบสำรวจ) */
         <div className="space-y-6" id="evaluations-tab-content">
           {/* Inner tab navigation */}
-          <div className="bg-slate-50 border border-slate-200/60 p-1.5 rounded-xl flex gap-1 w-fit">
+          <div className="bg-white border border-[#E2E8F0] p-1.5 rounded-full inline-flex gap-1 shadow-xs">
             <button
               onClick={() => setEvaluationSubTab('report')}
-              className={`px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              className={`px-5 py-2 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 evaluationSubTab === 'report'
-                  ? 'bg-white text-slate-900 shadow-sm font-extrabold'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-[#071A4B] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-[#071A4B]'
               }`}
             >
-              <Award className="h-4 w-4 text-orange-500" />
+              <Award className={`h-4 w-4 ${evaluationSubTab === 'report' ? 'text-[#F97316]' : 'text-slate-400'}`} />
               <span>ผลประเมินและการวิเคราะห์ (Report & Analysis)</span>
             </button>
             <button
               onClick={() => setEvaluationSubTab('manage')}
-              className={`px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              className={`px-5 py-2 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 evaluationSubTab === 'manage'
-                  ? 'bg-white text-slate-900 shadow-sm font-extrabold'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-[#071A4B] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-[#071A4B]'
               }`}
             >
-              <Settings className="h-4 w-4 text-orange-500" />
+              <Settings className={`h-4 w-4 ${evaluationSubTab === 'manage' ? 'text-[#F97316]' : 'text-slate-400'}`} />
               <span>จัดการข้อคำถามแบบประเมิน (Manage Questions)</span>
             </button>
           </div>
 
           {evaluationSubTab === 'manage' ? (
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-8 animate-in fade-in duration-200">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-850 flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-orange-500" />
-                    <span>ตั้งค่าแบบสอบถามความพึงพอใจส่วนบุคคล</span>
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    กำหนดและจัดสรรโครงสร้างแบบประเมินผู้เข้าอบรม สามารถเพิ่ม ลบ และเรียงข้อคำถามได้แบบเรียลไทม์
-                  </p>
+            <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] rounded-2xl p-6 shadow-sm space-y-8 animate-in fade-in duration-200">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E2E8F0] pb-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                    <Sparkles className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-2">
+                      <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                      Survey Architect
+                    </span>
+                    <h3 className="text-base font-extrabold text-[#071A4B] mt-0.5">
+                      ตั้งค่าแบบสอบถามความพึงพอใจ<span className="text-[#F97316]">ส่วนบุคคล</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      กำหนดและจัดสรรโครงสร้างแบบประเมินผู้เข้าอบรม สามารถเพิ่ม ลบ และเรียงข้อคำถามได้แบบเรียลไทม์
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -8669,14 +9473,14 @@ export default function AdminPortal({
                         }
                       );
                     }}
-                    className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold rounded-xl text-xs transition relative min-h-[38px] cursor-pointer"
+                    className="px-4 py-2 border border-[#E2E8F0] bg-white text-[#071A4B] hover:border-[#071A4B] hover:bg-slate-50 font-bold rounded-full text-xs transition relative min-h-[38px] cursor-pointer"
                   >
                     คืนค่าเริ่มต้นดั้งเดิม
                   </button>
                   <button
                     onClick={() => handleSaveEvaluationConfig(evaluationConfig)}
                     disabled={savingEvalConfig}
-                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold rounded-xl text-xs transition shadow-sm flex items-center gap-1.5 min-h-[38px] cursor-pointer"
+                    className="px-5 py-2 bg-[#F97316] hover:bg-[#EA580C] disabled:opacity-50 text-white font-bold rounded-full text-xs transition shadow-sm flex items-center gap-1.5 min-h-[38px] cursor-pointer"
                   >
                     {savingEvalConfig ? (
                       <span>กำลังบันทึกโครงสร้าง...</span>
@@ -8691,19 +9495,19 @@ export default function AdminPortal({
               </div>
 
               {saveEvalConfigSuccess && (
-                <div className="bg-emerald-50 border border-emerald-150 p-3.5 rounded-xl text-xs font-bold text-emerald-850 flex items-center gap-2 animate-pulse">
+                <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-xs font-bold text-emerald-800 flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-emerald-600" />
                   <span>บันทึกหัวข้อข้อประเมินความพึงพอใจขึ้นระบบคลาวด์เรียบร้อยแล้วค่ะ! ผู้เข้าอบรมจะเห็นฟอร์มใหม่นี้ทันที</span>
                 </div>
               )}
 
               {/* Select Target Course to Edit */}
-              <div className="bg-orange-50/40 border border-orange-100 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="bg-orange-50/40 border border-orange-200/80 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-orange-600 block uppercase tracking-wider">
+                  <label className="text-[10px] font-bold text-[#EA580C] block uppercase tracking-wider">
                     เป้าหมายการตั้งค่า (Configuration Target)
                   </label>
-                  <span className="text-xs font-black text-slate-850">
+                  <span className="text-xs font-extrabold text-[#071A4B]">
                     เลือกการอบรมที่คุณต้องการออกแบบคำถามประเมินเฉพาะตัว
                   </span>
                 </div>
@@ -8711,7 +9515,7 @@ export default function AdminPortal({
                   <select
                     value={evalTargetCourseId}
                     onChange={(e) => setEvalTargetCourseId(e.target.value)}
-                    className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl p-2.5 focus:ring-1 focus:ring-orange-500 focus:outline-none transition cursor-pointer"
+                    className="w-full text-xs font-bold text-[#071A4B] bg-white border border-[#E2E8F0] rounded-xl p-2.5 focus:border-[#EA580C] focus:outline-none transition cursor-pointer"
                   >
                     <option value="global">📣 แบบประเมินมาตรฐานกลาง (ใช้กับทุกหลักสูตรทั่วไป)</option>
                     {courses.map(c => (
@@ -8728,17 +9532,17 @@ export default function AdminPortal({
                 const hasCustom = !!targetCourse?.customEvaluationConfig;
                 if (!hasCustom) {
                   return (
-                    <div className="bg-sky-50 border border-sky-100 p-4 rounded-xl text-xs text-sky-850 flex items-start gap-2 animate-fadeIn">
-                      <Info className="h-4 w-4 text-sky-600 mt-0.5 shrink-0" />
+                    <div className="bg-[#F5F7FA] border border-[#E2E8F0] p-4 rounded-2xl text-xs text-[#071A4B] flex items-start gap-2.5 animate-fadeIn">
+                      <Info className="h-4 w-4 text-[#EA580C] mt-0.5 shrink-0" />
                       <div>
                         <strong className="block font-bold">💡 หลักสูตรนี้กำลังใช้คำถามมาตรฐานกลาง (ไม่มีแบบประเมินเฉพาะตัว):</strong>
-                        <p className="mt-0.5">คุณสามารถปรับแต่ง แก้ไข หรือเพิ่ม/ลบ คำถามด้านล่างนี้ได้เลยค่ะ เมื่อคุณกด <strong>"บันทึกแบบประเมิน"</strong> ระบบจะคัดลอกจากคำถามมาตรฐานกลางและบันทึกเป็นแบบประเมินเฉพาะตัวของหลักสูตรนี้ให้โดยอัตโนมัติ (ไม่กระทบหลักสูตรอื่น)</p>
+                        <p className="mt-0.5 text-slate-600">คุณสามารถปรับแต่ง แก้ไข หรือเพิ่ม/ลบ คำถามด้านล่างนี้ได้เลยค่ะ เมื่อคุณกด <strong>"บันทึกแบบประเมิน"</strong> ระบบจะคัดลอกจากคำถามมาตรฐานกลางและบันทึกเป็นแบบประเมินเฉพาะตัวของหลักสูตรนี้ให้โดยอัตโนมัติ (ไม่กระทบหลักสูตรอื่น)</p>
                       </div>
                     </div>
                   );
                 } else {
                   return (
-                    <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl text-xs text-emerald-850 flex items-start gap-2 animate-fadeIn">
+                    <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl text-xs text-emerald-900 flex items-start gap-2.5 animate-fadeIn">
                       <Sparkles className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                       <div>
                         <strong className="block font-bold">✨ หลักสูตรนี้มี "แบบประเมินเฉพาะตัว" แล้ว:</strong>
@@ -8751,19 +9555,19 @@ export default function AdminPortal({
 
               {/* PART 1 */}
               <div className="space-y-4">
-                <div className="border-b border-slate-100 pb-2">
-                  <span className="text-[10px] bg-slate-100 text-slate-705 px-2.5 py-0.5 rounded font-black font-sans">PART 1</span>
-                  <h4 className="text-sm font-extrabold text-slate-800 mt-0.5">ส่วนที่ 1: ข้อมูลทั่วไป (สังกัดของผู้เข้าอบรม)</h4>
-                  <p className="text-xs text-slate-450">กำหนดรายชื่อของคณะหรือสถาบันที่เปิดให้ผู้ประเมินคลิกเลือกสังกัด</p>
+                <div className="border-b border-[#E2E8F0] pb-2">
+                  <span className="text-[10px] bg-[#071A4B] text-white px-2.5 py-0.5 rounded-full font-bold font-sans">PART 1</span>
+                  <h4 className="text-sm font-extrabold text-[#071A4B] mt-1">ส่วนที่ 1: ข้อมูลทั่วไป (สังกัดของผู้เข้าอบรม)</h4>
+                  <p className="text-xs text-slate-500">กำหนดรายชื่อของคณะหรือสถาบันที่เปิดให้ผู้ประเมินคลิกเลือกสังกัด</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-150">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#F5F7FA] p-4 rounded-2xl border border-[#E2E8F0]">
                   <div className="space-y-3">
-                    <label className="text-xs font-extrabold text-slate-700 block">รายชื่อคณะ/หน่วยงานปัจจุบัน ({evaluationConfig.part1Affiliations.length} สังกัด)</label>
-                    <div className="space-y-1.5 max-h-[250px] overflow-y-auto pr-1 bg-white border border-slate-200 rounded-xl p-3">
+                    <label className="text-xs font-extrabold text-[#071A4B] block tabular-nums">รายชื่อคณะ/หน่วยงานปัจจุบัน ({evaluationConfig.part1Affiliations.length} สังกัด)</label>
+                    <div className="space-y-1.5 max-h-[250px] overflow-y-auto pr-1 bg-white border border-[#E2E8F0] rounded-xl p-3">
                       {evaluationConfig.part1Affiliations.map((aff, idx) => (
-                        <div key={idx} className="flex items-center gap-2 border-b border-slate-50 last:border-0 pb-1.5 last:pb-0">
-                          <span className="text-[10px] text-slate-400 font-mono font-bold w-5">{idx + 1}.</span>
+                        <div key={idx} className="flex items-center gap-2 border-b border-slate-100 last:border-0 pb-1.5 last:pb-0">
+                          <span className="text-[10px] text-slate-400 font-mono font-bold w-5 tabular-nums">{idx + 1}.</span>
                           <input
                             type="text"
                             value={aff}
@@ -8772,14 +9576,14 @@ export default function AdminPortal({
                               updated[idx] = e.target.value;
                               setEvaluationConfig({ ...evaluationConfig, part1Affiliations: updated });
                             }}
-                            className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none focus:bg-slate-50 px-1.5 py-1 rounded flex-1 border border-transparent focus:border-slate-200"
+                            className="bg-transparent text-xs font-bold text-[#071A4B] focus:outline-none focus:bg-[#F5F7FA] px-1.5 py-1 rounded-lg flex-1 border border-transparent focus:border-[#E2E8F0]"
                           />
                           <button
                             onClick={() => {
                               const updated = evaluationConfig.part1Affiliations.filter((_, i) => i !== idx);
                               setEvaluationConfig({ ...evaluationConfig, part1Affiliations: updated });
                             }}
-                            className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition cursor-pointer"
+                            className="text-slate-400 hover:text-rose-600 p-1 rounded-full hover:bg-rose-50 transition cursor-pointer"
                             title="ลบสังกัดนี้"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -8793,7 +9597,7 @@ export default function AdminPortal({
                         type="text"
                         placeholder="พิมพ์สังกัดใหม่ (เช่น คณะอักษรศาสตร์)..."
                         id="new-aff-inner"
-                        className="bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-orange-500 flex-1 min-h-[36px]"
+                        className="bg-white border border-[#E2E8F0] px-3 py-2 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C] flex-1 min-h-[36px]"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             const val = (e.target as HTMLInputElement).value.trim();
@@ -8819,7 +9623,7 @@ export default function AdminPortal({
                             el.value = '';
                           }
                         }}
-                        className="p-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold px-4 cursor-pointer min-h-[36px]"
+                        className="py-2 bg-[#071A4B] hover:bg-[#0D2566] text-white rounded-full text-xs font-bold px-4 cursor-pointer min-h-[36px] transition"
                       >
                         เพิ่มสังกัด
                       </button>
@@ -8827,8 +9631,8 @@ export default function AdminPortal({
                   </div>
 
                   <div className="space-y-4 flex flex-col justify-between">
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
-                      <h5 className="text-xs font-extrabold text-slate-805">ตัวชี้วัดเสริมสังกัด อื่นๆ</h5>
+                    <div className="bg-white p-4 rounded-xl border border-[#E2E8F0] space-y-3">
+                      <h5 className="text-xs font-extrabold text-[#071A4B]">ตัวชี้วัดเสริมสังกัด อื่นๆ</h5>
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => setEvaluationConfig({
@@ -8838,19 +9642,19 @@ export default function AdminPortal({
                           className="focus:outline-none cursor-pointer"
                         >
                           {evaluationConfig.enableOtherAffiliation ? (
-                            <ToggleRight className="h-9 w-9 text-emerald-600" />
+                            <ToggleRight className="h-9 w-9 text-[#EA580C]" />
                           ) : (
-                            <ToggleLeft className="h-9 w-9 text-slate-350" />
+                            <ToggleLeft className="h-9 w-9 text-slate-300" />
                           )}
                         </button>
                         <div>
-                          <span className="text-xs font-extrabold text-slate-805 block">เปิดช่องกรอกสังกัด "อื่นๆ (ระบุเพิ่มเติม)"</span>
-                          <span className="text-[10px] text-slate-400">อนุญาตให้ผู้ประเมินคลิกเลือก 'อื่นๆ โปรดระบุ' ได้</span>
+                          <span className="text-xs font-extrabold text-[#071A4B] block">เปิดช่องกรอกสังกัด "อื่นๆ (ระบุเพิ่มเติม)"</span>
+                          <span className="text-[10px] text-slate-500">อนุญาตให้ผู้ประเมินคลิกเลือก 'อื่นๆ โปรดระบุ' ได้</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="border border-dashed border-slate-200 rounded-xl p-4 text-[11px] text-slate-500 leading-relaxed bg-white/45">
+                    <div className="border border-dashed border-[#E2E8F0] rounded-xl p-4 text-[11px] text-slate-500 leading-relaxed bg-white">
                       💡 สังกัดหน่วยงานของบุคลากรจะเอื้อประโยชน์ให้สถาบันสามารถประมวลผลความใส่ใจรายสังกัดได้อย่างง่ายดายค่ะ
                     </div>
                   </div>
@@ -8858,28 +9662,28 @@ export default function AdminPortal({
               </div>
 
               {/* PART 2 */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <div className="border-b border-slate-100 pb-2">
-                  <span className="text-[10px] bg-slate-100 text-slate-705 px-2.5 py-0.5 rounded font-black font-sans">PART 2</span>
-                  <h4 className="text-sm font-extrabold text-slate-800 mt-0.5">ส่วนที่ 2: ความเข้าใจในเนื้อหาการสอนก่อนและหลังจากสัมมนา</h4>
-                  <p className="text-xs text-slate-450">ปรับแต่งข้อคําถามสเกลคะแนนความพึงพอใจด้านระดับความก้าวหน้าและการยกระดับวิชาการ</p>
+              <div className="space-y-4 pt-4 border-t border-[#E2E8F0]">
+                <div className="border-b border-[#E2E8F0] pb-2">
+                  <span className="text-[10px] bg-[#071A4B] text-white px-2.5 py-0.5 rounded-full font-bold font-sans">PART 2</span>
+                  <h4 className="text-sm font-extrabold text-[#071A4B] mt-1">ส่วนที่ 2: ความเข้าใจในเนื้อหาการสอนก่อนและหลังจากสัมมนา</h4>
+                  <p className="text-xs text-slate-500">ปรับแต่งข้อคําถามสเกลคะแนนความพึงพอใจด้านระดับความก้าวหน้าและการยกระดับวิชาการ</p>
                 </div>
 
-                <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-150">
+                <div className="space-y-3 bg-[#F5F7FA] p-4 rounded-2xl border border-[#E2E8F0]">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-550 block">🔴 คำถามก่อนเข้ารับการอบรม (Before Training Label)</label>
+                    <label className="text-[10px] font-bold text-slate-500 block">🔴 คำถามก่อนเข้ารับการอบรม (Before Training Label)</label>
                     <input
                       type="text"
-                      className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500 min-h-[38px]"
+                      className="w-full bg-white border border-[#E2E8F0] p-3 rounded-xl text-xs font-bold text-[#071A4B] focus:outline-none focus:border-[#EA580C] min-h-[38px]"
                       value={evaluationConfig.part2BeforeLabel}
                       onChange={(e) => setEvaluationConfig({ ...evaluationConfig, part2BeforeLabel: e.target.value })}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-550 block">🔴 คำถามหลังเสร็จสิ้นการอบรม (After Training Label)</label>
+                    <label className="text-[10px] font-bold text-slate-500 block">🟢 คำถามหลังเสร็จสิ้นการอบรม (After Training Label)</label>
                     <input
                       type="text"
-                      className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500 min-h-[38px]"
+                      className="w-full bg-white border border-[#E2E8F0] p-3 rounded-xl text-xs font-bold text-[#071A4B] focus:outline-none focus:border-[#EA580C] min-h-[38px]"
                       value={evaluationConfig.part2AfterLabel}
                       onChange={(e) => setEvaluationConfig({ ...evaluationConfig, part2AfterLabel: e.target.value })}
                     />
@@ -8888,12 +9692,12 @@ export default function AdminPortal({
               </div>
 
               {/* PART 3 */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <div className="border-b border-slate-100 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-4 pt-4 border-t border-[#E2E8F0]">
+                <div className="border-b border-[#E2E8F0] pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <span className="text-[10px] bg-slate-100 text-slate-705 px-2.5 py-0.5 rounded font-black font-sans">PART 3</span>
-                    <h4 className="text-sm font-extrabold text-slate-800 mt-0.5">ส่วนที่ 3: ระดับความพึงพอใจและการประเมินจัดการโครงการ</h4>
-                    <p className="text-xs text-slate-450">แก้ไขสาระ เพิ่ม ลบ ฟอร์มสเกลวัดตั้งแต่ระดับ (1-5 ดาว) จนถึงการพิมพ์คำแนะนำอิสระ</p>
+                    <span className="text-[10px] bg-[#071A4B] text-white px-2.5 py-0.5 rounded-full font-bold font-sans">PART 3</span>
+                    <h4 className="text-sm font-extrabold text-[#071A4B] mt-1">ส่วนที่ 3: ระดับความพึงพอใจและการประเมินจัดการโครงการ</h4>
+                    <p className="text-xs text-slate-500">แก้ไขสาระ เพิ่ม ลบ ฟอร์มสเกลวัดตั้งแต่ระดับ (1-5 ดาว) จนถึงการพิมพ์คำแนะนำอิสระ</p>
                   </div>
                   <button
                     onClick={() => {
@@ -8909,7 +9713,7 @@ export default function AdminPortal({
                         part3Questions: [...evaluationConfig.part3Questions, newQ]
                       });
                     }}
-                    className="self-start sm:self-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 min-h-[36px] cursor-pointer"
+                    className="self-start sm:self-center px-4 py-2 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold rounded-full text-xs shadow-sm flex items-center gap-1.5 min-h-[36px] cursor-pointer transition"
                   >
                     <Plus className="h-4 w-4" />
                     <span>เพิ่มข้อคำถามอบรม</span>
@@ -8918,9 +9722,9 @@ export default function AdminPortal({
 
                 <div className="space-y-3">
                   {evaluationConfig.part3Questions.map((q, idx) => (
-                    <div key={q.id} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div key={q.id} className="bg-[#F5F7FA] border border-[#E2E8F0] rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                       <div className="flex items-center gap-2.5 w-full md:w-auto flex-1">
-                        <span className="text-xs font-black text-slate-400 font-mono bg-white h-7 w-7 rounded-lg border border-slate-150 flex items-center justify-center shadow-3xs">
+                        <span className="text-xs font-extrabold text-[#071A4B] font-mono bg-white h-7 w-7 rounded-full border border-[#E2E8F0] flex items-center justify-center tabular-nums">
                           {idx + 1}
                         </span>
                         <input
@@ -8931,7 +9735,7 @@ export default function AdminPortal({
                             updated[idx] = { ...q, text: e.target.value };
                             setEvaluationConfig({ ...evaluationConfig, part3Questions: updated });
                           }}
-                          className="bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500 flex-1 min-h-[36px]"
+                          className="bg-white border border-[#E2E8F0] px-3 py-2 rounded-xl text-xs font-bold text-[#071A4B] focus:outline-none focus:border-[#EA580C] flex-1 min-h-[36px]"
                         />
                       </div>
 
@@ -8945,7 +9749,7 @@ export default function AdminPortal({
                               updated[idx] = { ...q, type: e.target.value as 'rating' | 'text' };
                               setEvaluationConfig({ ...evaluationConfig, part3Questions: updated });
                             }}
-                            className="bg-white border border-slate-150 px-2 py-1 rounded-lg text-[11px] font-bold text-slate-705 focus:outline-none cursor-pointer"
+                            className="bg-white border border-[#E2E8F0] px-2.5 py-1 rounded-xl text-[11px] font-bold text-[#071A4B] focus:outline-none cursor-pointer"
                           >
                             <option value="rating">⭐ 1-5 ดาวประเมิน</option>
                             <option value="text">✏️ พิมพ์ตอบแสดงความเห็น</option>
@@ -8963,9 +9767,9 @@ export default function AdminPortal({
                             className="focus:outline-none"
                           >
                             {q.required ? (
-                              <span className="inline-flex px-2 py-0.5 bg-rose-100 text-rose-800 text-[10px] font-black rounded border border-rose-200 cursor-pointer">ใช่</span>
+                              <span className="inline-flex px-2.5 py-0.5 bg-rose-50 text-rose-700 text-[10px] font-bold rounded-full border border-rose-200 cursor-pointer">ใช่</span>
                             ) : (
-                              <span className="inline-flex px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded border border-slate-200 cursor-pointer">ไม่</span>
+                              <span className="inline-flex px-2.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full border border-[#E2E8F0] cursor-pointer">ไม่</span>
                             )}
                           </button>
                         </div>
@@ -8980,7 +9784,7 @@ export default function AdminPortal({
                               updated[idx - 1] = temp;
                               setEvaluationConfig({ ...evaluationConfig, part3Questions: updated });
                             }}
-                            className="p-1 px-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-30 text-[10px] font-black cursor-pointer"
+                            className="p-1 px-2.5 bg-white border border-[#E2E8F0] rounded-full hover:border-[#071A4B] disabled:opacity-30 text-[10px] font-bold cursor-pointer"
                           >
                             ▲
                           </button>
@@ -8993,7 +9797,7 @@ export default function AdminPortal({
                               updated[idx + 1] = temp;
                               setEvaluationConfig({ ...evaluationConfig, part3Questions: updated });
                             }}
-                            className="p-1 px-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-30 text-[10px] font-black cursor-pointer"
+                            className="p-1 px-2.5 bg-white border border-[#E2E8F0] rounded-full hover:border-[#071A4B] disabled:opacity-30 text-[10px] font-bold cursor-pointer"
                           >
                             ▼
                           </button>
@@ -9004,7 +9808,7 @@ export default function AdminPortal({
                             const updated = evaluationConfig.part3Questions.filter((_, i) => i !== idx);
                             setEvaluationConfig({ ...evaluationConfig, part3Questions: updated });
                           }}
-                          className="text-slate-400 hover:text-rose-600 p-2 rounded-xl hover:bg-rose-50 transition cursor-pointer"
+                          className="text-slate-400 hover:text-rose-600 p-2 rounded-full hover:bg-rose-50 transition cursor-pointer"
                           title="ลบข้อคำถามข้อนี้"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -9017,60 +9821,112 @@ export default function AdminPortal({
             </div>
           ) : (
             <>
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col xl:flex-row justify-between xl:items-center gap-6 animate-in fade-in duration-100">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center w-fit gap-1">
-                      Evaluation Report & Analysis
-                    </span>
-                    <span className="bg-slate-100 text-slate-650 text-[10px] font-extrabold px-2 py-0.5 rounded-md">
-                      ผลตอบรับประเมินจริง {registrations.filter(r => r.courseId === selectedCourseId && r.feedback).length} รายการ
-                    </span>
+              <div className="bg-[#071A4B] text-white border border-white/10 border-b-2 border-b-[#F97316] rounded-2xl p-6 shadow-md flex flex-col xl:flex-row justify-between xl:items-center gap-6 animate-in fade-in duration-100">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-11 h-11 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <Award className="h-5 w-5" />
                   </div>
-                  <h2 className="text-xl font-extrabold text-slate-800">คลังผลประเมินจากการอบรมคณาจารย์</h2>
-                  <p className="text-xs text-slate-450 font-medium leading-relaxed">
-                    วิเคราะห์ผลสัมฤทธิ์ คุณภาพการสอน คะแนนส่งแนะส่งต่อ และความคิดเห็นข้อคิดป้อนกลับสำหรับหลักสูตรโครงการพัฒนาคณาจารย์
-                  </p>
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#F97316] flex items-center gap-2">
+                        <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                        Evaluation Report & Analysis
+                      </span>
+                      <span className="bg-[#0D2566] border border-white/15 text-orange-300 text-[10px] font-bold px-2.5 py-0.5 rounded-full tabular-nums">
+                        ผลตอบรับประเมินจริง {registrations.filter(r => r.courseId === selectedCourseId && r.feedback).length} รายการ
+                      </span>
+                    </div>
+                    <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">คลังผลประเมินจาก<span className="text-[#F97316]">การอบรมคณาจารย์</span></h2>
+                    <p className="text-xs text-slate-300 font-medium leading-relaxed">
+                      วิเคราะห์ผลสัมฤทธิ์ คุณภาพการสอน คะแนนแนะนำต่อ และความคิดเห็นข้อเสนอแนะสำหรับหลักสูตรพัฒนาคณาจารย์
+                    </p>
+                  </div>
                 </div>
 
                 {/* Course Selector Dropdown */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">เลือกหลักสูตรประเมิน</label>
+                    <label className="text-[10px] font-bold text-slate-300 block uppercase tracking-wider">เลือกหลักสูตรประเมิน</label>
                     <select
                       value={selectedCourseId}
                       onChange={(e) => setSelectedCourseId(e.target.value)}
-                      className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-extrabold focus:outline-none focus:border-orange-500 min-w-[280px] cursor-pointer text-slate-800"
+                      className="bg-[#0D2566] border border-white/15 p-2.5 rounded-xl text-xs font-extrabold focus:outline-none focus:border-[#F97316] min-w-[280px] cursor-pointer text-white"
                     >
-                      <option value="">-- กรุณาเลือกหลักสูตรที่ต้องการวิเคราะห์ --</option>
+                      <option value="" className="text-[#071A4B] bg-white">-- กรุณาเลือกหลักสูตรที่ต้องการวิเคราะห์ --</option>
                       {courses.filter(c => !c.archived || c.id === selectedCourseId || showArchivedInDropdown).map(c => (
-                        <option key={c.id} value={c.id}>
+                        <option key={c.id} value={c.id} className="text-[#071A4B] bg-white">
                           {c.archived ? '📁 [จัดเก็บแล้ว] ' : ''}{c.title}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl hover:bg-slate-100 transition cursor-pointer select-none">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold text-white bg-[#0D2566] border border-white/15 px-3.5 py-2.5 rounded-full hover:border-[#F97316] transition cursor-pointer select-none tabular-nums">
                     <input
                       type="checkbox"
                       checked={showArchivedInDropdown}
                       onChange={(e) => setShowArchivedInDropdown(e.target.checked)}
-                      className="rounded text-rose-600 focus:ring-rose-500 h-3.5 w-3.5 cursor-pointer"
+                      className="rounded text-[#F97316] focus:ring-[#F97316] h-3.5 w-3.5 cursor-pointer"
                     />
                     <span>แสดงหลักสูตรที่จัดเก็บแล้ว ({courses.filter(c => c.archived).length})</span>
                   </label>
 
-                  <button
-                    type="button"
-                    onClick={handleDownloadEvaluations}
-                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs transition shadow-sm cursor-pointer min-h-[38px]"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    <span>ดึงข้อมูลผลประเมิน (CSV)</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      type="button"
+                      disabled={!selectedCourseId || !courses.some(c => c.id === selectedCourseId)}
+                      onClick={() => setShowEvaluationImportModal(true)}
+                      title={!selectedCourseId ? 'กรุณาเลือกหลักสูตรก่อนนำเข้าผลประเมิน' : 'นำเข้าผลประเมินจากไฟล์ Excel หรือ CSV'}
+                      className="flex items-center justify-center gap-1.5 px-5 py-2.5 bg-[#F97316] hover:bg-[#EA580C] disabled:opacity-45 disabled:cursor-not-allowed text-white font-bold rounded-full text-xs transition shadow-sm cursor-pointer min-h-[38px]"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      <span>นำเข้าผลประเมิน (Excel/CSV)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDownloadEvaluations}
+                      className="flex items-center justify-center gap-1.5 px-5 py-2.5 bg-white hover:bg-slate-100 text-[#071A4B] font-bold rounded-full text-xs transition shadow-sm cursor-pointer min-h-[38px]"
+                    >
+                      <Download className="h-3.5 w-3.5 text-[#F97316]" />
+                      <span>ดึงข้อมูลผลประเมิน (CSV)</span>
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              {evaluationImportBanner && evaluationImportBanner.courseId === selectedCourseId && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-start justify-between gap-3 text-emerald-950 shadow-xs animate-in fade-in duration-200">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle className="h-4 w-4" />
+                    </div>
+                    <div className="space-y-0.5 text-xs">
+                      <p className="font-extrabold text-emerald-900">
+                        นำเข้าผลประเมินสำเร็จ {evaluationImportBanner.importedCount} รายการ
+                        <span className="ml-2 font-bold text-[#EA580C] tabular-nums">
+                          (คะแนนเฉลี่ยชุดที่นำเข้า ★ {evaluationImportBanner.predictedAvgSatisfaction.toFixed(2)} / 5.0)
+                        </span>
+                      </p>
+                      <p className="text-[11px] text-emerald-800 font-medium tabular-nums">
+                        หลักสูตร: {evaluationImportBanner.courseTitle}
+                        {evaluationImportBanner.updatedExistingCount > 0 && ` • อัปเดตผู้ลงทะเบียนเดิม ${evaluationImportBanner.updatedExistingCount} คน`}
+                        {evaluationImportBanner.replacedRemovedCount > 0 && ` • แทนที่ข้อมูลนำเข้าเดิม ${evaluationImportBanner.replacedRemovedCount} รายการ`}
+                        {evaluationImportBanner.skippedInvalidCount > 0 && ` • ข้ามแถวไม่สมบูรณ์ ${evaluationImportBanner.skippedInvalidCount} แถว`}
+                        {evaluationImportBanner.skippedDuplicateCount > 0 && ` • ข้ามแถวซ้ำในไฟล์ ${evaluationImportBanner.skippedDuplicateCount} แถว`}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEvaluationImportBanner(null)}
+                    className="p-1.5 rounded-full hover:bg-emerald-100 text-emerald-700 transition cursor-pointer"
+                    aria-label="ปิดการแจ้งเตือน"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
 
               {/* KPI Analytics Cards */}
               {(() => {
@@ -9082,63 +9938,218 @@ export default function AdminPortal({
                   ? (feedList.reduce((acc, curr) => acc + (curr.feedback?.satisfaction || 0), 0) / totalFeeds).toFixed(2)
                   : '-';
 
-                const avgRec = totalFeeds > 0 
-                  ? (feedList.reduce((acc, curr) => acc + (curr.feedback?.recommendation || 0), 0) / totalFeeds).toFixed(2)
+                const ratedRecs = feedList.filter(
+                  r => typeof r.feedback?.recommendation === 'number' && r.feedback.recommendation >= 1
+                );
+                const avgRec = ratedRecs.length > 0 
+                  ? (ratedRecs.reduce((acc, curr) => acc + (curr.feedback?.recommendation || 0), 0) / ratedRecs.length).toFixed(2)
                   : '-';
 
                 const checkInCount = courseRegs.filter(r => r.checkedIn).length;
-                const completionRate = checkInCount > 0 ? Math.ceil((totalFeeds / checkInCount) * 100) : 0;
+                const completionRate = checkInCount > 0 ? Math.min(100, Math.ceil((totalFeeds / checkInCount) * 100)) : 0;
 
                 return (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="evaluations-stats-grid">
-                    <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">ปริมาณส่งแบบประเมิน</span>
-                      <div className="flex justify-between items-baseline mt-4">
-                        <span className="text-2xl font-black text-slate-800">{totalFeeds} ใบตอบกลับ</span>
-                        <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
-                          จากผู้เช็คอิน {checkInCount} คน
+                    <div className="bg-[#071A4B] text-white p-5 rounded-2xl shadow-sm border border-white/10 border-b-2 border-b-[#F97316]">
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">ปริมาณส่งแบบประเมิน</span>
+                      <div className="flex justify-between items-baseline mt-4 tabular-nums">
+                        <span className="text-2xl font-extrabold text-white">{totalFeeds} <span className="text-xs font-semibold text-slate-300">ใบตอบกลับ</span></span>
+                        <span className="text-[10px] font-bold bg-[#0D2566] border border-white/15 text-orange-300 px-2.5 py-0.5 rounded-full">
+                          เช็คอิน {checkInCount} คน
                         </span>
                       </div>
                     </div>
 
-                    <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">ความพึงพอใจเฉลี่ย</span>
-                      <div className="flex justify-between items-baseline mt-4">
-                        <span className="text-2xl font-black text-amber-500">★ {avgSat} / 5.0</span>
-                        <span className="text-[10px] font-bold text-slate-400">เกณฑ์เฉลี่ย</span>
+                    <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] text-white p-5 rounded-2xl shadow-sm">
+                      <span className="text-[10px] font-bold text-orange-100 uppercase tracking-wider block">ความพึงพอใจเฉลี่ย</span>
+                      <div className="flex justify-between items-baseline mt-4 tabular-nums">
+                        <span className="text-2xl font-extrabold text-white">★ {avgSat} <span className="text-xs font-semibold text-orange-100">/ 5.0</span></span>
+                        <span className="text-[10px] font-bold text-orange-100">เกณฑ์เฉลี่ย</span>
                       </div>
                     </div>
 
-                    <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">ดัชนีส่งแนะแนะต่อ</span>
-                      <div className="flex justify-between items-baseline mt-4">
-                        <span className="text-2xl font-black text-blue-600">❤ {avgRec} / 5.0</span>
-                        <span className="text-[10px] font-semibold text-slate-400">Recommendation</span>
+                    <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] p-5 rounded-2xl shadow-sm">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">ดัชนีแนะนำต่อ</span>
+                      <div className="flex justify-between items-baseline mt-4 tabular-nums">
+                        <span className="text-2xl font-extrabold text-[#071A4B]">❤ {avgRec} <span className="text-xs font-semibold text-slate-400">/ 5.0</span></span>
+                        <span className="text-[10px] font-semibold text-slate-500">Recommendation</span>
                       </div>
                     </div>
 
-                    <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">ความร่วมมือส่งประเมิน</span>
-                      <div className="flex justify-between items-baseline mt-4">
-                        <span className="text-2xl font-black text-emerald-600">{completionRate}%</span>
-                        <span className="text-[10px] font-bold text-slate-400">Response Rate</span>
+                    <div className="bg-[#0D2566] text-white p-5 rounded-2xl shadow-sm border border-white/10">
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">ความร่วมมือส่งประเมิน</span>
+                      <div className="flex justify-between items-baseline mt-4 tabular-nums">
+                        <span className="text-2xl font-extrabold text-white">{completionRate}%</span>
+                        <span className="text-[10px] font-bold text-emerald-300">Response Rate</span>
                       </div>
                     </div>
                   </div>
                 );
               })()}
 
-              {/* Evaluations detailed comments */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-6 space-y-4">
-                <h3 className="text-sm font-extrabold text-slate-955 flex items-center gap-1.5 border-b border-slate-50 pb-3">
-                  <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
-                  <span>ประวัติผู้ส่งแบบสำรวจความพึงพอใจและคำแนะนำเพิ่มเติม</span>
-                </h3>
+              {/* Criterion-Level Breakdown & Qualitative Feedback Summary */}
+              {(() => {
+                const selectedCourseObj = courses.find(c => c.id === selectedCourseId);
+                const activeEvalCfg = selectedCourseObj?.customEvaluationConfig || globalEvaluationConfig;
+                const feedList = registrations.filter(r => r.courseId === selectedCourseId && r.feedback);
+                const ratingQuestions = (activeEvalCfg?.part3Questions || []).filter(q => q.type === 'rating');
 
-                <div className="overflow-x-auto rounded-xl border border-slate-100">
+                const criterionStats = ratingQuestions
+                  .map(q => {
+                    const scores: number[] = [];
+                    for (const reg of feedList) {
+                      const raw = reg.feedback?.answers?.[q.id];
+                      const num = typeof raw === 'number' ? raw : Number(raw);
+                      if (Number.isFinite(num) && num >= 1 && num <= 5) {
+                        scores.push(num);
+                      }
+                    }
+                    const avg = scores.length > 0
+                      ? Number((scores.reduce((s, v) => s + v, 0) / scores.length).toFixed(2))
+                      : null;
+                    return { id: q.id, text: q.text, count: scores.length, avg };
+                  })
+                  .filter(item => item.avg !== null);
+
+                const qualitativeComments = feedList
+                  .map(reg => ({
+                    id: reg.id,
+                    name: reg.name,
+                    department:
+                      reg.feedback?.affiliation === 'อื่นๆ' && reg.feedback?.affiliationOther
+                        ? `อื่นๆ (${reg.feedback.affiliationOther})`
+                        : (reg.feedback?.affiliation || reg.department),
+                    satisfaction: reg.feedback?.satisfaction || 0,
+                    comment: (reg.feedback?.comments || '').trim(),
+                    isImported: reg.source === 'imported' || reg.feedback?.source === 'imported'
+                  }))
+                  .filter(item => item.comment.length > 0);
+
+                if (feedList.length === 0) return null;
+
+                return (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Criterion Breakdown */}
+                    <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] rounded-2xl shadow-sm p-6 space-y-4">
+                      <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                            <Award className="h-4 w-4 text-[#F97316]" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-1.5">
+                              <span className="inline-block w-3.5 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                              Criteria Breakdown
+                            </span>
+                            <h3 className="text-sm font-extrabold text-[#071A4B]">
+                              คะแนนประเมินเฉลี่ยจำแนกรายหัวข้อ
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+
+                      {criterionStats.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic py-6 text-center">
+                          ยังไม่มีคะแนนแยกรายหัวข้อคำถามสำหรับหลักสูตรนี้
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {criterionStats.map((stat, idx) => {
+                            const pct = Math.min(100, Math.round(((stat.avg || 0) / 5) * 100));
+                            return (
+                              <div key={stat.id} className="space-y-1.5">
+                                <div className="flex items-center justify-between gap-2 text-xs">
+                                  <span className="font-semibold text-[#071A4B] truncate">
+                                    {idx + 1}. {stat.text}
+                                  </span>
+                                  <span className="font-extrabold text-[#EA580C] tabular-nums shrink-0">
+                                    ★ {stat.avg?.toFixed(2)} <span className="text-[10px] font-medium text-slate-400">({stat.count})</span>
+                                  </span>
+                                </div>
+                                <div className="w-full h-2 rounded-full bg-[#F1F5F9] overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full bg-gradient-to-r from-[#071A4B] to-[#F97316] transition-all duration-300"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Qualitative Comments List */}
+                    <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] rounded-2xl shadow-sm p-6 space-y-4">
+                      <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                            <MessageSquare className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-1.5">
+                              <span className="inline-block w-3.5 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                              Qualitative Feedback
+                            </span>
+                            <h3 className="text-sm font-extrabold text-[#071A4B]">
+                              ข้อเสนอแนะและความคิดเห็นเพิ่มเติม ({qualitativeComments.length})
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+
+                      {qualitativeComments.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic py-6 text-center">
+                          ยังไม่มีข้อเสนอแนะเชิงข้อความสำหรับหลักสูตรนี้
+                        </p>
+                      ) : (
+                        <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                          {qualitativeComments.map(item => (
+                            <div
+                              key={item.id}
+                              className="bg-[#F5F7FA] border border-[#E2E8F0] rounded-xl p-3 space-y-1"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-xs font-bold text-[#071A4B]">{item.name}</span>
+                                  <span className="text-[10px] text-slate-400">• {item.department}</span>
+                                  {item.isImported && (
+                                    <span className="px-2 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-[#EA580C] text-[10px] font-bold">
+                                      นำเข้า
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-[11px] font-extrabold text-[#EA580C] tabular-nums">
+                                  ★ {item.satisfaction} / 5
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                {item.comment}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Evaluations detailed comments */}
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-sm p-6 space-y-4">
+                <div className="flex items-center gap-2.5 border-b border-[#E2E8F0] pb-3">
+                  <div className="w-8 h-8 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                    <FileSpreadsheet className="h-4 w-4" />
+                  </div>
+                  <h3 className="text-sm font-extrabold text-[#071A4B]">
+                    ประวัติผู้ส่งแบบสำรวจความพึงพอใจและคำแนะนำเพิ่มเติม
+                  </h3>
+                </div>
+
+                <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0]">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/60 text-[11px] font-black uppercase text-slate-500 border-b border-slate-100">
+                      <tr className="bg-[#F5F7FA] text-[11px] font-bold uppercase text-[#071A4B] border-b border-[#E2E8F0]">
                         <th className="py-3 px-4 text-center w-16">ลำดับ</th>
                         <th className="py-3 px-3 w-32">รหัสบุคลากร</th>
                         <th className="py-3 px-3">ชื่อ-นามสกุล</th>
@@ -9149,7 +10160,7 @@ export default function AdminPortal({
                         <th className="py-3 px-4 text-center w-36">การตอบสนอง</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                    <tbody className="divide-y divide-[#E2E8F0]/60 text-xs text-slate-700">
                       {(() => {
                         const matchedRefs = registrations
                           .filter(r => r.courseId === selectedCourseId && r.feedback)
@@ -9171,24 +10182,34 @@ export default function AdminPortal({
                           const affiliationDisplay = m.feedback?.affiliation === 'อื่นๆ' && m.feedback?.affiliationOther
                             ? `อื่นๆ (${m.feedback.affiliationOther})`
                             : (m.feedback?.affiliation || m.department);
+                          const isImportedRecord = m.source === 'imported' || m.feedback?.source === 'imported';
                           return (
-                            <tr key={m.id} className="hover:bg-slate-50">
-                              <td className="py-3 px-4 text-center font-mono font-bold text-slate-400">{idx + 1}</td>
-                              <td className="py-3 px-3 font-mono font-bold text-slate-800">{m.personnelId}</td>
-                              <td className="py-3 px-3 font-semibold text-slate-900">{m.name}</td>
+                            <tr key={m.id} className="hover:bg-[#F5F7FA]">
+                              <td className="py-3 px-4 text-center font-mono font-bold text-slate-400 tabular-nums">{idx + 1}</td>
+                              <td className="py-3 px-3 font-mono font-bold text-[#071A4B] tabular-nums">{m.personnelId}</td>
+                              <td className="py-3 px-3 font-semibold text-[#071A4B]">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span>{m.name}</span>
+                                  {isImportedRecord && (
+                                    <span className="px-2 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-[#EA580C] text-[10px] font-bold">
+                                      นำเข้า
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
                               <td className="py-3 px-3 text-slate-500">{affiliationDisplay}</td>
-                              <td className="py-3 px-3 text-center">
-                                <span className={`font-bold px-2 py-0.5 rounded ${m.feedback?.part2Before && m.feedback.part2Before >= 4 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-600'}`}>
+                              <td className="py-3 px-3 text-center tabular-nums">
+                                <span className={`font-bold px-2.5 py-0.5 rounded-full ${m.feedback?.part2Before && m.feedback.part2Before >= 4 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
                                   {m.feedback?.part2Before || '-'}
                                 </span>
                               </td>
-                              <td className="py-3 px-3 text-center">
-                                <span className={`font-bold px-2 py-0.5 rounded ${m.feedback?.part2After && m.feedback.part2After >= 4 ? 'bg-emerald-100 text-emerald-800' : m.feedback?.part2After && m.feedback.part2After > (m.feedback?.part2Before || 0) ? 'bg-orange-50 text-orange-700' : 'bg-slate-50 text-slate-600'}`}>
+                              <td className="py-3 px-3 text-center tabular-nums">
+                                <span className={`font-bold px-2.5 py-0.5 rounded-full ${m.feedback?.part2After && m.feedback.part2After >= 4 ? 'bg-emerald-100 text-emerald-800' : m.feedback?.part2After && m.feedback.part2After > (m.feedback?.part2Before || 0) ? 'bg-orange-50 text-[#EA580C]' : 'bg-slate-100 text-slate-600'}`}>
                                   {m.feedback?.part2After || '-'}
                                 </span>
                               </td>
-                              <td className="py-3 px-3 text-center">
-                                <span className="font-bold text-amber-500">
+                              <td className="py-3 px-3 text-center tabular-nums">
+                                <span className="font-bold text-[#EA580C]">
                                   ★ {m.feedback?.satisfaction} / 5
                                 </span>
                               </td>
@@ -9196,7 +10217,7 @@ export default function AdminPortal({
                                 <button
                                   type="button"
                                   onClick={() => setSelectedDetailedFeedback(m)}
-                                  className="text-xs font-bold text-orange-600 hover:text-white hover:bg-orange-600 border border-orange-200 hover:border-orange-600 px-3 py-1.5 rounded-lg transition shadow-3xs cursor-pointer"
+                                  className="text-xs font-bold text-[#071A4B] hover:text-white hover:bg-[#071A4B] border border-[#E2E8F0] hover:border-[#071A4B] px-3.5 py-1.5 rounded-full transition cursor-pointer"
                                 >
                                   ดูข้อมูลประเมินครบ
                                 </button>
@@ -9212,18 +10233,38 @@ export default function AdminPortal({
             </>
           )}
 
+          {/* Evaluation Spreadsheet Import Modal */}
+          {(() => {
+            const selectedImportCourse = courses.find(c => c.id === selectedCourseId);
+            if (!showEvaluationImportModal || !selectedImportCourse) return null;
+            const activeImportEvalConfig =
+              selectedImportCourse.customEvaluationConfig || globalEvaluationConfig;
+            return (
+              <EvaluationImportModal
+                isOpen={showEvaluationImportModal}
+                onClose={() => setShowEvaluationImportModal(false)}
+                course={selectedImportCourse}
+                evaluationConfig={activeImportEvalConfig}
+                registrations={registrations}
+                personnel={personnel}
+                onImportComplete={result => setEvaluationImportBanner(result)}
+              />
+            );
+          })()}
+
           {/* Detailed answers dialog modal overlay */}
           {selectedDetailedFeedback && (
-            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[999] animate-in fade-in duration-250">
-              <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 space-y-6 animate-in slide-in-from-bottom-6 duration-300">
-                <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+            <div className="fixed inset-0 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4 z-[999] animate-in fade-in duration-250">
+              <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl border border-[#E2E8F0] p-6 space-y-6 animate-in slide-in-from-bottom-6 duration-300">
+                <div className="flex items-start justify-between border-b border-[#E2E8F0] pb-4">
                   <div>
-                    <h3 className="text-base font-extrabold text-slate-900">ผลสรุปแบบประเมินส่วนประกอบผู้เข้าอบรม</h3>
-                    <p className="text-xs text-slate-450 mt-1">ผู้ตอบ: {selectedDetailedFeedback.name} ({selectedDetailedFeedback.personnelId})</p>
+                    <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">Individual Evaluation</span>
+                    <h3 className="text-base font-extrabold text-[#071A4B]">ผลสรุปแบบประเมินผู้เข้าอบรม</h3>
+                    <p className="text-xs text-slate-500 mt-1 tabular-nums">ผู้ตอบ: {selectedDetailedFeedback.name} ({selectedDetailedFeedback.personnelId})</p>
                   </div>
                   <button
                     onClick={() => setSelectedDetailedFeedback(null)}
-                    className="p-1 px-3 text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg cursor-pointer transition"
+                    className="py-1.5 px-4 text-xs font-bold bg-[#F5F7FA] border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] rounded-full cursor-pointer transition"
                   >
                     ปิดหน้าต่าง
                   </button>
@@ -9233,7 +10274,7 @@ export default function AdminPortal({
                   {/* PART 1 */}
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ส่วนที่ 1: สังกัดหน่วยงานที่ประเมิน</span>
-                    <p className="text-xs bg-slate-50 border border-slate-150 p-3 rounded-xl font-bold text-slate-800">
+                    <p className="text-xs bg-[#F5F7FA] border border-[#E2E8F0] p-3 rounded-xl font-bold text-[#071A4B]">
                       {selectedDetailedFeedback.feedback?.affiliation === 'อื่นๆ' && selectedDetailedFeedback.feedback?.affiliationOther
                         ? `อื่นๆ (${selectedDetailedFeedback.feedback.affiliationOther})`
                         : (selectedDetailedFeedback.feedback?.affiliation || selectedDetailedFeedback.department)}
@@ -9243,14 +10284,14 @@ export default function AdminPortal({
                   {/* PART 2 */}
                   <div className="space-y-2">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ส่วนที่ 2: ความรู้ความเข้าใจก่อนและหลังอบรม (ความเข้าใจเฉลี่ย)</span>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-slate-50 border border-slate-150 p-3 rounded-xl">
+                    <div className="grid grid-cols-2 gap-3 tabular-nums">
+                      <div className="bg-[#F5F7FA] border border-[#E2E8F0] p-3 rounded-xl">
                         <span className="text-[10px] font-medium text-slate-400 block">ก่อนรับการอบรม</span>
-                        <span className="text-lg font-black text-slate-800">★ {selectedDetailedFeedback.feedback?.part2Before || '-'} / 5</span>
+                        <span className="text-lg font-extrabold text-[#071A4B]">★ {selectedDetailedFeedback.feedback?.part2Before || '-'} / 5</span>
                       </div>
-                      <div className="bg-slate-50 border border-slate-150 p-3 rounded-xl">
-                        <span className="text-[10px] font-medium text-slate-400 block">หลังได้รับการอบรม</span>
-                        <span className="text-lg font-black text-emerald-700">★ {selectedDetailedFeedback.feedback?.part2After || '-'} / 5</span>
+                      <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
+                        <span className="text-[10px] font-medium text-emerald-700 block">หลังได้รับการอบรม</span>
+                        <span className="text-lg font-extrabold text-emerald-700">★ {selectedDetailedFeedback.feedback?.part2After || '-'} / 5</span>
                       </div>
                     </div>
                   </div>
@@ -9258,7 +10299,7 @@ export default function AdminPortal({
                   {/* PART 3 */}
                   <div className="space-y-2">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ส่วนที่ 3: ความพึงพอใจจำแนกรายละเอียดคำถาม</span>
-                    <div className="space-y-2.5 bg-slate-50 border border-slate-150 p-4 rounded-2xl max-h-[300px] overflow-y-auto">
+                    <div className="space-y-2.5 bg-[#F5F7FA] border border-[#E2E8F0] p-4 rounded-2xl max-h-[300px] overflow-y-auto">
                       {(() => {
                         const feedbackCourse = courses.find(c => c.id === selectedDetailedFeedback.courseId);
                         const feedbackEvalConfig = feedbackCourse?.customEvaluationConfig || globalEvaluationConfig;
@@ -9269,19 +10310,19 @@ export default function AdminPortal({
                             ?? (q.id === 'q9' ? selectedDetailedFeedback.feedback?.comments : undefined);
 
                           return (
-                            <div key={q.id} className="border-b border-slate-100 last:border-0 pb-2.5 last:pb-0">
-                              <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
-                                <span className="text-[10px] font-mono text-slate-400">{idx + 1}.</span>
+                            <div key={q.id} className="border-b border-[#E2E8F0] last:border-0 pb-2.5 last:pb-0">
+                              <span className="text-[11px] font-bold text-[#071A4B] flex items-center gap-1.5">
+                                <span className="text-[10px] font-mono text-slate-400 tabular-nums">{idx + 1}.</span>
                                 <span>{q.text}</span>
                               </span>
                               <div className="mt-1">
                                 {q.type === 'rating' ? (
-                                  <span className="text-xs font-black text-amber-500">
-                                    ★ {answerValue ? `${answerValue} / 5` : <span className="text-slate-350 italic font-normal">- ไม่ได้ระบุระดับคะแนน -</span>}
+                                  <span className="text-xs font-extrabold text-[#EA580C] tabular-nums">
+                                    ★ {answerValue ? `${answerValue} / 5` : <span className="text-slate-400 italic font-normal">- ไม่ได้ระบุระดับคะแนน -</span>}
                                   </span>
                                 ) : (
-                                  <p className="text-xs text-slate-600 bg-white/70 px-2.5 py-1.5 rounded-lg border border-slate-100 italic leading-relaxed">
-                                    {answerValue ? `"${answerValue}"` : <span className="text-slate-305 font-mono italic">- ว่าง -</span>}
+                                  <p className="text-xs text-slate-600 bg-white px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] italic leading-relaxed">
+                                    {answerValue ? `"${answerValue}"` : <span className="text-slate-400 font-mono italic">- ว่าง -</span>}
                                   </p>
                                 )}
                               </div>
@@ -9299,32 +10340,40 @@ export default function AdminPortal({
       ) : (
         /* MANAGE WEB SERVICE EMAIL SETTINGS (GAS CONFIG) */
         <div className="space-y-6" id="settings-tab-content">
-          <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 max-w-3xl space-y-6">
-            <div>
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-1.5">
-                <Settings className="h-5.5 w-5.5 text-orange-600" />
-                <span>กำหนดช่องทางเว็บบริการส่งเมล (Google Apps Script Integration)</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                การส่งอีเมล์ยืนยันไปหาบุคลากรฟรี 100% จำเป็นต้องมีการเชื่อมโยง API ไปยัง Google Apps Script ที่ติดตั้งภายใต้โดเมนของคุณ
-              </p>
+          <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] shadow-sm rounded-2xl p-6 max-w-3xl space-y-6">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                <Settings className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] flex items-center gap-2">
+                  <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                  System Integrations
+                </span>
+                <h3 className="text-lg font-extrabold text-[#071A4B] mt-0.5">
+                  กำหนดช่องทางเว็บบริการส่งเมล (<span className="text-[#F97316]">Google Apps Script</span> Integration)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  การส่งอีเมล์ยืนยันไปหาบุคลากรฟรี 100% จำเป็นต้องมีการเชื่อมโยง API ไปยัง Google Apps Script ที่ติดตั้งภายใต้โดเมนของคุณ
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 block">ป้อน Google Apps Script Web App URL ของท่าน</label>
+              <label className="text-xs font-bold text-[#071A4B] block">ป้อน Google Apps Script Web App URL ของท่าน</label>
               <input
                 type="text"
                 placeholder="https://script.google.com/macros/s/.../exec"
                 value={gasUrl}
                 onChange={(e) => onUpdateGasUrl(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-3 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                 id="input-gas-url-setting"
               />
               <p className="text-[11px] text-slate-400">
                 {gasUrl ? '🔔 บันทึก URL เรียบร้อยแล้ว ระบบจะทำการส่งเมลจริงผ่านบัญชีผู้ใช้งานทันทีที่เริ่มสแกน' : '⚠️ ปัจจุบันระบบใช้ "โหมดทดสอบส่งเมลจำลอง" ประวัติการเช็คอินทั้งหมดจะแสดงใน Console และแจ้งเตือนของหน้าเว็บ'}
               </p>
               {gasUrl && (
-                <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs leading-relaxed text-amber-900 space-y-2 mt-2 shadow-xs">
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-xs leading-relaxed text-amber-900 space-y-2 mt-2">
                   <span className="font-bold flex items-center gap-1.5 text-amber-800 text-sm">
                     📢 แนะนำพิเศษสำหรับปัญหา "ภาพโปสเตอร์ไม่แสดงในอีเมล (ภาพไม่ขึ้น)"
                   </span>
@@ -9345,34 +10394,38 @@ export default function AdminPortal({
             </div>
 
             {/* BASE APPLICATION URL SETTINGS */}
-            <hr className="border-slate-100" />
+            <hr className="border-[#E2E8F0]" />
 
-            <div>
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-1.5">
-                <Globe className="h-5.5 w-5.5 text-orange-600" />
-                <span>กำหนด URL ตัวจริงของหน้ารายการสัมมนา (Base Application URL)</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                กำหนด URL ปลายทางหลักของเว็บบอร์ด เพื่อเชื่อมโยง QR Code เผยแพร่ และลิงก์ภายในตั๋วหรืออีเมลให้เปิดทำงานเข้าถึงจากภายนอก/สมาร์ทโฟนได้ถูกต้อง 100% ตัวอย่าง: <code className="bg-slate-100 px-1 py-0.5 rounded text-rose-600 font-mono text-[10px]">https://ais-share-xxx.run.app</code>
-              </p>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                <Globe className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-[#071A4B]">
+                  กำหนด URL ตัวจริงของหน้ารายการสัมมนา (Base Application URL)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  กำหนด URL ปลายทางหลักของเว็บบอร์ด เพื่อเชื่อมโยง QR Code เผยแพร่ และลิงก์ภายในตั๋วหรืออีเมลให้เปิดทำงานเข้าถึงจากภายนอก/สมาร์ทโฟนได้ถูกต้อง 100% ตัวอย่าง: <code className="bg-[#F5F7FA] border border-[#E2E8F0] px-1.5 py-0.5 rounded text-[#EA580C] font-mono text-[10px]">https://ais-share-xxx.run.app</code>
+                </p>
+              </div>
             </div>
 
             {(window.location.origin.includes('aistudio.google.com') || window.location.origin.includes('googleusercontent.com')) && !baseAppUrl && (
-              <div className="bg-orange-50 border border-orange-200 p-3.5 rounded-xl text-[11px] leading-relaxed text-orange-850 space-y-1 shadow-xs">
-                <span className="font-bold flex items-center gap-1 text-xs">⚠️ แนะนำอย่างยิ่งสำหรับการรันบน sandbox (aistudio)</span>
-                <p>เนื่องจากหน้าจอนี้รันภายในเฟรมตรวจงานของสตูดิโอ หากนำโทรศัพท์สแกน QR Code ดั้งเดิมจะติดปัญหาเปิดไม่ขึ้นเพราะโดเมน <code className="font-mono bg-orange-100/60 rounded text-orange-950 px-1">aistudio.google.com</code> จำกัดสิทธิ์เฉพาะนักพัฒนา</p>
-                <p className="font-bold text-orange-900">• โปรดคัดลอกลิงก์ตัวจริงจากการกดปุ่มแชร์ขวาบนของ AI Studio (สัตยาบันเป็นลิงก์ .run.app) มาวางใส่กล่องด้านล่างนี้ได้เลยค่ะ!</p>
+              <div className="bg-orange-50 border border-orange-200 p-3.5 rounded-2xl text-[11px] leading-relaxed text-[#071A4B] space-y-1">
+                <span className="font-bold flex items-center gap-1 text-xs text-[#EA580C]">⚠️ แนะนำอย่างยิ่งสำหรับการรันบน sandbox (aistudio)</span>
+                <p>เนื่องจากหน้าจอนี้รันภายในเฟรมตรวจงานของสตูดิโอ หากนำโทรศัพท์สแกน QR Code ดั้งเดิมจะติดปัญหาเปิดไม่ขึ้นเพราะโดเมน <code className="font-mono bg-white border border-orange-200 rounded text-[#071A4B] px-1">aistudio.google.com</code> จำกัดสิทธิ์เฉพาะนักพัฒนา</p>
+                <p className="font-bold text-[#EA580C]">• โปรดคัดลอกลิงก์ตัวจริงจากการกดปุ่มแชร์ขวาบนของ AI Studio (สัตยาบันเป็นลิงก์ .run.app) มาวางใส่กล่องด้านล่างนี้ได้เลยค่ะ!</p>
               </div>
             )}
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 block">ป้อน URL แอปพลิเคชันตัวจริง (Base App URL สำหรับสร้างลิงก์และสแกนเช็คอินจริง)</label>
+              <label className="text-xs font-bold text-[#071A4B] block">ป้อน URL แอปพลิเคชันตัวจริง (Base App URL สำหรับสร้างลิงก์และสแกนเช็คอินจริง)</label>
               <input
                 type="text"
                 placeholder="https://ais-pre-3fyg4vczltrub3tzakr4q2-314979693296.asia-southeast1.run.app"
                 value={baseAppUrl}
                 onChange={(e) => onUpdateBaseAppUrl(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-3 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                 id="input-base-app-url-setting"
               />
               <p className="text-[11px] text-slate-400">
@@ -9381,98 +10434,104 @@ export default function AdminPortal({
             </div>
 
             {/* EMAIL TEMPLATE EDITORS */}
-            <hr className="border-slate-100" />
+            <hr className="border-[#E2E8F0]" />
 
-            <div>
-              <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-1.5">
-                <Mail className="h-5.5 w-5.5 text-orange-600" />
-                <span>ปรับแต่งหัวข้อและเนื้อหาอีเมลอัตโนมัติ (Automated Email Customizer)</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                คุณสามารถออกแบบเนื้อหาจดหมายตอบกลับ (ทั้งหัวเรื่องและตัวข้อความ) ที่ระบบส่งยืนยันหาคุณครู/ผู้ร่วมลงทะเบียนเข้าเรียนโดยอัตโนมัติ (รองรับข้อมูลด้วยตัวแปรและการพิมพ์โค้ด HTML)
-              </p>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                <Mail className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-[#071A4B]">
+                  ปรับแต่งหัวข้อและเนื้อหาอีเมลอัตโนมัติ (Automated Email Customizer)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  คุณสามารถออกแบบเนื้อหาจดหมายตอบกลับ (ทั้งหัวเรื่องและตัวข้อความ) ที่ระบบส่งยืนยันหาคุณครู/ผู้ร่วมลงทะเบียนเข้าเรียนโดยอัตโนมัติ (รองรับข้อมูลด้วยตัวแปรและการพิมพ์โค้ด HTML)
+                </p>
+              </div>
             </div>
 
              {/* EMAIL TEMPLATE EDITORS TABBED CONTAINER */}
              <div className="space-y-4">
                {/* Tab buttons */}
-               <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+               <div className="flex flex-wrap gap-2 border-b border-[#E2E8F0] pb-3">
                  <button
                    type="button"
                    onClick={() => setSelectedTemplateTab('register')}
-                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition cursor-pointer ${
+                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full border transition cursor-pointer ${
                      selectedTemplateTab === 'register'
-                       ? 'border-orange-500 text-orange-600 bg-orange-50/40'
-                       : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                       ? 'bg-[#F97316] border-[#EA580C] text-white'
+                       : 'border-[#E2E8F0] bg-white text-[#071A4B] hover:border-[#071A4B]'
                    }`}
                  >
-                   <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                   <span className={`w-2 h-2 rounded-full ${selectedTemplateTab === 'register' ? 'bg-white' : 'bg-[#F97316]'}`}></span>
                    <span>1. ยืนยันการลงทะเบียน</span>
                  </button>
                  <button
                    type="button"
                    onClick={() => setSelectedTemplateTab('checkin')}
-                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition cursor-pointer ${
+                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full border transition cursor-pointer ${
                      selectedTemplateTab === 'checkin'
-                       ? 'border-violet-600 text-violet-700 bg-violet-50/40'
-                       : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                       ? 'bg-[#071A4B] border-[#071A4B] text-white'
+                       : 'border-[#E2E8F0] bg-white text-[#071A4B] hover:border-[#071A4B]'
                    }`}
                  >
-                   <span className="w-2 h-2 bg-violet-600 rounded-full"></span>
+                   <span className={`w-2 h-2 rounded-full ${selectedTemplateTab === 'checkin' ? 'bg-[#F97316]' : 'bg-[#071A4B]'}`}></span>
                    <span>2. เช็คอินเข้าอบรมสำเร็จ</span>
                  </button>
                  <button
                    type="button"
                    onClick={() => setSelectedTemplateTab('reminder')}
-                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition cursor-pointer ${
+                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full border transition cursor-pointer ${
                      selectedTemplateTab === 'reminder'
-                       ? 'border-blue-500 text-blue-600 bg-blue-50/40'
-                       : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                       ? 'bg-[#0D2566] border-[#0D2566] text-white'
+                       : 'border-[#E2E8F0] bg-white text-[#071A4B] hover:border-[#071A4B]'
                    }`}
                  >
-                   <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                   <span className={`w-2 h-2 rounded-full ${selectedTemplateTab === 'reminder' ? 'bg-[#F97316]' : 'bg-slate-400'}`}></span>
                    <span>3. เตรียมความพร้อมเข้าอบรม</span>
                  </button>
                  <button
                    type="button"
                    onClick={() => setSelectedTemplateTab('evaluation')}
-                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition cursor-pointer ${
+                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full border transition cursor-pointer ${
                      selectedTemplateTab === 'evaluation'
-                       ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40'
-                       : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                       ? 'bg-emerald-600 border-emerald-600 text-white'
+                       : 'border-[#E2E8F0] bg-white text-[#071A4B] hover:border-[#071A4B]'
                    }`}
                  >
-                   <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                   <span className={`w-2 h-2 rounded-full ${selectedTemplateTab === 'evaluation' ? 'bg-white' : 'bg-emerald-500'}`}></span>
                    <span>4. ส่งแบบประเมินผล</span>
                  </button>
                </div>
 
                {/* Active Editor Card */}
-               <div className="border border-slate-200 p-6 rounded-2xl bg-white space-y-4 shadow-sm">
+               <div className="border border-[#E2E8F0] p-6 rounded-2xl bg-white space-y-4 shadow-xs">
                  {selectedTemplateTab === 'register' && (
                    <div className="space-y-4">
-                     <div className="border-b border-slate-100 pb-2">
-                       <h4 className="text-sm font-black text-slate-800">1. อีเมลยืนยันการลงทะเบียนสำเร็จ (Registration Template)</h4>
+                     <div className="border-b border-[#E2E8F0] pb-2">
+                       <h4 className="text-sm font-extrabold text-[#071A4B]">1. อีเมลยืนยันการลงทะเบียนสำเร็จ (Registration Template)</h4>
                        <p className="text-xs text-slate-400 mt-0.5">ส่งหาผู้ใช้ทันทีหลังจากกดลงทะเบียนเรียนผ่านพอร์ทัลผู้เรียนสำเร็จ</p>
                      </div>
                      <div className="space-y-1.5">
-                       <label className="text-[11px] font-bold text-slate-700 block">หัวเรื่องอีเมล (Subject Line)</label>
+                       <label className="text-[11px] font-bold text-[#071A4B] block">หัวเรื่องอีเมล (Subject Line)</label>
                        <input
                          type="text"
                          value={registerSubject}
                          onChange={(e) => setRegisterSubject(e.target.value)}
-                         className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                         className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs font-bold text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                          placeholder="ป้อนหัวข้อจดหมาย..."
                        />
                      </div>
                      <div className="space-y-1.5">
-                       <label className="text-[11px] font-bold text-slate-700 block">เนื้อหาจดหมายแบบ HTML (HTML Code)</label>
-                       <textarea
-                         rows={14}
+                       <label className="text-[11px] font-bold text-[#071A4B] block">เนื้อหาจดหมาย (Visual Editor &amp; HTML)</label>
+                       <VisualHtmlEditor
                          value={registerHtml}
-                         onChange={(e) => setRegisterHtml(e.target.value)}
-                         className="w-full max-h-[420px] bg-slate-50/50 border border-slate-200 p-2.5 rounded-lg text-xs text-slate-850 font-mono focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                         placeholder="พิมพ์โค้ด HTML ของอีเมล..."
+                         onChange={setRegisterHtml}
+                         variables={SETTINGS_TEMPLATE_VARIABLES}
+                         defaultValue={DEFAULT_REGISTER_HTML}
+                         minHeightClass="min-h-[280px]"
+                         maxHeightClass="max-h-[420px]"
+                         placeholder="พิมพ์เนื้อหาอีเมลยืนยันการลงทะเบียน..."
                        />
                      </div>
                    </div>
@@ -9480,28 +10539,30 @@ export default function AdminPortal({
 
                  {selectedTemplateTab === 'checkin' && (
                    <div className="space-y-4">
-                     <div className="border-b border-slate-100 pb-2">
-                       <h4 className="text-sm font-black text-slate-800">2. อีเมลแจ้งประวัติการเช็คอินเข้าเรียนสำเร็จ (Check-In Template)</h4>
+                     <div className="border-b border-[#E2E8F0] pb-2">
+                       <h4 className="text-sm font-extrabold text-[#071A4B]">2. อีเมลแจ้งประวัติการเช็คอินเข้าเรียนสำเร็จ (Check-In Template)</h4>
                        <p className="text-xs text-slate-400 mt-0.5">ส่งหาผู้เรียนอัตโนมัติทันทีที่สแกนเช็คอินหน้าห้องอบรมสัมมนาเสร็จสิ้น</p>
                      </div>
                      <div className="space-y-1.5">
-                       <label className="text-[11px] font-bold text-slate-700 block">หัวเรื่องอีเมล (Subject Line)</label>
+                       <label className="text-[11px] font-bold text-[#071A4B] block">หัวเรื่องอีเมล (Subject Line)</label>
                        <input
                          type="text"
                          value={checkinSubject}
                          onChange={(e) => setCheckinSubject(e.target.value)}
-                         className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                         className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs font-bold text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                          placeholder="ป้อนหัวข้อจดหมาย..."
                        />
                      </div>
                      <div className="space-y-1.5">
-                       <label className="text-[11px] font-bold text-slate-700 block">เนื้อหาจดหมายแบบ HTML (HTML Code)</label>
-                       <textarea
-                         rows={14}
+                       <label className="text-[11px] font-bold text-[#071A4B] block">เนื้อหาจดหมาย (Visual Editor &amp; HTML)</label>
+                       <VisualHtmlEditor
                          value={checkinHtml}
-                         onChange={(e) => setCheckinHtml(e.target.value)}
-                         className="w-full max-h-[420px] bg-slate-50/50 border border-slate-200 p-2.5 rounded-lg text-xs text-slate-850 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                         placeholder="พิมพ์โค้ด HTML ของอีเมล..."
+                         onChange={setCheckinHtml}
+                         variables={SETTINGS_TEMPLATE_VARIABLES}
+                         defaultValue={DEFAULT_CHECKIN_HTML}
+                         minHeightClass="min-h-[280px]"
+                         maxHeightClass="max-h-[420px]"
+                         placeholder="พิมพ์เนื้อหาอีเมลเช็คอิน..."
                        />
                      </div>
                    </div>
@@ -9509,28 +10570,30 @@ export default function AdminPortal({
 
                  {selectedTemplateTab === 'reminder' && (
                    <div className="space-y-4">
-                     <div className="border-b border-slate-100 pb-2">
-                       <h4 className="text-sm font-black text-slate-800">3. อีเมลเตรียมความพร้อมก่อนวันเข้าอบรม (Reminder Template)</h4>
+                     <div className="border-b border-[#E2E8F0] pb-2">
+                       <h4 className="text-sm font-extrabold text-[#071A4B]">3. อีเมลเตรียมความพร้อมก่อนวันเข้าอบรม (Reminder Template)</h4>
                        <p className="text-xs text-slate-400 mt-0.5">ใช้เป็นแม่แบบในการส่งจดหมายแจ้งเตือนล่วงหน้าก่อนวันอบรมสัมมนาจริง (สามารถแก้ไขในป๊อปอัปก่อนส่งได้อีกครั้ง)</p>
                      </div>
                      <div className="space-y-1.5">
-                       <label className="text-[11px] font-bold text-slate-700 block">หัวเรื่องอีเมล (Subject Line)</label>
+                       <label className="text-[11px] font-bold text-[#071A4B] block">หัวเรื่องอีเมล (Subject Line)</label>
                        <input
                          type="text"
                          value={reminderSubject}
                          onChange={(e) => setReminderSubject(e.target.value)}
-                         className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                         className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs font-bold text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                          placeholder="ป้อนหัวข้อจดหมาย..."
                        />
                      </div>
                      <div className="space-y-1.5">
-                       <label className="text-[11px] font-bold text-slate-700 block">เนื้อหาจดหมายแบบ HTML (HTML Code)</label>
-                       <textarea
-                         rows={14}
+                       <label className="text-[11px] font-bold text-[#071A4B] block">เนื้อหาจดหมาย (Visual Editor &amp; HTML)</label>
+                       <VisualHtmlEditor
                          value={reminderHtml}
-                         onChange={(e) => setReminderHtml(e.target.value)}
-                         className="w-full max-h-[420px] bg-slate-50/50 border border-slate-200 p-2.5 rounded-lg text-xs text-slate-850 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                         placeholder="พิมพ์โค้ด HTML ของอีเมล..."
+                         onChange={setReminderHtml}
+                         variables={SETTINGS_TEMPLATE_VARIABLES}
+                         defaultValue={DEFAULT_REMINDER_HTML}
+                         minHeightClass="min-h-[280px]"
+                         maxHeightClass="max-h-[420px]"
+                         placeholder="พิมพ์เนื้อหาอีเมลแจ้งเตือนก่อนเข้าอบรม..."
                        />
                      </div>
                    </div>
@@ -9538,28 +10601,30 @@ export default function AdminPortal({
 
                  {selectedTemplateTab === 'evaluation' && (
                    <div className="space-y-4">
-                     <div className="border-b border-slate-100 pb-2">
-                       <h4 className="text-sm font-black text-slate-800">4. อีเมลส่งฟอร์มประเมินความพึงพอใจการอบรม (Evaluation Template)</h4>
+                     <div className="border-b border-[#E2E8F0] pb-2">
+                       <h4 className="text-sm font-extrabold text-[#071A4B]">4. อีเมลส่งฟอร์มประเมินความพึงพอใจการอบรม (Evaluation Template)</h4>
                        <p className="text-xs text-slate-400 mt-0.5">ใช้เป็นแม่แบบส่งลิงก์ตอบแบบประเมินรายบุคคลเพื่อรวบรวมเป็นงานวิจัยเชิงวิจัย (สามารถแก้ไขก่อนกระจายส่งได้)</p>
                      </div>
                      <div className="space-y-1.5">
-                       <label className="text-[11px] font-bold text-slate-700 block">หัวเรื่องอีเมล (Subject Line)</label>
+                       <label className="text-[11px] font-bold text-[#071A4B] block">หัวเรื่องอีเมล (Subject Line)</label>
                        <input
                          type="text"
                          value={evaluationSubject}
                          onChange={(e) => setEvaluationSubject(e.target.value)}
-                         className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                         className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs font-bold text-[#071A4B] focus:outline-none focus:border-[#EA580C]"
                          placeholder="ป้อนหัวข้อจดหมาย..."
                        />
                      </div>
                      <div className="space-y-1.5">
-                       <label className="text-[11px] font-bold text-slate-700 block">เนื้อหาจดหมายแบบ HTML (HTML Code)</label>
-                       <textarea
-                         rows={14}
+                       <label className="text-[11px] font-bold text-[#071A4B] block">เนื้อหาจดหมาย (Visual Editor &amp; HTML)</label>
+                       <VisualHtmlEditor
                          value={evaluationHtml}
-                         onChange={(e) => setEvaluationHtml(e.target.value)}
-                         className="w-full max-h-[420px] bg-slate-50/50 border border-slate-200 p-2.5 rounded-lg text-xs text-slate-850 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                         placeholder="พิมพ์โค้ด HTML ของอีเมล..."
+                         onChange={setEvaluationHtml}
+                         variables={SETTINGS_TEMPLATE_VARIABLES}
+                         defaultValue={DEFAULT_EVALUATION_HTML}
+                         minHeightClass="min-h-[280px]"
+                         maxHeightClass="max-h-[420px]"
+                         placeholder="พิมพ์เนื้อหาอีเมลส่งแบบประเมิน..."
                        />
                      </div>
                    </div>
@@ -9568,22 +10633,22 @@ export default function AdminPortal({
              </div>
 
              {/* DYNAMIC VARIABLE REPLACEMENT INSTRUCTIONS */}
-             <div className="bg-orange-50/70 border border-orange-100/80 p-4 rounded-xl text-[11px] text-slate-700 space-y-1.5 leading-relaxed">
-               <span className="font-extrabold text-orange-850 block text-xs">💡 คำจำเพาะตัวแปรอัตโนมัติ (Dynamic Replacement Tokens):</span>
+             <div className="bg-orange-50/60 border border-orange-200/80 p-4 rounded-2xl text-[11px] text-[#071A4B] space-y-1.5 leading-relaxed">
+               <span className="font-extrabold text-[#EA580C] block text-xs">💡 คำจำเพาะตัวแปรอัตโนมัติ (Dynamic Replacement Tokens):</span>
                <p>สามารถป้อนคำในวงเล็บปีกกาด้านล่าง เพื่อให้ระบบแทนค่าข้อมูลผู้เรียนและรายละเอียดหลักสูตรแยกรายบุคคลโดยอัตโนมัติเมื่อจัดส่ง:</p>
                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 font-mono text-[10px]">
-                 <div><code className="text-orange-700 font-bold">{`{learner_name}`}</code> : ชื่อผู้รับ (ชื่อครู)</div>
-                 <div><code className="text-orange-700 font-bold">{`{course_title}`}</code> : ชื่อวิชาหลักสูตรอบรม</div>
-                 <div><code className="text-orange-700 font-bold">{`{course_date}`}</code> : วันที่ดำเนินงานจัด</div>
-                 <div><code className="text-orange-700 font-bold">{`{course_time}`}</code> : ช่วงเวลาดำเนินงานจัด</div>
-                 <div><code className="text-orange-700 font-bold">{`{course_location}`}</code> : สถานที่จัดอบรม</div>
-                 <div><code className="text-orange-700 font-bold">{`{course_description}`}</code> : รายละเอียดวิชา</div>
-                 <div><code className="text-orange-700 font-bold">{`{survey_link}`}</code> : ลิงก์ทำแบบประเมินความพึงพอใจ</div>
-                 <div><code className="text-orange-700 font-bold">{`{learner_certificate_link}`}</code> : ลิงก์ดาวน์โหลดเกียรติบัตร</div>
+                 <div><code className="text-[#EA580C] font-bold">{`{learner_name}`}</code> : ชื่อผู้รับ (ชื่อครู)</div>
+                 <div><code className="text-[#EA580C] font-bold">{`{course_title}`}</code> : ชื่อวิชาหลักสูตรอบรม</div>
+                 <div><code className="text-[#EA580C] font-bold">{`{course_date}`}</code> : วันที่ดำเนินงานจัด</div>
+                 <div><code className="text-[#EA580C] font-bold">{`{course_time}`}</code> : ช่วงเวลาดำเนินงานจัด</div>
+                 <div><code className="text-[#EA580C] font-bold">{`{course_location}`}</code> : สถานที่จัดอบรม</div>
+                 <div><code className="text-[#EA580C] font-bold">{`{course_description}`}</code> : รายละเอียดวิชา</div>
+                 <div><code className="text-[#EA580C] font-bold">{`{survey_link}`}</code> : ลิงก์ทำแบบประเมินความพึงพอใจ</div>
+                 <div><code className="text-[#EA580C] font-bold">{`{learner_certificate_link}`}</code> : ลิงก์ดาวน์โหลดเกียรติบัตร</div>
                </div>
              </div>
 
-             <div className="flex gap-3 justify-end pt-2 border-t border-slate-100">
+             <div className="flex gap-3 justify-end pt-3 border-t border-[#E2E8F0]">
                <button
                  type="button"
                  onClick={() => {
@@ -9607,7 +10672,7 @@ export default function AdminPortal({
                      }
                    );
                  }}
-                 className="px-4 h-10 text-xs border border-slate-200 bg-white hover:bg-slate-50 text-slate-650 rounded-lg transition font-bold cursor-pointer"
+                 className="px-4 h-10 text-xs border border-[#E2E8F0] bg-white hover:border-[#071A4B] hover:bg-slate-50 text-[#071A4B] rounded-full transition font-bold cursor-pointer"
                >
                  รีเซ็ตกลับเป็นค่าเริ่มต้น
                </button>
@@ -9615,16 +10680,16 @@ export default function AdminPortal({
                  type="button"
                  disabled={savingTemplate}
                  onClick={handleSaveEmailTemplates}
-                 className="px-6 h-10 text-xs bg-orange-600 hover:bg-orange-700 disabled:bg-slate-300 text-white font-extrabold rounded-lg transition flex items-center gap-1.5 shadow cursor-pointer"
+                 className="px-6 h-10 text-xs bg-[#F97316] hover:bg-[#EA580C] disabled:bg-slate-300 text-white font-bold rounded-full transition flex items-center gap-1.5 shadow-sm cursor-pointer"
                >
                  {savingTemplate ? 'กำลังบันทึก...' : '💾 บันทึกเทมเพลตจดหมาย'}
                </button>
              </div>
              {saveTemplateSuccess && (
-               <p className="text-xs text-emerald-600 font-black text-right">✓ บันทึกโครงสร้างเทมเพลตจดหมายและเชื่อมระบบเรียบร้อย!</p>
+               <p className="text-xs text-emerald-600 font-extrabold text-right">✓ บันทึกโครงสร้างเทมเพลตจดหมายและเชื่อมระบบเรียบร้อย!</p>
              )}
 
-            <hr className="border-slate-100" />
+            <hr className="border-[#E2E8F0]" />
 
             <AppsScriptGuide />
           </div>
@@ -9634,40 +10699,45 @@ export default function AdminPortal({
 
       {/* QR MODAL GENERATION & DISPLAY FOR COURSE CHECK-INS */}
       {showQrModal && qrCourse && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full uppercase">
-                  Check-In QR Code
-                </span>
-                <h3 className="text-base font-extrabold text-slate-800 mt-1">
-                  โค้ดสแกนประจำวิทยากรอบรม
-                </h3>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#E2E8F0] flex flex-col">
+            <div className="p-6 bg-[#F5F7FA] border-b border-[#E2E8F0] flex justify-between items-start gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                  <QrCode className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">
+                    Check-In QR Code
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#071A4B] mt-0.5">
+                    โค้ดสแกนประจำวิทยากรอบรม
+                  </h3>
+                </div>
               </div>
-              <button onClick={() => { setShowQrModal(false); setQrCourse(null); setCopiedLink(false); }} className="text-slate-400 hover:text-slate-700 p-2 text-lg font-bold min-h-[44px]">✕</button>
+              <button onClick={() => { setShowQrModal(false); setQrCourse(null); setCopiedLink(false); }} className="text-slate-400 hover:text-[#071A4B] p-2 text-lg font-bold min-h-[44px] cursor-pointer">✕</button>
             </div>
 
             <div className="p-6 flex flex-col items-center text-center space-y-4 overflow-y-auto">
-              <p className="text-sm font-bold text-slate-900 leading-snug">{qrCourse.title}</p>
+              <p className="text-sm font-bold text-[#071A4B] leading-snug">{qrCourse.title}</p>
               
               {/* Real high-quality scannable QR Code */}
-              <div className="p-4 bg-white border border-slate-200 rounded-3xl flex flex-col items-center justify-center shadow-inner">
+              <div className="p-4 bg-[#F5F7FA] border border-[#E2E8F0] rounded-2xl flex flex-col items-center justify-center">
                 <img 
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${getCleanOrigin()}/?courseId=${qrCourse.id}&action=checkin`)}`}
                   alt="Check-In QR Code"
-                  className="w-56 h-56 rounded-2xl object-contain bg-white border border-slate-100 p-2"
+                  className="w-56 h-56 rounded-xl object-contain bg-white border border-[#E2E8F0] p-2"
                   referrerPolicy="no-referrer"
                 />
               </div>
 
               {/* Time validator indicators */}
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left w-full text-xs text-amber-900">
-                <p className="font-bold flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-amber-700 mt-0.5 flex-shrink-0" />
+                <p className="font-bold flex items-center gap-1.5">
+                  <Clock className="h-4 w-4 text-[#EA580C] shrink-0" />
                   <span>สัญกรณ์ตรวจสอบเวลา Time-based Validation</span>
                 </p>
-                <p className="text-[11px] text-amber-800 mt-0.5">
+                <p className="text-[11px] text-amber-800 mt-1 tabular-nums">
                   ช่วงเวลาเป้าหมายเปิดเช็คอิน: {qrCourse.qrOpenTime ? new Date(qrCourse.qrOpenTime).toLocaleString('th-TH') : 'ฟรีไม่ล็อกเริ่มต้น'}<br />
                   ช่วงสิ้นสุดระบบล็อก: {qrCourse.qrCloseTime ? new Date(qrCourse.qrCloseTime).toLocaleString('th-TH') : 'ไม่มีล็อกปิด'}
                 </p>
@@ -9682,13 +10752,18 @@ export default function AdminPortal({
                     setCopiedLink(true);
                     setTimeout(() => setCopiedLink(false), 2000);
                   }}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition duration-150 flex items-center justify-center gap-1.5 min-h-[44px]"
+                  className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold py-2.5 px-5 rounded-full text-xs transition duration-150 flex items-center justify-between gap-2 min-h-[44px] cursor-pointer shadow-sm"
                   id="btn-copy-checkin-link"
                 >
-                  {copiedLink ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  <span>{copiedLink ? 'คัดลอกลิงก์สแกนแล้ว!' : 'คัดลอกลิงก์สำหรับสแกนเข้างาน'}</span>
+                  <span className="flex items-center gap-2">
+                    {copiedLink ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    <span>{copiedLink ? 'คัดลอกลิงก์สแกนแล้ว!' : 'คัดลอกลิงก์สำหรับสแกนเข้างาน'}</span>
+                  </span>
+                  <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
                 </button>
-                <p className="text-[10px] text-slate-400">เมื่อผู้ใช้สแกนผ่านลิงก์นี้ ระบบจะบันทึกเช็คอินสัญชาตลักษณ์และเปิดแบบประเมินผู้ใช้ทันที</p>
+                <p className="text-[10px] text-slate-500">เมื่อผู้ใช้สแกนผ่านลิงก์นี้ ระบบจะบันทึกเช็คอินสัญชาตลักษณ์และเปิดแบบประเมินผู้ใช้ทันที</p>
               </div>
             </div>
           </div>
@@ -9697,40 +10772,45 @@ export default function AdminPortal({
 
       {/* QR MODAL GENERATION & DISPLAY FOR COURSE EVALUATION / SURVEY */}
       {showEvalQrModal && qrCourse && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full uppercase">
-                  Evaluation QR Code
-                </span>
-                <h3 className="text-base font-extrabold text-slate-800 mt-1">
-                  โค้ดสแกนเพื่อทำแบบประเมินผลหลังอบรม
-                </h3>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#E2E8F0] flex flex-col">
+            <div className="p-6 bg-[#F5F7FA] border-b border-[#E2E8F0] flex justify-between items-start gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <FileSpreadsheet className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-emerald-600 block">
+                    Evaluation QR Code
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#071A4B] mt-0.5">
+                    โค้ดสแกนเพื่อทำแบบประเมินผลหลังอบรม
+                  </h3>
+                </div>
               </div>
-              <button onClick={() => { setShowEvalQrModal(false); setQrCourse(null); setCopiedLink(false); }} className="text-slate-400 hover:text-slate-700 p-2 text-lg font-bold min-h-[44px]">✕</button>
+              <button onClick={() => { setShowEvalQrModal(false); setQrCourse(null); setCopiedLink(false); }} className="text-slate-400 hover:text-[#071A4B] p-2 text-lg font-bold min-h-[44px] cursor-pointer">✕</button>
             </div>
 
             <div className="p-6 flex flex-col items-center text-center space-y-4 overflow-y-auto">
-              <p className="text-sm font-bold text-slate-900 leading-snug">{qrCourse.title}</p>
+              <p className="text-sm font-bold text-[#071A4B] leading-snug">{qrCourse.title}</p>
               
               {/* Real high-quality scannable QR Code */}
-              <div className="p-4 bg-white border border-slate-200 rounded-3xl flex flex-col items-center justify-center shadow-inner">
+              <div className="p-4 bg-[#F5F7FA] border border-[#E2E8F0] rounded-2xl flex flex-col items-center justify-center">
                 <img 
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${getCleanOrigin()}/?courseId=${qrCourse.id}&action=feedback`)}`}
                   alt="Evaluation QR Code"
-                  className="w-56 h-56 rounded-2xl object-contain bg-white border border-slate-100 p-2"
+                  className="w-56 h-56 rounded-xl object-contain bg-white border border-[#E2E8F0] p-2"
                   referrerPolicy="no-referrer"
                 />
               </div>
 
               {/* Information text */}
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-left w-full text-xs text-emerald-900">
-                <p className="font-bold flex items-center gap-1">
-                  <FileSpreadsheet className="h-4 w-4 text-emerald-700 mt-0.5 flex-shrink-0" />
+                <p className="font-bold flex items-center gap-1.5">
+                  <FileSpreadsheet className="h-4 w-4 text-emerald-700 shrink-0" />
                   <span>สแกนตอบแบบประเมินความพึงพอใจ</span>
                 </p>
-                <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                <p className="text-[11px] text-emerald-800 mt-1 leading-relaxed">
                   ผู้เข้าร่วมอบรมสามารถใช้สมาร์ทโฟนสแกน QR Code นี้ เพื่อทำแบบประเมินความพึงพอใจหลังเสร็จสิ้นการอบรมได้ทันที โดยระบบจะนำทางไปยังหน้าประเมินผลของหลักสูตรนี้โดยตรง
                 </p>
               </div>
@@ -9744,11 +10824,16 @@ export default function AdminPortal({
                     setCopiedLink(true);
                     setTimeout(() => setCopiedLink(false), 2000);
                   }}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition duration-150 flex items-center justify-center gap-1.5 min-h-[44px]"
+                  className="w-full bg-[#071A4B] hover:bg-[#0D2566] text-white font-bold py-2.5 px-5 rounded-full text-xs transition duration-150 flex items-center justify-between gap-2 min-h-[44px] cursor-pointer shadow-sm"
                   id="btn-copy-feedback-link"
                 >
-                  {copiedLink ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  <span>{copiedLink ? 'คัดลอกลิงก์แบบประเมินแล้ว!' : 'คัดลอกลิงก์แบบประเมินความพึงพอใจ'}</span>
+                  <span className="flex items-center gap-2">
+                    {copiedLink ? <CheckCircle className="h-4 w-4 text-[#EA580C]" /> : <Copy className="h-4 w-4 text-[#EA580C]" />}
+                    <span>{copiedLink ? 'คัดลอกลิงก์แบบประเมินแล้ว!' : 'คัดลอกลิงก์แบบประเมินความพึงพอใจ'}</span>
+                  </span>
+                  <span className="w-7 h-7 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
                 </button>
               </div>
             </div>
@@ -9758,21 +10843,26 @@ export default function AdminPortal({
 
       {/* MANUAL REGISTER PARTICIPANT MODAL */}
       {showManualRegisterModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                  Manual Registration
-                </span>
-                <h3 className="text-base font-extrabold text-slate-800 mt-2 leading-snug">
-                  เพิ่มผู้เข้าอบรมด้วยตนเอง (Manual)
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  หลักสูตร: <span className="font-bold text-slate-700">{courses.find(c => c.id === selectedCourseId)?.title}</span>
-                </p>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#E2E8F0] flex flex-col">
+            <div className="p-6 bg-[#F5F7FA] border-b border-[#E2E8F0] flex justify-between items-start gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <UserPlus className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">
+                    Manual Registration
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#071A4B] mt-0.5 leading-snug">
+                    เพิ่มผู้เข้าอบรมด้วยตนเอง (Manual)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    หลักสูตร: <span className="font-bold text-[#071A4B]">{courses.find(c => c.id === selectedCourseId)?.title}</span>
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setShowManualRegisterModal(false)} className="text-slate-400 hover:text-slate-700 p-2 text-lg font-bold min-h-[44px]">✕</button>
+              <button onClick={() => setShowManualRegisterModal(false)} className="text-slate-400 hover:text-[#071A4B] p-2 text-lg font-bold min-h-[44px] cursor-pointer">✕</button>
             </div>
 
             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
@@ -9793,7 +10883,7 @@ export default function AdminPortal({
                     placeholder="พิมพ์รหัสพนักงาน, ชื่อ-นามสกุล, อีเมล หรือหน่วยงาน..."
                     value={manualSearchQuery}
                     onChange={(e) => setManualSearchQuery(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 pl-9 pr-8 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500 min-h-[40px] font-bold shadow-2xs"
+                    className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 pl-9 pr-8 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] min-h-[40px] font-bold"
                   />
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                     <Search className="h-4 w-4" />
@@ -9802,7 +10892,7 @@ export default function AdminPortal({
                     <button
                       type="button"
                       onClick={() => setManualSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-extrabold p-1 text-xs"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-extrabold p-1 text-xs cursor-pointer"
                     >
                       ✕
                     </button>
@@ -9810,7 +10900,7 @@ export default function AdminPortal({
                 </div>
 
                 {/* Filtered List Selection Area */}
-                <div className="border border-slate-150 rounded-xl bg-slate-50/50 max-h-40 overflow-y-auto divide-y divide-slate-100 shadow-inner">
+                <div className="border border-[#E2E8F0] rounded-xl bg-[#F5F7FA] max-h-40 overflow-y-auto divide-y divide-[#E2E8F0]">
                   {(() => {
                     const query = manualSearchQuery.trim().toLowerCase();
                     const filtered = personnel.filter(p => {
@@ -9846,19 +10936,19 @@ export default function AdminPortal({
                             });
                             setManualRegisterError('');
                           }}
-                          className={`w-full text-left p-2 px-3 hover:bg-emerald-50/65 text-xs transition flex flex-col gap-0.5 cursor-pointer ${
-                            isSelected ? 'bg-emerald-50 border-l-4 border-emerald-500' : ''
+                          className={`w-full text-left p-2 px-3 hover:bg-orange-50/70 text-xs transition flex flex-col gap-0.5 cursor-pointer ${
+                            isSelected ? 'bg-orange-50 border-l-4 border-[#EA580C]' : ''
                           }`}
                         >
-                          <div className="font-extrabold text-slate-800 flex items-center justify-between">
-                            <span className={isSelected ? 'text-emerald-700 font-black' : ''}>{p.name}</span>
-                            <span className="text-[10px] bg-slate-200/70 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold">
+                          <div className="font-extrabold text-[#071A4B] flex items-center justify-between">
+                            <span className={isSelected ? 'text-[#EA580C] font-black' : ''}>{p.name}</span>
+                            <span className="text-[10px] bg-slate-200/70 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold tabular-nums">
                               {p.id}
                             </span>
                           </div>
                           <div className="text-[10px] text-slate-500 flex items-center justify-between mt-0.5">
                             <span className="truncate max-w-[200px]">{p.email}</span>
-                            <span className="text-emerald-600 font-semibold truncate max-w-[180px]">{p.department}</span>
+                            <span className="text-[#071A4B] font-semibold truncate max-w-[180px]">{p.department}</span>
                           </div>
                         </button>
                       );
@@ -9867,7 +10957,7 @@ export default function AdminPortal({
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 my-2 pt-2"></div>
+              <div className="border-t border-[#E2E8F0] my-2 pt-2"></div>
 
               {/* Personnel ID */}
               <div className="space-y-1">
@@ -9877,7 +10967,7 @@ export default function AdminPortal({
                   placeholder="เช่น 10502011"
                   value={manualRegisterForm.personnelId}
                   onChange={(e) => setManualRegisterForm({ ...manualRegisterForm, personnelId: e.target.value })}
-                  className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500 min-h-[40px] font-bold"
+                  className="w-full bg-white border border-[#E2E8F0] p-3 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] min-h-[40px] font-bold"
                 />
               </div>
 
@@ -9889,7 +10979,7 @@ export default function AdminPortal({
                   placeholder="เช่น สมชาย ใจดี"
                   value={manualRegisterForm.name}
                   onChange={(e) => setManualRegisterForm({ ...manualRegisterForm, name: e.target.value })}
-                  className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500 min-h-[40px] font-bold"
+                  className="w-full bg-white border border-[#E2E8F0] p-3 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] min-h-[40px] font-bold"
                 />
               </div>
 
@@ -9901,7 +10991,7 @@ export default function AdminPortal({
                   placeholder="เช่น somchai.t@bu.ac.th"
                   value={manualRegisterForm.email}
                   onChange={(e) => setManualRegisterForm({ ...manualRegisterForm, email: e.target.value })}
-                  className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500 min-h-[40px] font-bold"
+                  className="w-full bg-white border border-[#E2E8F0] p-3 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] min-h-[40px] font-bold"
                 />
               </div>
 
@@ -9913,20 +11003,20 @@ export default function AdminPortal({
                   placeholder="เช่น คณะเทคโนโลยีสารสนเทศและนวัตกรรม"
                   value={manualRegisterForm.department}
                   onChange={(e) => setManualRegisterForm({ ...manualRegisterForm, department: e.target.value })}
-                  className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500 min-h-[40px] font-bold"
+                  className="w-full bg-white border border-[#E2E8F0] p-3 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] min-h-[40px] font-bold"
                 />
               </div>
 
-              <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 text-[11px] text-emerald-800 leading-relaxed font-semibold">
-                🔔 <strong className="text-emerald-900">หมายเหตุสำคัญ:</strong> หลังจากบันทึกชื่อผู้เข้าอบรมแล้ว ระบบจะส่งอีเมลแจ้งยืนยันสิทธิ์ พร้อมส่งลิงก์ปฏิทิน Google Calendar นัดหมายสัมมนาไปหาบุคลากรคนดังกล่าวแบบอัตโนมัติทันที
+              <div className="bg-[#F5F7FA] p-4 rounded-xl border border-[#E2E8F0] text-[11px] text-slate-700 leading-relaxed font-semibold">
+                🔔 <strong className="text-[#071A4B]">หมายเหตุสำคัญ:</strong> หลังจากบันทึกชื่อผู้เข้าอบรมแล้ว ระบบจะส่งอีเมลแจ้งยืนยันสิทธิ์ พร้อมส่งลิงก์ปฏิทิน Google Calendar นัดหมายสัมมนาไปหาบุคลากรคนดังกล่าวแบบอัตโนมัติทันที
               </div>
             </div>
 
-            <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+            <div className="p-6 bg-[#F5F7FA] border-t border-[#E2E8F0] flex gap-3">
               <button
                 type="button"
                 onClick={() => setShowManualRegisterModal(false)}
-                className="flex-1 h-11 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition flex items-center justify-center cursor-pointer shadow-sm"
+                className="px-5 h-11 bg-white hover:bg-slate-50 border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs transition flex items-center justify-center cursor-pointer"
               >
                 ยกเลิก
               </button>
@@ -9934,9 +11024,12 @@ export default function AdminPortal({
                 type="button"
                 onClick={handleSaveManualRegistration}
                 disabled={manualRegisterSubmitting}
-                className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 text-white font-black rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                className="flex-1 h-11 bg-[#F97316] hover:bg-[#EA580C] disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold px-5 rounded-full text-xs transition flex items-center justify-between gap-2 cursor-pointer shadow-sm"
               >
-                {manualRegisterSubmitting ? 'กำลังจัดส่งและลงทะเบียน...' : 'ลงทะเบียนและส่งอีเมลยืนยัน'}
+                <span>{manualRegisterSubmitting ? 'กำลังจัดส่งและลงทะเบียน...' : 'ลงทะเบียนและส่งอีเมลยืนยัน'}</span>
+                <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </span>
               </button>
             </div>
           </div>
@@ -9945,21 +11038,26 @@ export default function AdminPortal({
 
       {/* 1. SEND REMINDER EMAIL MODAL */}
       {showReminderModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <span className="text-xs font-black text-blue-700 bg-blue-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                  LD Reminder Campaign
-                </span>
-                <h3 className="text-base font-extrabold text-slate-800 mt-2 leading-snug">
-                  ส่งอีเมลแจ้งเตือนผู้ลงทะเบียนหลักสูตร
-                </h3>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#E2E8F0] flex flex-col">
+            <div className="p-6 bg-[#F5F7FA] border-b border-[#E2E8F0] flex justify-between items-start gap-3 shrink-0">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">
+                    LD Reminder Campaign
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#071A4B] mt-0.5 leading-snug">
+                    ส่งอีเมลแจ้งเตือนผู้ลงทะเบียนหลักสูตร
+                  </h3>
+                </div>
               </div>
-              <button onClick={() => setShowReminderModal(false)} className="text-slate-400 hover:text-slate-700 p-2 text-lg font-bold min-h-[44px]">✕</button>
+              <button onClick={() => setShowReminderModal(false)} className="text-slate-400 hover:text-[#071A4B] p-2 text-lg font-bold min-h-[44px] cursor-pointer">✕</button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto">
+            <div className="p-6 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
               {(() => {
                 const selCourse = courses.find(c => c.id === selectedCourseId);
                 const allRegs = registrations.filter(r => r.courseId === selectedCourseId);
@@ -9970,48 +11068,48 @@ export default function AdminPortal({
 
                 return (
                   <>
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs text-slate-650 space-y-1.5 leading-relaxed">
-                      <p><strong>ประเภทการคัดกรอง:</strong> {checkedCount > 0 ? `ส่งแบบเจาะจงเฉพาะผู้เลือก (${checkedCount} คน)` : `ส่งตามผลลัพธ์คัดกรองทั้งหมด (${finalRecipients.length} คน)`}</p>
-                      <p><strong>หลักสูตรต้นทาง:</strong> {selCourse?.title}</p>
-                      <p><strong>วิทยากรผู้สอน:</strong> {selCourse?.speaker}</p>
+                    <div className="bg-[#F5F7FA] p-4 rounded-xl border border-[#E2E8F0] text-xs text-slate-700 space-y-1.5 leading-relaxed tabular-nums">
+                      <p><strong className="text-[#071A4B]">ประเภทการคัดกรอง:</strong> {checkedCount > 0 ? `ส่งแบบเจาะจงเฉพาะผู้เลือก (${checkedCount} คน)` : `ส่งตามผลลัพธ์คัดกรองทั้งหมด (${finalRecipients.length} คน)`}</p>
+                      <p><strong className="text-[#071A4B]">หลักสูตรต้นทาง:</strong> {selCourse?.title}</p>
+                      <p><strong className="text-[#071A4B]">วิทยากรผู้สอน:</strong> {selCourse?.speaker}</p>
                     </div>
 
                     {/* Modal Send Type Toggle */}
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-slate-500 block">รูปแบบการจัดส่ง (Email Dispatch Method) *</label>
-                      <div className="grid grid-cols-2 gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                      <div className="grid grid-cols-2 gap-2 bg-[#F5F7FA] p-1 rounded-xl border border-[#E2E8F0]">
                         <button
                           type="button"
                           onClick={() => setModalSendType('individual')}
-                          className={`py-1.5 px-2 rounded-md text-center text-[11px] font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
+                          className={`py-1.5 px-2 rounded-lg text-center text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                             modalSendType === 'individual'
-                              ? 'bg-white text-blue-600 shadow-2xs border border-slate-200/50'
-                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                              ? 'bg-[#071A4B] text-white shadow-xs'
+                              : 'text-slate-600 hover:text-[#071A4B] hover:bg-white'
                           }`}
                         >
                           <span className="truncate">✉️ ส่งแยกรายบุคคล</span>
-                          <span className="text-[8px] opacity-75 font-normal">ระบุชื่อรายคน</span>
+                          <span className="text-[8px] opacity-80 font-normal">ระบุชื่อรายคน</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setModalSendType('group_to')}
-                          className={`py-1.5 px-2 rounded-md text-center text-[11px] font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
+                          className={`py-1.5 px-2 rounded-lg text-center text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                             modalSendType === 'group_to'
-                              ? 'bg-white text-blue-600 shadow-2xs border border-slate-200/50'
-                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                              ? 'bg-[#071A4B] text-white shadow-xs'
+                              : 'text-slate-600 hover:text-[#071A4B] hover:bg-white'
                           }`}
                         >
                           <span className="truncate">📬 ส่งกลุ่ม To ทุกคน</span>
-                          <span className="text-[8px] opacity-75 font-normal">To ทุกคน (เรียน อาจารย์ทุกท่าน)</span>
+                          <span className="text-[8px] opacity-80 font-normal">To ทุกคน (เรียน อาจารย์ทุกท่าน)</span>
                         </button>
                       </div>
                     </div>
 
                     {/* CC Admin Toggle */}
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2.5 bg-slate-50/50 rounded-lg border border-slate-150/50">
+                      <div className="flex items-center justify-between p-2.5 bg-[#F5F7FA] rounded-xl border border-[#E2E8F0]">
                         <div className="space-y-0.5">
-                          <span className="text-[11px] font-semibold text-slate-700 block">สำเนาถึงผู้ดูแลระบบ (CC to Admin)</span>
+                          <span className="text-[11px] font-semibold text-[#071A4B] block">สำเนาถึงผู้ดูแลระบบ (CC to Admin)</span>
                           <span className="text-[9px] text-slate-500 block">ส่งสำเนาอีเมลนี้เพื่อใช้เก็บหลักฐาน</span>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer select-none">
@@ -10027,12 +11125,12 @@ export default function AdminPortal({
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                          <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#F97316]"></div>
                         </label>
                       </div>
 
                       {modalCcAdmin && (
-                        <div className="p-2.5 bg-slate-50 border border-slate-150 rounded-lg space-y-2 max-h-36 overflow-y-auto animate-fadeIn">
+                        <div className="p-2.5 bg-[#F5F7FA] border border-[#E2E8F0] rounded-xl space-y-2 max-h-36 overflow-y-auto animate-fadeIn">
                           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">เลือกรายชื่อผู้รับ CC (Admins to CC):</p>
                           {adminsList.length === 0 ? (
                             <p className="text-[10px] text-slate-400 italic">ไม่พบรายชื่อแอดมินในระบบ</p>
@@ -10053,10 +11151,10 @@ export default function AdminPortal({
                                           setModalCcEmails(prev => prev.filter(em => em !== email));
                                         }
                                       }}
-                                      className="rounded text-blue-500 focus:ring-blue-500 h-3 w-3 border-slate-300"
+                                      className="rounded text-[#EA580C] focus:ring-[#EA580C] h-3 w-3 border-slate-300"
                                     />
                                     <span className="truncate">
-                                      <strong>{adm.name}</strong> <span className="text-slate-400 font-mono text-[9px]">({adm.email})</span> {isCurrentUser && <span className="ml-1 text-[9px] px-1 bg-blue-100 text-blue-700 font-bold rounded">คุณ</span>}
+                                      <strong>{adm.name}</strong> <span className="text-slate-400 font-mono text-[9px]">({adm.email})</span> {isCurrentUser && <span className="ml-1 text-[9px] px-1 bg-orange-100 text-[#EA580C] font-bold rounded">คุณ</span>}
                                     </span>
                                   </label>
                                 );
@@ -10068,30 +11166,30 @@ export default function AdminPortal({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-extrabold text-slate-700 block">หัวเรื่องอีเมล (Email Subject)</label>
+                      <label className="text-xs font-extrabold text-[#071A4B] block">หัวเรื่องอีเมล (Email Subject)</label>
                       <input
                         type="text"
                         value={modalEmailSubject}
                         onChange={(e) => setModalEmailSubject(e.target.value)}
-                        className="w-full text-xs text-slate-800 border border-slate-200 p-3 rounded-xl focus:border-blue-500 focus:ring-0 focus:outline-none font-bold"
+                        className="w-full text-xs text-[#071A4B] border border-[#E2E8F0] p-3 rounded-xl focus:border-[#071A4B] focus:ring-0 focus:outline-none font-bold"
                       />
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-extrabold text-slate-700 block">พิมพ์ใจความแจ้งเตือนสำคัญ (รองรับตัวแปรอัตโนมัติ)</label>
-                        <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px]">
+                        <label className="text-xs font-extrabold text-[#071A4B] block">พิมพ์ใจความแจ้งเตือนสำคัญ (รองรับตัวแปรอัตโนมัติ)</label>
+                        <div className="flex items-center gap-1 bg-[#F5F7FA] p-0.5 rounded-full border border-[#E2E8F0] text-[10px]">
                           <button
                             type="button"
                             onClick={() => setModalViewTab('editor')}
-                            className={`px-2 py-0.5 rounded font-bold transition ${modalViewTab === 'editor' ? 'bg-blue-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`px-2.5 py-0.5 rounded-full font-bold transition cursor-pointer ${modalViewTab === 'editor' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                           >
                             ✏️ เขียนเนื้อหา
                           </button>
                           <button
                             type="button"
                             onClick={() => setModalViewTab('preview')}
-                            className={`px-2 py-0.5 rounded font-bold transition ${modalViewTab === 'preview' ? 'bg-blue-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`px-2.5 py-0.5 rounded-full font-bold transition cursor-pointer ${modalViewTab === 'preview' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                           >
                             👁️ ตัวอย่างก่อนส่ง
                           </button>
@@ -10100,34 +11198,36 @@ export default function AdminPortal({
 
                       {modalViewTab === 'editor' ? (
                         <>
-                          <textarea
+                          <VisualHtmlEditor
                             value={modalEmailMessage}
-                            onChange={(e) => setModalEmailMessage(e.target.value)}
-                            rows={7}
-                            className="w-full text-xs text-slate-850 border border-slate-200 p-3 rounded-xl focus:border-blue-500 focus:ring-0 focus:outline-none leading-relaxed font-sans"
-                            placeholder="กรุณากรอกข้อมูลสัญกรณ์..."
+                            onChange={setModalEmailMessage}
+                            variables={COURSE_DISPATCH_VARIABLES}
+                            defaultValue={reminderHtml || DEFAULT_REMINDER_HTML}
+                            minHeightClass="min-h-[180px]"
+                            maxHeightClass="max-h-[320px]"
+                            placeholder="พิมพ์ข้อความแจ้งเตือนก่อนเข้าอบรมที่นี่..."
                           />
                           <ImageToHtmlHelper onInsert={(htmlImg) => setModalEmailMessage(prev => prev + "\n" + htmlImg + "\n")} />
-                          <p className="text-[10px] text-slate-400 font-medium">
-                            * ระบบดำเนินการเปลี่ยนค่าหัวข้ออัตโนมัติ: <code className="text-red-500 font-bold">{`{course_title}`}</code>, <code className="text-red-500 font-bold">{`{date_time}`}</code>, <code className="text-red-500 font-bold">{`{location}`}</code>, <code className="text-red-500 font-bold">{`{speaker}`}</code>, <code className="text-red-500 font-bold">{`{register_link}`}</code>
+                          <p className="text-[10px] text-slate-500 font-medium">
+                            * ระบบดำเนินการเปลี่ยนค่าหัวข้ออัตโนมัติ: <code className="text-[#EA580C] font-bold">{`{course_title}`}</code>, <code className="text-[#EA580C] font-bold">{`{date_time}`}</code>, <code className="text-[#EA580C] font-bold">{`{location}`}</code>, <code className="text-[#EA580C] font-bold">{`{speaker}`}</code>, <code className="text-[#EA580C] font-bold">{`{register_link}`}</code>
                           </p>
-                          <div className="mt-1.5 bg-blue-50/70 border border-blue-100 p-2.5 rounded-lg text-[10px] text-slate-600 space-y-1 leading-normal">
-                            <p className="font-bold text-slate-700">🖼️ วิธีใส่รูปภาพในการแจ้งเตือน:</p>
-                            <p>1. แทรกรูปโปสเตอร์คอร์สนี้อัตโนมัติ: พิมพ์ <code className="text-blue-600 bg-white px-1 py-0.2 rounded font-mono font-bold">{`{course_poster}`}</code> ลงในข้อความได้เลยค่ะ</p>
-                            <p>2. ใส่รูปภาพจากเว็บไซต์ภายนอกด้วย HTML: <code className="text-slate-700 bg-white px-1 py-0.2 rounded font-mono">{`<img src="ลิงก์รูปภาพของคุณ" style="max-width:100%; border-radius:8px;"/>`}</code></p>
+                          <div className="mt-1.5 bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-[10px] text-slate-600 space-y-1 leading-normal">
+                            <p className="font-bold text-[#071A4B]">🖼️ วิธีใส่รูปภาพในการแจ้งเตือน:</p>
+                            <p>1. แทรกรูปโปสเตอร์คอร์สนี้อัตโนมัติ: พิมพ์ <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold border border-[#E2E8F0]">{`{course_poster}`}</code> ลงในข้อความได้เลยค่ะ</p>
+                            <p>2. ใส่รูปภาพจากเว็บไซต์ภายนอกด้วย HTML: <code className="text-[#071A4B] bg-white px-1 py-0.5 rounded font-mono border border-[#E2E8F0]">{`<img src="ลิงก์รูปภาพของคุณ" style="max-width:100%; border-radius:8px;"/>`}</code></p>
                           </div>
                         </>
                       ) : (
-                        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs bg-white p-4 space-y-3 font-sans">
-                          <div className="bg-gradient-to-r from-blue-600 to-sky-500 text-white p-3 rounded-lg text-center">
-                            <h4 className="text-xs font-bold uppercase tracking-wider opacity-90">Bangkok University</h4>
+                        <div className="border border-[#E2E8F0] rounded-xl max-h-[55vh] overflow-y-auto overflow-x-hidden overscroll-contain shadow-xs bg-white p-4 space-y-3 font-sans">
+                          <div className="bg-[#071A4B] text-white p-3 rounded-xl text-center border-b-2 border-b-[#F97316]">
+                            <h4 className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#EA580C]">Bangkok University</h4>
                             <h3 className="text-sm font-extrabold">สำนักมาตรฐานคุณภาพการศึกษา</h3>
                           </div>
-                          <div className="text-xs text-slate-600 font-bold border-b border-slate-100 pb-1">
+                          <div className="text-xs text-slate-600 font-bold border-b border-[#E2E8F0] pb-1.5">
                             เรื่อง: {modalEmailSubject.replace('{course_title}', selCourse?.title || '')}
                           </div>
                           <div 
-                            className="text-xs text-slate-800 leading-relaxed"
+                            className="text-xs text-[#071A4B] leading-relaxed [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_table]:max-w-full"
                             style={{
                               fontSize: emailTextFontSize,
                               textAlign: emailTextAlign,
@@ -10167,9 +11267,12 @@ export default function AdminPortal({
                         }
                       }}
                       disabled={sendingBulkEmail || !modalEmailSubject.trim() || !modalEmailMessage.trim()}
-                      className="w-full h-12 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow"
+                      className="w-full h-12 bg-[#F97316] hover:bg-[#EA580C] disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold px-5 rounded-full text-xs flex items-center justify-between gap-2 shadow-sm cursor-pointer tabular-nums"
                     >
-                      {sendingBulkEmail ? 'กำลังดำเนินการส่งสารเช็คอินกล่องขาเข้า...' : `สั่งจ่ายเมลกลุ่มแจ้งเตือนจริงถึง (${finalRecipients.length} คน) ทันที`}
+                      <span>{sendingBulkEmail ? 'กำลังดำเนินการส่งสารเช็คอินกล่องขาเข้า...' : `สั่งจ่ายเมลกลุ่มแจ้งเตือนจริงถึง (${finalRecipients.length} คน) ทันที`}</span>
+                      <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
                     </button>
                   </>
                 );
@@ -10181,21 +11284,26 @@ export default function AdminPortal({
 
       {/* 2. SEND EVALUATION EMAIL MODAL */}
       {showEvaluationModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                  LD Satisfaction Survey Launcher
-                </span>
-                <h3 className="text-base font-extrabold text-slate-800 mt-2 leading-snug animate-none">
-                  ส่งแบบสำรวจความพึงพอใจการอบรมขยายผล
-                </h3>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#E2E8F0] flex flex-col">
+            <div className="p-6 bg-[#F5F7FA] border-b border-[#E2E8F0] flex justify-between items-start gap-3 shrink-0">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                  <FileSpreadsheet className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-emerald-600 block">
+                    LD Satisfaction Survey Launcher
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#071A4B] mt-0.5 leading-snug">
+                    ส่งแบบสำรวจความพึงพอใจการอบรมขยายผล
+                  </h3>
+                </div>
               </div>
-              <button onClick={() => setShowEvaluationModal(false)} className="text-slate-400 hover:text-slate-700 p-2 text-lg font-bold min-h-[44px]">✕</button>
+              <button onClick={() => setShowEvaluationModal(false)} className="text-slate-400 hover:text-[#071A4B] p-2 text-lg font-bold min-h-[44px] cursor-pointer">✕</button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto">
+            <div className="p-6 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
               {(() => {
                 const selCourse = courses.find(c => c.id === selectedCourseId);
                 const checkedOnly = registrations.filter(r => r.courseId === selectedCourseId && r.checkedIn);
@@ -10206,47 +11314,47 @@ export default function AdminPortal({
 
                 return (
                   <>
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs text-slate-650 space-y-1.5 leading-relaxed">
-                      <p><strong>เป้าหมายจัดส่ง:</strong> {selectedCount > 0 ? `ผู้เลือกและเช็คอินแล้ว (${selectedCount} คน)` : `ผู้เช็คอินสำเร็จทั้งหมด (${checkedOnly.length} คน)`}</p>
-                      <p><strong>หลักสูตรประเมิน:</strong> {selCourse?.title}</p>
+                    <div className="bg-[#F5F7FA] p-4 rounded-xl border border-[#E2E8F0] text-xs text-slate-700 space-y-1.5 leading-relaxed tabular-nums">
+                      <p><strong className="text-[#071A4B]">เป้าหมายจัดส่ง:</strong> {selectedCount > 0 ? `ผู้เลือกและเช็คอินแล้ว (${selectedCount} คน)` : `ผู้เช็คอินสำเร็จทั้งหมด (${checkedOnly.length} คน)`}</p>
+                      <p><strong className="text-[#071A4B]">หลักสูตรประเมิน:</strong> {selCourse?.title}</p>
                     </div>
 
                     {/* Modal Send Type Toggle */}
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-slate-500 block">รูปแบบการจัดส่ง (Email Dispatch Method) *</label>
-                      <div className="grid grid-cols-2 gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                      <div className="grid grid-cols-2 gap-2 bg-[#F5F7FA] p-1 rounded-xl border border-[#E2E8F0]">
                         <button
                           type="button"
                           onClick={() => setModalSendType('individual')}
-                          className={`py-1.5 px-2 rounded-md text-center text-[11px] font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
+                          className={`py-1.5 px-2 rounded-lg text-center text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                             modalSendType === 'individual'
-                              ? 'bg-white text-emerald-600 shadow-2xs border border-slate-200/50'
-                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                              ? 'bg-[#071A4B] text-white shadow-xs'
+                              : 'text-slate-600 hover:text-[#071A4B] hover:bg-white'
                           }`}
                         >
                           <span className="truncate">✉️ ส่งแยกรายบุคคล</span>
-                          <span className="text-[8px] opacity-75 font-normal">ระบุชื่อรายคน</span>
+                          <span className="text-[8px] opacity-80 font-normal">ระบุชื่อรายคน</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setModalSendType('group_to')}
-                          className={`py-1.5 px-2 rounded-md text-center text-[11px] font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
+                          className={`py-1.5 px-2 rounded-lg text-center text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                             modalSendType === 'group_to'
-                              ? 'bg-white text-emerald-600 shadow-2xs border border-slate-200/50'
-                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                              ? 'bg-[#071A4B] text-white shadow-xs'
+                              : 'text-slate-600 hover:text-[#071A4B] hover:bg-white'
                           }`}
                         >
                           <span className="truncate">📬 ส่งกลุ่ม To ทุกคน</span>
-                          <span className="text-[8px] opacity-75 font-normal">To ทุกคน (เรียน อาจารย์ทุกท่าน)</span>
+                          <span className="text-[8px] opacity-80 font-normal">To ทุกคน (เรียน อาจารย์ทุกท่าน)</span>
                         </button>
                       </div>
                     </div>
 
                     {/* CC Admin Toggle */}
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2.5 bg-slate-50/50 rounded-lg border border-slate-150/50">
+                      <div className="flex items-center justify-between p-2.5 bg-[#F5F7FA] rounded-xl border border-[#E2E8F0]">
                         <div className="space-y-0.5">
-                          <span className="text-[11px] font-semibold text-slate-700 block">สำเนาถึงผู้ดูแลระบบ (CC to Admin)</span>
+                          <span className="text-[11px] font-semibold text-[#071A4B] block">สำเนาถึงผู้ดูแลระบบ (CC to Admin)</span>
                           <span className="text-[9px] text-slate-500 block">ส่งสำเนาอีเมลนี้เพื่อใช้เก็บหลักฐาน</span>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer select-none">
@@ -10262,12 +11370,12 @@ export default function AdminPortal({
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                          <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#F97316]"></div>
                         </label>
                       </div>
 
                       {modalCcAdmin && (
-                        <div className="p-2.5 bg-slate-50 border border-slate-150 rounded-lg space-y-2 max-h-36 overflow-y-auto animate-fadeIn">
+                        <div className="p-2.5 bg-[#F5F7FA] border border-[#E2E8F0] rounded-xl space-y-2 max-h-36 overflow-y-auto animate-fadeIn">
                           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">เลือกรายชื่อผู้รับ CC (Admins to CC):</p>
                           {adminsList.length === 0 ? (
                             <p className="text-[10px] text-slate-400 italic">ไม่พบรายชื่อแอดมินในระบบ</p>
@@ -10288,7 +11396,7 @@ export default function AdminPortal({
                                           setModalCcEmails(prev => prev.filter(em => em !== email));
                                         }
                                       }}
-                                      className="rounded text-emerald-500 focus:ring-emerald-500 h-3 w-3 border-slate-300"
+                                      className="rounded text-[#EA580C] focus:ring-[#EA580C] h-3 w-3 border-slate-300"
                                     />
                                     <span className="truncate">
                                       <strong>{adm.name}</strong> <span className="text-slate-400 font-mono text-[9px]">({adm.email})</span> {isCurrentUser && <span className="ml-1 text-[9px] px-1 bg-emerald-100 text-emerald-700 font-bold rounded">คุณ</span>}
@@ -10303,30 +11411,30 @@ export default function AdminPortal({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-extrabold text-slate-700 block">หัวเรื่องจดหมายสากล (Email Subject)</label>
+                      <label className="text-xs font-extrabold text-[#071A4B] block">หัวเรื่องจดหมายสากล (Email Subject)</label>
                       <input
                         type="text"
                         value={modalEmailSubject}
                         onChange={(e) => setModalEmailSubject(e.target.value)}
-                        className="w-full text-xs text-slate-805 border border-slate-200 p-3 rounded-xl focus:border-emerald-500 focus:ring-0 focus:outline-none font-bold"
+                        className="w-full text-xs text-[#071A4B] border border-[#E2E8F0] p-3 rounded-xl focus:border-[#071A4B] focus:ring-0 focus:outline-none font-bold"
                       />
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-extrabold text-slate-700 block">เนื้อหาจดหมายเรียนเชิญช่วยตอบประเมินผล</label>
-                        <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px]">
+                        <label className="text-xs font-extrabold text-[#071A4B] block">เนื้อหาจดหมายเรียนเชิญช่วยตอบประเมินผล</label>
+                        <div className="flex items-center gap-1 bg-[#F5F7FA] p-0.5 rounded-full border border-[#E2E8F0] text-[10px]">
                           <button
                             type="button"
                             onClick={() => setModalViewTab('editor')}
-                            className={`px-2 py-0.5 rounded font-bold transition ${modalViewTab === 'editor' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`px-2.5 py-0.5 rounded-full font-bold transition cursor-pointer ${modalViewTab === 'editor' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                           >
                             ✏️ เขียนเนื้อหา
                           </button>
                           <button
                             type="button"
                             onClick={() => setModalViewTab('preview')}
-                            className={`px-2 py-0.5 rounded font-bold transition ${modalViewTab === 'preview' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`px-2.5 py-0.5 rounded-full font-bold transition cursor-pointer ${modalViewTab === 'preview' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                           >
                             👁️ ตัวอย่างก่อนส่ง
                           </button>
@@ -10335,34 +11443,36 @@ export default function AdminPortal({
 
                       {modalViewTab === 'editor' ? (
                         <>
-                          <textarea
+                          <VisualHtmlEditor
                             value={modalEmailMessage}
-                            onChange={(e) => setModalEmailMessage(e.target.value)}
-                            rows={7}
-                            className="w-full text-xs text-slate-850 border border-slate-200 p-3 rounded-xl focus:border-emerald-500 focus:ring-0 focus:outline-none leading-relaxed font-sans"
-                            placeholder="กรุณากรอกข้อมูลสัญกรณ์..."
+                            onChange={setModalEmailMessage}
+                            variables={COURSE_DISPATCH_VARIABLES}
+                            defaultValue={evaluationHtml || DEFAULT_EVALUATION_HTML}
+                            minHeightClass="min-h-[180px]"
+                            maxHeightClass="max-h-[320px]"
+                            placeholder="พิมพ์ข้อความเชิญตอบแบบประเมินที่นี่..."
                           />
                           <ImageToHtmlHelper onInsert={(htmlImg) => setModalEmailMessage(prev => prev + "\n" + htmlImg + "\n")} />
-                          <p className="text-[10px] text-slate-400 font-medium leading-normal">
-                            * ระบบแทรกลิงก์รายบุคคลอัตโนมัติ: <code className="text-red-500 font-bold">{`👉 {course_id} & {email}`}</code> ซึ่งเชื่อมโยงโดยตรงเข้าหน้าเพจกรอกคะแนนความพึงพอใจและ comment feedback คืนสถาบัน
+                          <p className="text-[10px] text-slate-500 font-medium leading-normal">
+                            * ระบบแทรกลิงก์รายบุคคลอัตโนมัติ: <code className="text-[#EA580C] font-bold">{`👉 {course_id} & {email}`}</code> ซึ่งเชื่อมโยงโดยตรงเข้าหน้าเพจกรอกคะแนนความพึงพอใจและ comment feedback คืนสถาบัน
                           </p>
-                          <div className="mt-1.5 bg-emerald-50/70 border border-emerald-100 p-2.5 rounded-lg text-[10px] text-slate-600 space-y-1 leading-normal">
-                            <p className="font-bold text-slate-700">🖼️ วิธีใส่รูปภาพในการแจ้งเตือน:</p>
-                            <p>1. แทรกรูปโปสเตอร์คอร์สนี้อัตโนมัติ: พิมพ์ <code className="text-blue-600 bg-white px-1 py-0.2 rounded font-mono font-bold">{`{course_poster}`}</code> ลงในข้อความได้เลยค่ะ</p>
-                            <p>2. ใส่รูปภาพจากเว็บไซต์ภายนอกด้วย HTML: <code className="text-slate-700 bg-white px-1 py-0.2 rounded font-mono">{`<img src="ลิงก์รูปภาพของคุณ" style="max-width:100%; border-radius:8px;"/>`}</code></p>
+                          <div className="mt-1.5 bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-[10px] text-slate-600 space-y-1 leading-normal">
+                            <p className="font-bold text-[#071A4B]">🖼️ วิธีใส่รูปภาพในการแจ้งเตือน:</p>
+                            <p>1. แทรกรูปโปสเตอร์คอร์สนี้อัตโนมัติ: พิมพ์ <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold border border-[#E2E8F0]">{`{course_poster}`}</code> ลงในข้อความได้เลยค่ะ</p>
+                            <p>2. ใส่รูปภาพจากเว็บไซต์ภายนอกด้วย HTML: <code className="text-[#071A4B] bg-white px-1 py-0.5 rounded font-mono border border-[#E2E8F0]">{`<img src="ลิงก์รูปภาพของคุณ" style="max-width:100%; border-radius:8px;"/>`}</code></p>
                           </div>
                         </>
                       ) : (
-                        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs bg-white p-4 space-y-3 font-sans">
-                          <div className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white p-3 rounded-lg text-center">
-                            <h4 className="text-xs font-bold uppercase tracking-wider opacity-90">Bangkok University</h4>
+                        <div className="border border-[#E2E8F0] rounded-xl max-h-[55vh] overflow-y-auto overflow-x-hidden overscroll-contain shadow-xs bg-white p-4 space-y-3 font-sans">
+                          <div className="bg-[#071A4B] text-white p-3 rounded-xl text-center border-b-4 border-emerald-500">
+                            <h4 className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-400">Bangkok University</h4>
                             <h3 className="text-sm font-extrabold">สำนักมาตรฐานคุณภาพการศึกษา</h3>
                           </div>
-                          <div className="text-xs text-slate-600 font-bold border-b border-slate-100 pb-1">
+                          <div className="text-xs text-slate-600 font-bold border-b border-[#E2E8F0] pb-1.5">
                             เรื่อง: {modalEmailSubject.replace('{course_title}', selCourse?.title || '')}
                           </div>
                           <div 
-                            className="text-xs text-slate-800 leading-relaxed"
+                            className="text-xs text-[#071A4B] leading-relaxed [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_table]:max-w-full"
                             style={{
                               fontSize: emailTextFontSize,
                               textAlign: emailTextAlign,
@@ -10402,9 +11512,12 @@ export default function AdminPortal({
                         }
                       }}
                       disabled={sendingBulkEmail || !modalEmailSubject.trim() || !modalEmailMessage.trim()}
-                      className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow"
+                      className="w-full h-12 bg-[#F97316] hover:bg-[#EA580C] disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold px-5 rounded-full text-xs flex items-center justify-between gap-2 shadow-sm cursor-pointer tabular-nums"
                     >
-                      {sendingBulkEmail ? 'กำลังทรานสมิตส่งแบบประเมินเข้าระบบ...' : `สั่งยิงเมลแบบฟอร์มประเมินผู้ใช้ (${finalRecipients.length} คน) ทันที`}
+                      <span>{sendingBulkEmail ? 'กำลังทรานสมิตส่งแบบประเมินเข้าระบบ...' : `สั่งยิงเมลแบบฟอร์มประเมินผู้ใช้ (${finalRecipients.length} คน) ทันที`}</span>
+                      <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
                     </button>
                   </>
                 );
@@ -10416,21 +11529,26 @@ export default function AdminPortal({
 
       {/* 3. SEND CERTIFICATE EMAIL MODAL */}
       {showCertificateModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <span className="text-xs font-black text-amber-700 bg-amber-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                  LD Certification Dispatcher
-                </span>
-                <h3 className="text-base font-extrabold text-slate-800 mt-2 leading-snug">
-                  จัดส่งภาพจำลองและเกียรติบัตรรับรองสัมพันธภาพ
-                </h3>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#E2E8F0] flex flex-col">
+            <div className="p-6 bg-[#F5F7FA] border-b border-[#E2E8F0] flex justify-between items-start gap-3 shrink-0">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                  <Award className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">
+                    LD Certification Dispatcher
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#071A4B] mt-0.5 leading-snug">
+                    จัดส่งภาพจำลองและเกียรติบัตรรับรองสัมพันธภาพ
+                  </h3>
+                </div>
               </div>
-              <button onClick={() => setShowCertificateModal(false)} className="text-slate-400 hover:text-slate-700 p-2 text-lg font-bold min-h-[44px]">✕</button>
+              <button onClick={() => setShowCertificateModal(false)} className="text-slate-400 hover:text-[#071A4B] p-2 text-lg font-bold min-h-[44px] cursor-pointer">✕</button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto">
+            <div className="p-6 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
               {(() => {
                 const selCourse = courses.find(c => c.id === selectedCourseId);
                 const isCheckedOnly = registrations.filter(r => r.courseId === selectedCourseId && r.checkedIn);
@@ -10441,47 +11559,47 @@ export default function AdminPortal({
 
                 return (
                   <>
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs text-slate-650 space-y-1.5 leading-relaxed">
-                      <p><strong>กลุ่มส่งผล (เช็คอินแล้วเท่านั้น):</strong> {selectedCount > 0 ? `ผู้ร่วมที่เจาะจงเฉพาะตัวเลือก (${selectedCount} คน)` : `ผู้เช็คอินจริงทุกคน (${isCheckedOnly.length} คน)`}</p>
-                      <p><strong>โครงการศึกษาอบรมสัมมนา:</strong> {selCourse?.title}</p>
+                    <div className="bg-[#F5F7FA] p-4 rounded-xl border border-[#E2E8F0] text-xs text-slate-700 space-y-1.5 leading-relaxed tabular-nums">
+                      <p><strong className="text-[#071A4B]">กลุ่มส่งผล (เช็คอินแล้วเท่านั้น):</strong> {selectedCount > 0 ? `ผู้ร่วมที่เจาะจงเฉพาะตัวเลือก (${selectedCount} คน)` : `ผู้เช็คอินจริงทุกคน (${isCheckedOnly.length} คน)`}</p>
+                      <p><strong className="text-[#071A4B]">โครงการศึกษาอบรมสัมมนา:</strong> {selCourse?.title}</p>
                     </div>
 
                     {/* Modal Send Type Toggle */}
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-slate-500 block">รูปแบบการจัดส่ง (Email Dispatch Method) *</label>
-                      <div className="grid grid-cols-2 gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                      <div className="grid grid-cols-2 gap-2 bg-[#F5F7FA] p-1 rounded-xl border border-[#E2E8F0]">
                         <button
                           type="button"
                           onClick={() => setModalSendType('individual')}
-                          className={`py-1.5 px-2 rounded-md text-center text-[11px] font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
+                          className={`py-1.5 px-2 rounded-lg text-center text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                             modalSendType === 'individual'
-                              ? 'bg-white text-amber-600 shadow-2xs border border-slate-200/50'
-                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                              ? 'bg-[#071A4B] text-white shadow-xs'
+                              : 'text-slate-600 hover:text-[#071A4B] hover:bg-white'
                           }`}
                         >
                           <span className="truncate">✉️ ส่งแยกรายบุคคล</span>
-                          <span className="text-[8px] opacity-75 font-normal">ระบุชื่อรายคน</span>
+                          <span className="text-[8px] opacity-80 font-normal">ระบุชื่อรายคน</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setModalSendType('group_to')}
-                          className={`py-1.5 px-2 rounded-md text-center text-[11px] font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
+                          className={`py-1.5 px-2 rounded-lg text-center text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                             modalSendType === 'group_to'
-                              ? 'bg-white text-amber-600 shadow-2xs border border-slate-200/50'
-                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                              ? 'bg-[#071A4B] text-white shadow-xs'
+                              : 'text-slate-600 hover:text-[#071A4B] hover:bg-white'
                           }`}
                         >
                           <span className="truncate">📬 ส่งกลุ่ม To ทุกคน</span>
-                          <span className="text-[8px] opacity-75 font-normal">To ทุกคน (เรียน อาจารย์ทุกท่าน)</span>
+                          <span className="text-[8px] opacity-80 font-normal">To ทุกคน (เรียน อาจารย์ทุกท่าน)</span>
                         </button>
                       </div>
                     </div>
 
                     {/* CC Admin Toggle */}
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2.5 bg-slate-50/50 rounded-lg border border-slate-150/50">
+                      <div className="flex items-center justify-between p-2.5 bg-[#F5F7FA] rounded-xl border border-[#E2E8F0]">
                         <div className="space-y-0.5">
-                          <span className="text-[11px] font-semibold text-slate-700 block">สำเนาถึงผู้ดูแลระบบ (CC to Admin)</span>
+                          <span className="text-[11px] font-semibold text-[#071A4B] block">สำเนาถึงผู้ดูแลระบบ (CC to Admin)</span>
                           <span className="text-[9px] text-slate-500 block">ส่งสำเนาอีเมลนี้เพื่อใช้เก็บหลักฐาน</span>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer select-none">
@@ -10497,12 +11615,12 @@ export default function AdminPortal({
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                          <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#F97316]"></div>
                         </label>
                       </div>
 
                       {modalCcAdmin && (
-                        <div className="p-2.5 bg-slate-50 border border-slate-150 rounded-lg space-y-2 max-h-36 overflow-y-auto animate-fadeIn">
+                        <div className="p-2.5 bg-[#F5F7FA] border border-[#E2E8F0] rounded-xl space-y-2 max-h-36 overflow-y-auto animate-fadeIn">
                           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">เลือกรายชื่อผู้รับ CC (Admins to CC):</p>
                           {adminsList.length === 0 ? (
                             <p className="text-[10px] text-slate-400 italic">ไม่พบรายชื่อแอดมินในระบบ</p>
@@ -10523,10 +11641,10 @@ export default function AdminPortal({
                                           setModalCcEmails(prev => prev.filter(em => em !== email));
                                         }
                                       }}
-                                      className="rounded text-amber-500 focus:ring-amber-500 h-3 w-3 border-slate-300"
+                                      className="rounded text-[#EA580C] focus:ring-[#EA580C] h-3 w-3 border-slate-300"
                                     />
                                     <span className="truncate">
-                                      <strong>{adm.name}</strong> <span className="text-slate-400 font-mono text-[9px]">({adm.email})</span> {isCurrentUser && <span className="ml-1 text-[9px] px-1 bg-amber-100 text-amber-700 font-bold rounded">คุณ</span>}
+                                      <strong>{adm.name}</strong> <span className="text-slate-400 font-mono text-[9px]">({adm.email})</span> {isCurrentUser && <span className="ml-1 text-[9px] px-1 bg-orange-100 text-[#EA580C] font-bold rounded">คุณ</span>}
                                     </span>
                                   </label>
                                 );
@@ -10538,32 +11656,34 @@ export default function AdminPortal({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-extrabold text-slate-700 block">ความสำคัญหัวข้อ (Email Subject)</label>
+                      <label className="text-xs font-extrabold text-[#071A4B] block">ความสำคัญหัวข้อ (Email Subject)</label>
                       <input
                         type="text"
                         value={modalEmailSubject}
                         onChange={(e) => setModalEmailSubject(e.target.value)}
-                        className="w-full text-xs text-slate-800 border border-slate-200 p-3 rounded-xl focus:border-amber-500 focus:ring-0 focus:outline-none font-bold"
+                        className="w-full text-xs text-[#071A4B] border border-[#E2E8F0] p-3 rounded-xl focus:border-[#071A4B] focus:ring-0 focus:outline-none font-bold"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-extrabold text-slate-700 block">พิมพ์คำอวยพรร่วมแสดงความยินดีประดับเว็บบอร์ด</label>
-                      <textarea
+                      <label className="text-xs font-extrabold text-[#071A4B] block">พิมพ์คำอวยพรร่วมแสดงความยินดีประดับเว็บบอร์ด</label>
+                      <VisualHtmlEditor
                         value={modalEmailMessage}
-                        onChange={(e) => setModalEmailMessage(e.target.value)}
-                        rows={7}
-                        className="w-full text-xs text-slate-850 border border-slate-200 p-3 rounded-xl focus:border-amber-500 focus:ring-0 focus:outline-none leading-relaxed font-sans"
-                        placeholder="กรุณากรอกข้อมูลคำยินดี..."
+                        onChange={setModalEmailMessage}
+                        variables={COURSE_DISPATCH_VARIABLES}
+                        defaultValue={`เรียน คณาจารย์ผู้ทรงคุณวุฒิทุกท่าน,\n\nสำนักงานพัฒนาบุคลากร (L&D) ขอขอบพระคุณและขอร่วมแสดงความยินดีกับความสำเร็จที่ท่านได้ผ่านการอบรมสัมมนาวิชาการหัวข้อ "{course_title}" บรรยายโดยวิทยากร: {speaker} เป็นที่เรียบร้อยแล้วค่ะ\n\nท่านสามารถดาวน์โหลดไฟล์ประกาศนียบัตรเกียรติบัตรอิเล็กทรอนิกส์ของท่านได้ที่ลิงก์ด้านล่างนี้:\n\nหวังเป็นอย่างยิ่งว่าจะได้มีโอกาสเรียนเชิญท่านเข้าร่วมสัมมนาโครงการดีๆ ในรอบถัดไป\n\nด้วยความเคารพอย่างสูง,\nสำนักงานพัฒนาอาจารย์และบุคลากร (Learning Development Office, BU)`}
+                        minHeightClass="min-h-[180px]"
+                        maxHeightClass="max-h-[320px]"
+                        placeholder="พิมพ์คำอวยพรและข้อความแจ้งรับเกียรติบัตรที่นี่..."
                       />
                       <ImageToHtmlHelper onInsert={(htmlImg) => setModalEmailMessage(prev => prev + "\n" + htmlImg + "\n")} />
-                      <p className="text-[10px] text-slate-400 font-medium leading-normal">
-                        * ระบบจัดทำลิ้งก์ดาวน์โหลดและภาพเกียรติบัตรสลักชื่อเฉพาะรายให้โดยอัตโนมัติ: <code className="text-red-500 font-semibold">{`🎓 {learner_certificate_link}`}</code> ด้วยเทคโนโลยีการเจนภาพจากฝั่งผู้ใช้
+                      <p className="text-[10px] text-slate-500 font-medium leading-normal">
+                        * ระบบจัดทำลิ้งก์ดาวน์โหลดและภาพเกียรติบัตรสลักชื่อเฉพาะรายให้โดยอัตโนมัติ: <code className="text-[#EA580C] font-semibold">{`🎓 {learner_certificate_link}`}</code> ด้วยเทคโนโลยีการเจนภาพจากฝั่งผู้ใช้
                       </p>
-                      <div className="mt-1.5 bg-amber-50/70 border border-amber-100 p-2.5 rounded-lg text-[10px] text-slate-600 space-y-1 leading-normal">
-                        <p className="font-bold text-slate-700">🖼️ วิธีใส่รูปภาพในการแจ้งเตือน:</p>
-                        <p>1. แทรกรูปโปสเตอร์คอร์สนี้อัตโนมัติ: พิมพ์ <code className="text-blue-600 bg-white px-1 py-0.2 rounded font-mono font-bold">{`{course_poster}`}</code> ลงในข้อความได้เลยค่ะ</p>
-                        <p>2. ใส่รูปภาพจากเว็บไซต์ภายนอกด้วย HTML: <code className="text-slate-700 bg-white px-1 py-0.2 rounded font-mono">{`<img src="ลิงก์รูปภาพของคุณ" style="max-width:100%; border-radius:8px;"/>`}</code></p>
+                      <div className="mt-1.5 bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-[10px] text-slate-600 space-y-1 leading-normal">
+                        <p className="font-bold text-[#071A4B]">🖼️ วิธีใส่รูปภาพในการแจ้งเตือน:</p>
+                        <p>1. แทรกรูปโปสเตอร์คอร์สนี้อัตโนมัติ: พิมพ์ <code className="text-[#EA580C] bg-white px-1 py-0.5 rounded font-mono font-bold border border-[#E2E8F0]">{`{course_poster}`}</code> ลงในข้อความได้เลยค่ะ</p>
+                        <p>2. ใส่รูปภาพจากเว็บไซต์ภายนอกด้วย HTML: <code className="text-[#071A4B] bg-white px-1 py-0.5 rounded font-mono border border-[#E2E8F0]">{`<img src="ลิงก์รูปภาพของคุณ" style="max-width:100%; border-radius:8px;"/>`}</code></p>
                       </div>
                     </div>
 
@@ -10582,9 +11702,12 @@ export default function AdminPortal({
                         }
                       }}
                       disabled={sendingBulkEmail || !modalEmailSubject.trim() || !modalEmailMessage.trim()}
-                      className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:from-slate-200 disabled:to-slate-300 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow"
+                      className="w-full h-12 bg-[#F97316] hover:bg-[#EA580C] disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold px-5 rounded-full text-xs flex items-center justify-between gap-2 shadow-sm cursor-pointer tabular-nums"
                     >
-                      {sendingBulkEmail ? 'กำลังคอมไพล์สัญชาติและจัดส่งใบเกียรติบัตร...' : `ปล่อยเมลและแนบใบประกาศนียบัตรกลุ่ม (${finalRecipients.length} คน) ทันที`}
+                      <span>{sendingBulkEmail ? 'กำลังคอมไพล์สัญชาติและจัดส่งใบเกียรติบัตร...' : `ปล่อยเมลและแนบใบประกาศนียบัตรกลุ่ม (${finalRecipients.length} คน) ทันที`}</span>
+                      <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
                     </button>
                   </>
                 );
@@ -10596,63 +11719,68 @@ export default function AdminPortal({
 
       {/* BULK EMAIL COMPOSER MODAL */}
       {showBulkEmailModal && selectedCourseForEmail && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <span className="text-xs font-bold text-blue-700 bg-blue-100 px-3 py-1 rounded-full uppercase">
-                  Bulk Section Email Announcement
-                </span>
-                <h3 className="text-base font-extrabold text-slate-800 mt-2 leading-snug">
-                  ส่งอีเมลประกาศถึงผู้ลงทะเบียนหลักสูตรอบรมทั้งหมด
-                </h3>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#E2E8F0] flex flex-col">
+            <div className="p-6 bg-[#F5F7FA] border-b border-[#E2E8F0] flex justify-between items-start gap-3 shrink-0">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <Send className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">
+                    Bulk Section Email Announcement
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#071A4B] mt-0.5 leading-snug">
+                    ส่งอีเมลประกาศถึงผู้ลงทะเบียนหลักสูตรอบรมทั้งหมด
+                  </h3>
+                </div>
               </div>
-              <button onClick={() => { setShowBulkEmailModal(false); setSelectedCourseForEmail(null); }} className="text-slate-400 hover:text-slate-700 p-2 text-lg font-bold min-h-[44px]">✕</button>
+              <button onClick={() => { setShowBulkEmailModal(false); setSelectedCourseForEmail(null); }} className="text-slate-400 hover:text-[#071A4B] p-2 text-lg font-bold min-h-[44px] cursor-pointer">✕</button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs text-slate-600 space-y-1">
-                <p><strong>หัวข้อหลักสูตร:</strong> {selectedCourseForEmail.title}</p>
-                <p><strong>วิทยากรหลัก:</strong> {selectedCourseForEmail.speaker}</p>
-                <p><strong>ผู้จะได้รับสาร:</strong> คนทั้งหมดที่ลงทะเบียนรอบนี้ ({registrations.filter(r => r.courseId === selectedCourseForEmail.id).length} บัญชี @bu.ac.th)</p>
+            <div className="p-6 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
+              <div className="bg-[#F5F7FA] p-4 rounded-xl border border-[#E2E8F0] text-xs text-slate-700 space-y-1 tabular-nums">
+                <p><strong className="text-[#071A4B]">หัวข้อหลักสูตร:</strong> {selectedCourseForEmail.title}</p>
+                <p><strong className="text-[#071A4B]">วิทยากรหลัก:</strong> {selectedCourseForEmail.speaker}</p>
+                <p><strong className="text-[#071A4B]">ผู้จะได้รับสาร:</strong> คนทั้งหมดที่ลงทะเบียนรอบนี้ ({registrations.filter(r => r.courseId === selectedCourseForEmail.id).length} บัญชี @bu.ac.th)</p>
               </div>
 
               {/* Bulk Send Type Toggle */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-500 block">รูปแบบการจัดส่ง (Email Dispatch Method) *</label>
-                <div className="grid grid-cols-2 gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                <div className="grid grid-cols-2 gap-2 bg-[#F5F7FA] p-1 rounded-xl border border-[#E2E8F0]">
                   <button
                     type="button"
                     onClick={() => setBulkSendType('individual')}
-                    className={`py-1.5 px-2 rounded-md text-center text-[11px] font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
+                    className={`py-1.5 px-2 rounded-lg text-center text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                       bulkSendType === 'individual'
-                        ? 'bg-white text-blue-600 shadow-2xs border border-slate-200/50'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        ? 'bg-[#071A4B] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-[#071A4B] hover:bg-white'
                     }`}
                   >
                     <span className="truncate">✉️ ส่งแยกรายบุคคล</span>
-                    <span className="text-[8px] opacity-75 font-normal">ระบุชื่อรายคน</span>
+                    <span className="text-[8px] opacity-80 font-normal">ระบุชื่อรายคน</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setBulkSendType('group_to')}
-                    className={`py-1.5 px-2 rounded-md text-center text-[11px] font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
+                    className={`py-1.5 px-2 rounded-lg text-center text-[11px] font-bold transition flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                       bulkSendType === 'group_to'
-                        ? 'bg-white text-blue-600 shadow-2xs border border-slate-200/50'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        ? 'bg-[#071A4B] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-[#071A4B] hover:bg-white'
                     }`}
                   >
                     <span className="truncate">📬 ส่งกลุ่ม To ทุกคน</span>
-                    <span className="text-[8px] opacity-75 font-normal">To ทุกคน (เรียน อาจารย์ทุกท่าน)</span>
+                    <span className="text-[8px] opacity-80 font-normal">To ทุกคน (เรียน อาจารย์ทุกท่าน)</span>
                   </button>
                 </div>
               </div>
 
               {/* CC Admin Toggle */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2.5 bg-slate-50/50 rounded-lg border border-slate-150/50">
+                <div className="flex items-center justify-between p-2.5 bg-[#F5F7FA] rounded-xl border border-[#E2E8F0]">
                   <div className="space-y-0.5">
-                    <span className="text-[11px] font-semibold text-slate-700 block">สำเนาถึงผู้ดูแลระบบ (CC to Admin)</span>
+                    <span className="text-[11px] font-semibold text-[#071A4B] block">สำเนาถึงผู้ดูแลระบบ (CC to Admin)</span>
                     <span className="text-[9px] text-slate-500 block">ส่งสำเนาอีเมลนี้เพื่อใช้เก็บหลักฐาน</span>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer select-none">
@@ -10668,12 +11796,12 @@ export default function AdminPortal({
                       }}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                    <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#F97316]"></div>
                   </label>
                 </div>
 
                 {bulkCcAdmin && (
-                  <div className="p-2.5 bg-slate-50 border border-slate-150 rounded-lg space-y-2 max-h-36 overflow-y-auto animate-fadeIn">
+                  <div className="p-2.5 bg-[#F5F7FA] border border-[#E2E8F0] rounded-xl space-y-2 max-h-36 overflow-y-auto animate-fadeIn">
                     <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">เลือกรายชื่อผู้รับ CC (Admins to CC):</p>
                     {adminsList.length === 0 ? (
                       <p className="text-[10px] text-slate-400 italic">ไม่พบรายชื่อแอดมินในระบบ</p>
@@ -10694,10 +11822,10 @@ export default function AdminPortal({
                                     setBulkCcEmails(prev => prev.filter(em => em !== email));
                                   }
                                 }}
-                                className="rounded text-blue-500 focus:ring-blue-500 h-3 w-3 border-slate-300"
+                                className="rounded text-[#EA580C] focus:ring-[#EA580C] h-3 w-3 border-slate-300"
                               />
                               <span className="truncate">
-                                <strong>{adm.name}</strong> <span className="text-slate-400 font-mono text-[9px]">({adm.email})</span> {isCurrentUser && <span className="ml-1 text-[9px] px-1 bg-blue-100 text-blue-700 font-bold rounded">คุณ</span>}
+                                <strong>{adm.name}</strong> <span className="text-slate-400 font-mono text-[9px]">({adm.email})</span> {isCurrentUser && <span className="ml-1 text-[9px] px-1 bg-orange-100 text-[#EA580C] font-bold rounded">คุณ</span>}
                               </span>
                             </label>
                           );
@@ -10710,19 +11838,19 @@ export default function AdminPortal({
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700">พิมพ์เนื้อหาข่าวสารเอกสาร หรือ ลิงก์ดาวน์โหลดไดรฟ์</label>
-                  <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px]">
+                  <label className="text-xs font-bold text-[#071A4B]">พิมพ์เนื้อหาข่าวสารเอกสาร หรือ ลิงก์ดาวน์โหลดไดรฟ์</label>
+                  <div className="flex items-center gap-1 bg-[#F5F7FA] p-0.5 rounded-full border border-[#E2E8F0] text-[10px]">
                     <button
                       type="button"
                       onClick={() => setBulkViewTab('editor')}
-                      className={`px-2 py-0.5 rounded font-bold transition ${bulkViewTab === 'editor' ? 'bg-blue-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+                      className={`px-2.5 py-0.5 rounded-full font-bold transition cursor-pointer ${bulkViewTab === 'editor' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                     >
                       ✏️ เขียนเนื้อหา
                     </button>
                     <button
                       type="button"
                       onClick={() => setBulkViewTab('preview')}
-                      className={`px-2 py-0.5 rounded font-bold transition ${bulkViewTab === 'preview' ? 'bg-blue-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+                      className={`px-2.5 py-0.5 rounded-full font-bold transition cursor-pointer ${bulkViewTab === 'preview' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                     >
                       👁️ ตัวอย่างก่อนส่ง
                     </button>
@@ -10731,26 +11859,28 @@ export default function AdminPortal({
 
                 {bulkViewTab === 'editor' ? (
                   <>
-                    <textarea
-                      placeholder="เรียน คณาจารย์ทุกท่าน, ขอส่งลิงค์ Google Drive เอกสารการอบรมหลังกิจกรรมนี้ดังต่อไปนี้...  "
-                      value={bulkEmailMessage}
-                      onChange={(e) => setBulkEmailMessage(e.target.value)}
-                      rows={6}
-                      className="w-full text-slate-800 border border-slate-200 p-3 rounded-lg text-xs font-sans leading-relaxed"
+                    <VisualHtmlEditor
                       id="textarea-bulk-message"
+                      value={bulkEmailMessage}
+                      onChange={setBulkEmailMessage}
+                      variables={COURSE_DISPATCH_VARIABLES}
+                      defaultValue=""
+                      minHeightClass="min-h-[180px]"
+                      maxHeightClass="max-h-[320px]"
+                      placeholder="เรียน คณาจารย์ทุกท่าน, ขอส่งลิงค์ Google Drive เอกสารการอบรมหลังกิจกรรมนี้ดังต่อไปนี้..."
                     />
                   </>
                 ) : (
-                  <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs bg-white p-4 space-y-3 font-sans">
-                    <div className="bg-gradient-to-r from-blue-600 to-sky-500 text-white p-3 rounded-lg text-center">
-                      <h4 className="text-xs font-bold uppercase tracking-wider opacity-90">Bangkok University</h4>
+                  <div className="border border-[#E2E8F0] rounded-xl max-h-[55vh] overflow-y-auto overflow-x-hidden overscroll-contain shadow-xs bg-white p-4 space-y-3 font-sans">
+                    <div className="bg-[#071A4B] text-white p-3 rounded-xl text-center border-b-2 border-b-[#F97316]">
+                      <h4 className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#EA580C]">Bangkok University</h4>
                       <h3 className="text-sm font-extrabold">สำนักมาตรฐานคุณภาพการศึกษา</h3>
                     </div>
-                    <div className="text-xs text-slate-600 font-bold border-b border-slate-100 pb-1">
+                    <div className="text-xs text-slate-600 font-bold border-b border-[#E2E8F0] pb-1.5">
                       เรื่อง: 📣 ข่าวสาร/เอกสารส่งต่อสำคัญจากหลักสูตร: {selectedCourseForEmail.title}
                     </div>
                     <div 
-                      className="text-xs text-slate-800 leading-relaxed"
+                      className="text-xs text-[#071A4B] leading-relaxed [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_table]:max-w-full"
                       style={{
                         fontSize: emailTextFontSize,
                         textAlign: emailTextAlign,
@@ -10771,10 +11901,13 @@ export default function AdminPortal({
               <button
                 onClick={handleSendBulkEmail}
                 disabled={sendingBulkEmail || !bulkEmailMessage.trim()}
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow"
+                className="w-full h-12 bg-[#F97316] hover:bg-[#EA580C] disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold px-5 rounded-full text-xs flex items-center justify-between gap-2 shadow-sm cursor-pointer"
                 id="btn-trigger-bulk-email-dispatcher"
               >
-                {sendingBulkEmail ? 'กำลังเตรียมการจัดส่งสาร...' : 'สั่งส่งเมลกลุ่มถึงผู้มีรายชื่อทันที'}
+                <span>{sendingBulkEmail ? 'กำลังเตรียมการจัดส่งสาร...' : 'สั่งส่งเมลกลุ่มถึงผู้มีรายชื่อทันที'}</span>
+                <span className="w-7 h-7 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </span>
               </button>
             </div>
           </div>
@@ -10783,26 +11916,30 @@ export default function AdminPortal({
 
       {/* CAMPAIGN RECIPIENTS PREVIEW MODAL */}
       {showCampaignRecipientsModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-5xl w-full max-h-[92vh] overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[92vh] overflow-hidden shadow-2xl border border-[#E2E8F0] flex flex-col">
             
             {/* Header */}
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <span className="text-xs font-bold text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase font-mono">
-                  Recipient Management Board
-                </span>
-                <h3 className="text-base font-extrabold text-slate-800 mt-2 leading-snug flex items-center gap-1.5">
-                  <Users className="h-5 w-5 text-orange-600" />
-                  <span>ตรวจสอบ แก้ไข และเพิ่ม/ลบ รายชื่อผู้รับจดหมายเชิญ ({getCampaignRecipients().length} รายการ)</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  ตรวจสอบความถูกต้องของรายชื่อ ตำแหน่ง สังกัด และอีเมลของกลุ่มเป้าหมาย คุณสามารถแก้ไข หรือเพิ่ม/ลบรายชื่อผู้รับได้อย่างอิสระก่อนกดจัดส่งจริงค่ะ
-                </p>
+            <div className="p-6 bg-[#F5F7FA] border-b border-[#E2E8F0] flex justify-between items-start gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">
+                    Recipient Management Board
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#071A4B] mt-0.5 leading-snug tabular-nums">
+                    ตรวจสอบ แก้ไข และเพิ่ม/ลบ รายชื่อผู้รับจดหมายเชิญ ({getCampaignRecipients().length} รายการ)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    ตรวจสอบความถูกต้องของรายชื่อ ตำแหน่ง สังกัด และอีเมลของกลุ่มเป้าหมาย คุณสามารถแก้ไข หรือเพิ่ม/ลบรายชื่อผู้รับได้อย่างอิสระก่อนกดจัดส่งจริงค่ะ
+                  </p>
+                </div>
               </div>
               <button 
                 onClick={() => { setShowCampaignRecipientsModal(false); setCampaignRecipientsSearch(''); setShowAddPanel(false); }} 
-                className="text-slate-400 hover:text-slate-700 p-2 text-lg font-bold min-h-[44px]"
+                className="text-slate-400 hover:text-[#071A4B] p-2 text-lg font-bold min-h-[44px] cursor-pointer"
               >
                 ✕
               </button>
@@ -10813,16 +11950,16 @@ export default function AdminPortal({
               
               {/* Add & Filter Control Bar */}
               <div className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                  <div className="flex items-center gap-1.5 text-xs font-bold">
-                    <span className="text-slate-500 text-[11px]">แสดง:</span>
+                <div className="flex flex-wrap items-center justify-between gap-2 bg-[#F5F7FA] p-2 rounded-xl border border-[#E2E8F0]">
+                  <div className="flex items-center gap-1.5 text-xs font-bold tabular-nums">
+                    <span className="text-slate-500 text-[11px] px-1">แสดง:</span>
                     <button
                       type="button"
                       onClick={() => setRecipientsFilterEmailStatus('all')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
                         recipientsFilterEmailStatus === 'all'
-                          ? 'bg-white text-slate-850 shadow-2xs border border-slate-200'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-[#071A4B] text-white shadow-xs'
+                          : 'bg-white border border-[#E2E8F0] text-slate-600 hover:border-[#071A4B] hover:text-[#071A4B]'
                       }`}
                     >
                       ทั้งหมด ({getCampaignRecipients().length})
@@ -10830,10 +11967,10 @@ export default function AdminPortal({
                     <button
                       type="button"
                       onClick={() => setRecipientsFilterEmailStatus('valid')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
                         recipientsFilterEmailStatus === 'valid'
-                          ? 'bg-green-50 text-green-700 shadow-2xs border border-green-200 font-extrabold'
-                          : 'text-slate-600 hover:text-green-700'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-white border border-[#E2E8F0] text-slate-600 hover:border-emerald-600 hover:text-emerald-700'
                       }`}
                     >
                       มีอีเมลพร้อมส่ง ({getCampaignRecipients().filter(r => r.email && r.email.trim().includes('@')).length})
@@ -10841,12 +11978,12 @@ export default function AdminPortal({
                     <button
                       type="button"
                       onClick={() => setRecipientsFilterEmailStatus('missing')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
                         recipientsFilterEmailStatus === 'missing'
                           ? 'bg-rose-600 text-white shadow-xs'
                           : getCampaignRecipients().some(r => !r.email || !r.email.trim().includes('@'))
                           ? 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold'
-                          : 'text-slate-400 hover:text-slate-700'
+                          : 'bg-white border border-[#E2E8F0] text-slate-400 hover:text-slate-700'
                       }`}
                     >
                       {getCampaignRecipients().some(r => !r.email || !r.email.trim().includes('@')) && <span>⚠️</span>}
@@ -10862,7 +11999,7 @@ export default function AdminPortal({
                         setCampaignCustomRecipients(prev => prev.filter(r => r.email && r.email.trim().includes('@')));
                         alert(`ตัดรายชื่อที่ไม่มีอีเมลออกเรียบร้อยแล้ว ${count} คนค่ะ`);
                       }}
-                      className="px-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
+                      className="px-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold rounded-full transition cursor-pointer flex items-center gap-1 tabular-nums"
                     >
                       <span>🚫 ตัดคนที่ไม่มีอีเมลออกจากกลุ่มนี้ ({getCampaignRecipients().filter(r => !r.email || !r.email.trim().includes('@')).length})</span>
                     </button>
@@ -10872,13 +12009,13 @@ export default function AdminPortal({
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
                   {/* Search Bar */}
                   <div className="relative md:col-span-8">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input
                       type="text"
                       placeholder="ค้นหาชื่อ, รหัส, ตำแหน่ง, คณะ หรือ อีเมล ในกลุ่มผู้รับปัจจุบัน..."
                       value={campaignRecipientsSearch}
                       onChange={(e) => setCampaignRecipientsSearch(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 pl-9 pr-4 py-2.5 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full bg-[#F5F7FA] border border-[#E2E8F0] pl-10 pr-4 py-2.5 rounded-full text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B]"
                     />
                   </div>
 
@@ -10886,10 +12023,10 @@ export default function AdminPortal({
                   <button
                     type="button"
                     onClick={() => setShowAddPanel(!showAddPanel)}
-                    className={`md:col-span-4 h-10 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    className={`md:col-span-4 h-10 px-4 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       showAddPanel 
-                        ? 'bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-150' 
-                        : 'bg-orange-600 hover:bg-orange-700 text-white shadow-xs'
+                        ? 'bg-[#071A4B] text-white' 
+                        : 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-xs'
                     }`}
                   >
                     <PlusCircle className="h-4 w-4" />
@@ -10900,12 +12037,12 @@ export default function AdminPortal({
 
               {/* Add Recipients Panel (Expandable) */}
               {showAddPanel && (
-                <div className="p-4 bg-orange-50/50 border border-orange-200 rounded-2xl grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-150">
+                <div className="p-4 bg-[#F5F7FA] border border-[#E2E8F0] rounded-2xl grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-150">
                   
                   {/* Left Column: Search & Add from Database */}
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-orange-950 flex items-center gap-1">
-                      <Search className="h-3.5 w-3.5" />
+                    <h4 className="text-xs font-bold text-[#071A4B] flex items-center gap-1.5">
+                      <Search className="h-3.5 w-3.5 text-[#EA580C]" />
                       <span>วิธีที่ 1: ค้นหาจากฐานข้อมูลและคลิกเลือกเพื่อเพิ่ม</span>
                     </h4>
                     <div className="relative">
@@ -10915,12 +12052,12 @@ export default function AdminPortal({
                         placeholder="พิมพ์เพื่อค้นหาพนักงานที่จะเพิ่ม..."
                         value={modalSearchQuery}
                         onChange={(e) => setModalSearchQuery(e.target.value)}
-                        className="w-full bg-white border border-slate-200 pl-8 pr-3 py-1.5 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-orange-500"
+                        className="w-full bg-white border border-[#E2E8F0] pl-8 pr-3 py-1.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B]"
                       />
                     </div>
 
                     {modalSearchQuery.trim().length > 0 && (
-                      <div className="border border-slate-200 rounded-lg max-h-36 overflow-y-auto bg-white shadow-xs divide-y divide-slate-100">
+                      <div className="border border-[#E2E8F0] rounded-xl max-h-36 overflow-y-auto bg-white shadow-xs divide-y divide-[#E2E8F0]">
                         {(() => {
                           const query = modalSearchQuery.toLowerCase().trim();
                           const matches = personnel.filter(p => 
@@ -10938,10 +12075,10 @@ export default function AdminPortal({
                           return matches.map(person => {
                             const isAdded = campaignCustomRecipients.some(cr => cr.id === person.id);
                             return (
-                              <div key={person.id} className="p-2 flex items-center justify-between hover:bg-slate-50 transition text-xs">
+                              <div key={person.id} className="p-2 flex items-center justify-between hover:bg-[#F5F7FA] transition text-xs">
                                 <div className="text-left pr-2 overflow-hidden">
-                                  <div className="font-bold text-slate-850 truncate">{person.name}</div>
-                                  <div className="text-[10px] text-slate-500 font-mono truncate">
+                                  <div className="font-bold text-[#071A4B] truncate">{person.name}</div>
+                                  <div className="text-[10px] text-slate-500 font-mono truncate tabular-nums">
                                     {person.id} • {person.position} • {person.department}
                                   </div>
                                 </div>
@@ -10954,10 +12091,10 @@ export default function AdminPortal({
                                       addCampaignRecipient(person);
                                     }
                                   }}
-                                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition flex-shrink-0 ${
+                                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold transition shrink-0 cursor-pointer ${
                                     isAdded 
                                       ? 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100' 
-                                      : 'bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100'
+                                      : 'bg-orange-50 text-[#EA580C] border border-orange-200 hover:bg-orange-100'
                                   }`}
                                 >
                                   {isAdded ? 'ลบออก' : 'เลือกเพิ่ม'}
@@ -10971,9 +12108,9 @@ export default function AdminPortal({
                   </div>
 
                   {/* Right Column: Manual Form Addition */}
-                  <div className="space-y-2 border-t lg:border-t-0 lg:border-l border-orange-200/60 lg:pl-6 pt-3 lg:pt-0">
-                    <h4 className="text-xs font-bold text-orange-950 flex items-center gap-1">
-                      <Plus className="h-3.5 w-3.5" />
+                  <div className="space-y-2 border-t lg:border-t-0 lg:border-l border-[#E2E8F0] lg:pl-6 pt-3 lg:pt-0">
+                    <h4 className="text-xs font-bold text-[#071A4B] flex items-center gap-1.5">
+                      <Plus className="h-3.5 w-3.5 text-[#EA580C]" />
                       <span>วิธีที่ 2: กรอกข้อมูลเอง (แบบแมนนวล / ผู้รับภายนอก)</span>
                     </h4>
                     
@@ -10983,35 +12120,35 @@ export default function AdminPortal({
                         placeholder="ชื่อ-นามสกุล *"
                         value={manualAddName}
                         onChange={(e) => setManualAddName(e.target.value)}
-                        className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs text-slate-800 focus:outline-none"
+                        className="bg-white border border-[#E2E8F0] px-2.5 py-1.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B]"
                       />
                       <input
                         type="email"
                         placeholder="อีเมลผู้รับ *"
                         value={manualAddEmail}
                         onChange={(e) => setManualAddEmail(e.target.value)}
-                        className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs text-slate-800 focus:outline-none"
+                        className="bg-white border border-[#E2E8F0] px-2.5 py-1.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B]"
                       />
                       <input
                         type="text"
                         placeholder="รหัสพนักงาน (ถ้ามี)"
                         value={manualAddId}
                         onChange={(e) => setManualAddId(e.target.value)}
-                        className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs text-slate-800 focus:outline-none font-mono"
+                        className="bg-white border border-[#E2E8F0] px-2.5 py-1.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] font-mono"
                       />
                       <input
                         type="text"
                         placeholder="ตำแหน่ง (เช่น คณบดี)"
                         value={manualAddPos}
                         onChange={(e) => setManualAddPos(e.target.value)}
-                        className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs text-slate-800 focus:outline-none"
+                        className="bg-white border border-[#E2E8F0] px-2.5 py-1.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B]"
                       />
                       <input
                         type="text"
                         placeholder="หน่วยงาน/คณะ"
                         value={manualAddDept}
                         onChange={(e) => setManualAddDept(e.target.value)}
-                        className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs text-slate-800 focus:outline-none col-span-2"
+                        className="bg-white border border-[#E2E8F0] px-2.5 py-1.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] col-span-2"
                       />
                     </div>
                     <div className="flex justify-end pt-1">
@@ -11039,9 +12176,9 @@ export default function AdminPortal({
                           setManualAddDept('');
                           setManualAddPos('');
                         }}
-                        className="bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition shadow-3xs"
+                        className="bg-[#071A4B] hover:bg-[#0D2566] text-white text-[10px] font-bold px-3.5 py-1.5 rounded-full transition cursor-pointer"
                       >
-                        บีบอัดเพิ่มรายชื่อนี้
+                        + เพิ่มรายชื่อนี้
                       </button>
                     </div>
                   </div>
@@ -11049,9 +12186,9 @@ export default function AdminPortal({
               )}
 
               {/* Scrollable Recipient Table Wrapper */}
-              <div className="flex-1 overflow-auto border border-slate-150 rounded-2xl shadow-3xs bg-white">
+              <div className="flex-1 overflow-auto border border-[#E2E8F0] rounded-2xl bg-white">
                 <table className="w-full border-collapse text-left text-xs text-slate-600">
-                  <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-150">
+                  <thead className="bg-[#F5F7FA] sticky top-0 z-10 border-b border-[#E2E8F0]">
                     <tr className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                       <th className="py-3 px-4 w-12 text-center">ที่</th>
                       <th className="py-3 px-3 w-28">รหัสพนักงาน</th>
@@ -11062,7 +12199,7 @@ export default function AdminPortal({
                       <th className="py-3 px-4 text-center w-28">การจัดการ</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
+                  <tbody className="divide-y divide-[#E2E8F0] font-medium">
                     {(() => {
                       const list = getCampaignRecipients();
                       const filtered = list.filter(p => {
@@ -11094,15 +12231,15 @@ export default function AdminPortal({
                         const hasValidEmail = Boolean(person.email && person.email.trim().includes('@'));
 
                         return (
-                          <tr key={person.id} className={`hover:bg-slate-50/70 duration-75 ${isEditing ? 'bg-amber-50/40' : !hasValidEmail ? 'bg-rose-50/20' : ''}`}>
-                            <td className="py-3 px-4 text-center font-mono text-slate-400 text-[11px]">{idx + 1}</td>
+                          <tr key={person.id} className={`hover:bg-[#F5F7FA] duration-75 ${isEditing ? 'bg-orange-50/40' : !hasValidEmail ? 'bg-rose-50/30' : ''}`}>
+                            <td className="py-3 px-4 text-center font-mono text-slate-400 text-[11px] tabular-nums">{idx + 1}</td>
                             
                             {/* Employee ID */}
-                            <td className="py-2 px-3 font-mono">
+                            <td className="py-2 px-3 font-mono tabular-nums">
                               {isEditing ? (
                                 <span className="text-slate-500 font-semibold">{person.id}</span>
                               ) : (
-                                <span className="font-bold text-slate-900">{person.id}</span>
+                                <span className="font-bold text-[#071A4B]">{person.id}</span>
                               )}
                             </td>
 
@@ -11113,10 +12250,10 @@ export default function AdminPortal({
                                   type="text"
                                   value={editingName}
                                   onChange={(e) => setEditingName(e.target.value)}
-                                  className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-semibold focus:outline-none focus:border-orange-500"
+                                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B]"
                                 />
                               ) : (
-                                <span className="font-semibold text-slate-900">{person.name}</span>
+                                <span className="font-semibold text-[#071A4B]">{person.name}</span>
                               )}
                             </td>
 
@@ -11127,10 +12264,10 @@ export default function AdminPortal({
                                   type="text"
                                   value={editingPosition}
                                   onChange={(e) => setEditingPosition(e.target.value)}
-                                  className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-850 focus:outline-none focus:border-orange-500"
+                                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B]"
                                 />
                               ) : (
-                                <span className="bg-slate-100 text-slate-755 px-2 py-0.5 rounded text-[10px] font-bold truncate block max-w-[130px]" title={person.position || '-'}>
+                                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-bold truncate block max-w-[130px]" title={person.position || '-'}>
                                   {person.position || '-'}
                                 </span>
                               )}
@@ -11143,7 +12280,7 @@ export default function AdminPortal({
                                   type="text"
                                   value={editingDepartment}
                                   onChange={(e) => setEditingDepartment(e.target.value)}
-                                  className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-850 focus:outline-none focus:border-orange-500"
+                                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B]"
                                 />
                               ) : (
                                 <span className="truncate block max-w-[140px]" title={person.department}>
@@ -11153,14 +12290,14 @@ export default function AdminPortal({
                             </td>
 
                             {/* Email */}
-                            <td className="py-2 px-3 text-blue-600 font-mono text-[11px]">
+                            <td className="py-2 px-3 text-[#071A4B] font-mono text-[11px]">
                               {isEditing ? (
                                 <input
                                   type="email"
                                   value={editingEmail}
                                   onChange={(e) => setEditingEmail(e.target.value)}
                                   placeholder="อีเมลผู้รับ..."
-                                  className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500"
+                                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs text-[#071A4B] font-mono focus:outline-none focus:border-[#071A4B]"
                                 />
                               ) : hasValidEmail ? (
                                 <span>{person.email}</span>
@@ -11174,7 +12311,7 @@ export default function AdminPortal({
                                     setEditingPosition(person.position || '');
                                     setEditingDepartment(person.department || '');
                                   }}
-                                  className="text-[10px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-0.5 rounded cursor-pointer transition flex items-center gap-1"
+                                  className="text-[10px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-0.5 rounded-full cursor-pointer transition flex items-center gap-1"
                                 >
                                   <span>⚠️ ไม่มีอีเมล (คลิกกรอก)</span>
                                 </button>
@@ -11223,7 +12360,7 @@ export default function AdminPortal({
 
                                       setEditingRecipientId(null);
                                     }}
-                                    className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition cursor-pointer"
+                                    className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition cursor-pointer"
                                     title="บันทึกข้อมูล"
                                   >
                                     <Check className="h-4 w-4" />
@@ -11231,7 +12368,7 @@ export default function AdminPortal({
                                   <button
                                     type="button"
                                     onClick={() => setEditingRecipientId(null)}
-                                    className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition text-xs font-bold font-mono cursor-pointer"
+                                    className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition text-xs font-bold font-mono cursor-pointer"
                                     title="ยกเลิก"
                                   >
                                     ✕
@@ -11248,7 +12385,7 @@ export default function AdminPortal({
                                       setEditingPosition(person.position || '');
                                       setEditingDepartment(person.department || '');
                                     }}
-                                    className="p-1 hover:bg-amber-50 text-amber-500 hover:text-amber-700 rounded transition"
+                                    className="p-1.5 hover:bg-orange-50 text-[#EA580C] hover:text-[#EA580C] rounded-lg transition cursor-pointer"
                                     title="แก้ไขข้อมูลผู้รับท่านนี้"
                                   >
                                     <Edit className="h-3.5 w-3.5" />
@@ -11256,7 +12393,7 @@ export default function AdminPortal({
                                   <button
                                     type="button"
                                     onClick={() => removeCampaignRecipient(person.id)}
-                                    className="p-1 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded transition"
+                                    className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-lg transition cursor-pointer"
                                     title="ลบรายชื่อท่านนี้ออกจากกลุ่มส่งเมลนี้"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
@@ -11273,9 +12410,9 @@ export default function AdminPortal({
               </div>
 
               {/* Stats Footer of the Modal */}
-              <div className="flex justify-between items-center text-xs text-slate-500 bg-slate-50 p-4 rounded-2xl border border-slate-150">
+              <div className="flex flex-wrap gap-3 justify-between items-center text-xs text-slate-600 bg-[#F5F7FA] p-4 rounded-2xl border border-[#E2E8F0] tabular-nums">
                 <span>
-                  แสดงผล <strong>
+                  แสดงผล <strong className="text-[#071A4B]">
                     {getCampaignRecipients().filter(p => {
                       const q = campaignRecipientsSearch.toLowerCase().trim();
                       if (!q) return true;
@@ -11285,12 +12422,12 @@ export default function AdminPortal({
                         p.department.toLowerCase().includes(q) ||
                         p.email.toLowerCase().includes(q);
                     }).length}
-                  </strong> รายการ จากผู้ส่งเป้าหมายทั้งหมด <strong>{getCampaignRecipients().length}</strong> คน
+                  </strong> รายการ จากผู้ส่งเป้าหมายทั้งหมด <strong className="text-[#071A4B]">{getCampaignRecipients().length}</strong> คน
                 </span>
                 <button
                   type="button"
                   onClick={() => { setShowCampaignRecipientsModal(false); setCampaignRecipientsSearch(''); setShowAddPanel(false); }}
-                  className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 py-2 rounded-xl transition shadow-sm text-xs"
+                  className="bg-[#071A4B] hover:bg-[#0D2566] text-white font-bold px-5 py-2.5 rounded-full transition shadow-sm text-xs cursor-pointer"
                 >
                   บันทึกความเปลี่ยนแปลงและปิดหน้าต่าง
                 </button>
@@ -11302,27 +12439,27 @@ export default function AdminPortal({
 
       {/* FULL EMAIL PRE-SEND PREVIEW & WORD-BREAK ADJUSTMENT MODAL */}
       {showPreSendModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-150">
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full h-[92vh] max-h-[92vh] flex flex-col border border-[#E2E8F0] overflow-hidden animate-in fade-in zoom-in duration-150">
             {/* Modal Header */}
-            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between shrink-0">
+            <div className="bg-[#071A4B] text-white px-6 py-4 flex flex-wrap items-center justify-between gap-3 shrink-0 border-b-2 border-b-[#F97316]">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-600 rounded-xl text-white shadow-sm">
+                <div className="w-10 h-10 bg-[#F97316] rounded-full text-white flex items-center justify-center shrink-0">
                   <Eye className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold flex items-center gap-2">
+                  <h3 className="text-sm font-extrabold flex flex-wrap items-center gap-2 tabular-nums">
                     <span>ตรวจสอบตัวอย่างอีเมลก่อนส่ง (Pre-Send Preview)</span>
-                    <span className="text-[10px] bg-green-500/30 text-green-300 border border-green-500/50 px-2 py-0.5 rounded-full font-bold">
+                    <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-0.5 rounded-full font-bold">
                       พร้อมส่ง {getCampaignRecipients().filter(r => r.email && r.email.trim().includes('@')).length} คน
                     </span>
                     {getCampaignRecipients().some(r => !r.email || !r.email.trim().includes('@')) && (
-                      <span className="text-[10px] bg-rose-500/30 text-rose-300 border border-rose-500/50 px-2 py-0.5 rounded-full font-bold">
+                      <span className="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2.5 py-0.5 rounded-full font-bold">
                         ⚠️ ไม่มีอีเมล {getCampaignRecipients().filter(r => !r.email || !r.email.trim().includes('@')).length} คน (ระบบจะข้าม)
                       </span>
                     )}
                   </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-slate-300 mt-0.5">
                     ทดสอบการแสดงผลบนขนาดหน้าจอต่างๆ ปรับแต่งข้อความได้ทันทีก่อนยืนยันการจัดส่ง
                   </p>
                 </div>
@@ -11330,13 +12467,13 @@ export default function AdminPortal({
 
               {/* Viewport Width Controls */}
               <div className="flex items-center gap-2">
-                <div className="bg-slate-800 p-1 rounded-xl flex items-center gap-1 border border-slate-700">
+                <div className="bg-[#0D2566] p-1 rounded-full flex items-center gap-1 border border-slate-700">
                   <button
                     type="button"
                     onClick={() => setPreviewViewport('desktop')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                       previewViewport === 'desktop'
-                        ? 'bg-orange-600 text-white shadow-xs'
+                        ? 'bg-[#F97316] text-white shadow-xs'
                         : 'text-slate-300 hover:text-white hover:bg-slate-700'
                     }`}
                     title="มุมมองจอคอมพิวเตอร์ (600px)"
@@ -11346,9 +12483,9 @@ export default function AdminPortal({
                   <button
                     type="button"
                     onClick={() => setPreviewViewport('mobile')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                       previewViewport === 'mobile'
-                        ? 'bg-orange-600 text-white shadow-xs'
+                        ? 'bg-[#F97316] text-white shadow-xs'
                         : 'text-slate-300 hover:text-white hover:bg-slate-700'
                     }`}
                     title="มุมมองจอมือถือ (375px)"
@@ -11358,9 +12495,9 @@ export default function AdminPortal({
                   <button
                     type="button"
                     onClick={() => setPreviewViewport('narrow')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                       previewViewport === 'narrow'
-                        ? 'bg-orange-600 text-white shadow-xs'
+                        ? 'bg-[#F97316] text-white shadow-xs'
                         : 'text-slate-300 hover:text-white hover:bg-slate-700'
                     }`}
                     title="มุมมองจอแคบพิเศษ (320px)"
@@ -11372,7 +12509,7 @@ export default function AdminPortal({
                 <button
                   type="button"
                   onClick={() => setShowPreSendModal(false)}
-                  className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition cursor-pointer text-base"
+                  className="text-slate-300 hover:text-white p-2 rounded-full hover:bg-slate-800 transition cursor-pointer text-base"
                   title="ปิดหน้าต่าง"
                 >
                   ✕
@@ -11381,14 +12518,14 @@ export default function AdminPortal({
             </div>
 
             {/* Responsive Screen Tab Switcher (< lg) */}
-            <div className="lg:hidden bg-slate-100 border-b border-slate-200 p-2 flex items-center justify-center gap-2 shrink-0">
+            <div className="lg:hidden bg-[#F5F7FA] border-b border-[#E2E8F0] p-2 flex items-center justify-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setPreSendModalTab('editor')}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                   preSendModalTab === 'editor'
-                    ? 'bg-orange-600 text-white shadow-xs'
-                    : 'bg-white text-slate-700 border border-slate-200'
+                    ? 'bg-[#071A4B] text-white shadow-xs'
+                    : 'bg-white text-[#071A4B] border border-[#E2E8F0]'
                 }`}
               >
                 <Edit className="h-3.5 w-3.5" />
@@ -11397,10 +12534,10 @@ export default function AdminPortal({
               <button
                 type="button"
                 onClick={() => setPreSendModalTab('preview')}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer tabular-nums ${
                   preSendModalTab === 'preview'
-                    ? 'bg-orange-600 text-white shadow-xs'
-                    : 'bg-white text-slate-700 border border-slate-200'
+                    ? 'bg-[#071A4B] text-white shadow-xs'
+                    : 'bg-white text-[#071A4B] border border-[#E2E8F0]'
                 }`}
               >
                 <Eye className="h-3.5 w-3.5" />
@@ -11409,15 +12546,15 @@ export default function AdminPortal({
             </div>
 
             {/* Modal Body: Split into Editor on Left, Live View on Right */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-0 overflow-hidden">
+            <div className="grid grid-cols-1 grid-rows-1 lg:grid-cols-12 flex-1 min-h-0 overflow-hidden">
               {/* Left Column: Quick Live Editor (5 cols) */}
-              <div className={`lg:col-span-5 border-r border-slate-200 bg-slate-50/70 p-4 overflow-y-auto flex flex-col justify-between space-y-3 ${
+              <div className={`lg:col-span-5 border-r border-[#E2E8F0] bg-[#F5F7FA] p-4 min-h-0 h-full overflow-y-auto overflow-x-hidden overscroll-contain flex-col justify-between space-y-3 ${
                 preSendModalTab === 'editor' ? 'flex' : 'hidden lg:flex'
               }`}>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
-                    <label className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                      <Edit className="h-3.5 w-3.5 text-orange-600" />
+                  <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2">
+                    <label className="text-xs font-extrabold text-[#071A4B] flex items-center gap-1.5">
+                      <Edit className="h-3.5 w-3.5 text-[#EA580C]" />
                       <span>ปรับแก้ข้อความ (Live Editor)</span>
                     </label>
                     <span className="text-[10px] text-slate-500 font-medium">
@@ -11426,20 +12563,20 @@ export default function AdminPortal({
                   </div>
 
                   {/* Typography & Alignment Controls */}
-                  <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-3xs space-y-2 text-xs">
-                    <span className="text-[10px] font-bold text-slate-600 block uppercase tracking-wider">
+                  <div className="p-2.5 bg-white rounded-xl border border-[#E2E8F0] space-y-2 text-xs">
+                    <span className="text-[10px] font-bold text-[#071A4B] block uppercase tracking-wider">
                       ⚙️ ตั้งค่าการแสดงผลตัวอักษร:
                     </span>
                     <div className="grid grid-cols-2 gap-2 text-[10px]">
                       <div>
-                        <label className="text-slate-400 block mb-0.5 font-semibold">ขนาดตัวอักษร:</label>
-                        <div className="flex bg-slate-100 rounded-lg p-0.5">
+                        <label className="text-slate-500 block mb-0.5 font-semibold">ขนาดตัวอักษร:</label>
+                        <div className="flex bg-[#F5F7FA] border border-[#E2E8F0] rounded-lg p-0.5">
                           {(['13px', '14px', '15px'] as const).map(size => (
                             <button
                               key={size}
                               type="button"
                               onClick={() => setEmailTextFontSize(size)}
-                              className={`flex-1 py-1 rounded text-center font-bold transition ${emailTextFontSize === size ? 'bg-orange-600 text-white shadow-3xs' : 'text-slate-600 hover:text-slate-900'}`}
+                              className={`flex-1 py-1 rounded text-center font-bold transition cursor-pointer ${emailTextFontSize === size ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                             >
                               {size}
                             </button>
@@ -11448,19 +12585,19 @@ export default function AdminPortal({
                       </div>
 
                       <div>
-                        <label className="text-slate-400 block mb-0.5 font-semibold">การจัดแนวข้อความ:</label>
-                        <div className="flex bg-slate-100 rounded-lg p-0.5">
+                        <label className="text-slate-500 block mb-0.5 font-semibold">การจัดแนวข้อความ:</label>
+                        <div className="flex bg-[#F5F7FA] border border-[#E2E8F0] rounded-lg p-0.5">
                           <button
                             type="button"
                             onClick={() => setEmailTextAlign('left')}
-                            className={`flex-1 py-1 rounded text-center font-bold transition ${emailTextAlign === 'left' ? 'bg-orange-600 text-white shadow-3xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`flex-1 py-1 rounded text-center font-bold transition cursor-pointer ${emailTextAlign === 'left' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                           >
                             ชิดซ้าย
                           </button>
                           <button
                             type="button"
                             onClick={() => setEmailTextAlign('justify')}
-                            className={`flex-1 py-1 rounded text-center font-bold transition ${emailTextAlign === 'justify' ? 'bg-orange-600 text-white shadow-3xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`flex-1 py-1 rounded text-center font-bold transition cursor-pointer ${emailTextAlign === 'justify' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                           >
                             กระจายเต็ม
                           </button>
@@ -11468,14 +12605,14 @@ export default function AdminPortal({
                       </div>
 
                       <div>
-                        <label className="text-slate-400 block mb-0.5 font-semibold">ระยะห่างบรรทัด:</label>
-                        <div className="flex bg-slate-100 rounded-lg p-0.5">
+                        <label className="text-slate-500 block mb-0.5 font-semibold">ระยะห่างบรรทัด:</label>
+                        <div className="flex bg-[#F5F7FA] border border-[#E2E8F0] rounded-lg p-0.5">
                           {(['1.6', '1.75', '2.0'] as const).map(lh => (
                             <button
                               key={lh}
                               type="button"
                               onClick={() => setEmailLineHeight(lh)}
-                              className={`flex-1 py-1 rounded text-center font-bold transition ${emailLineHeight === lh ? 'bg-orange-600 text-white shadow-3xs' : 'text-slate-600 hover:text-slate-900'}`}
+                              className={`flex-1 py-1 rounded text-center font-bold transition cursor-pointer ${emailLineHeight === lh ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                             >
                               {lh}
                             </button>
@@ -11484,12 +12621,12 @@ export default function AdminPortal({
                       </div>
 
                       <div>
-                        <label className="text-slate-400 block mb-0.5 font-semibold">โหมดตัดคำ:</label>
-                        <div className="flex bg-slate-100 rounded-lg p-0.5">
+                        <label className="text-slate-500 block mb-0.5 font-semibold">โหมดตัดคำ:</label>
+                        <div className="flex bg-[#F5F7FA] border border-[#E2E8F0] rounded-lg p-0.5">
                           <button
                             type="button"
                             onClick={() => setEmailWrapMode('natural')}
-                            className={`flex-1 py-1 rounded text-center font-bold transition text-[9px] ${emailWrapMode === 'natural' ? 'bg-orange-600 text-white shadow-3xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`flex-1 py-1 rounded text-center font-bold transition text-[9px] cursor-pointer ${emailWrapMode === 'natural' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                             title="คำไทยธรรมชาติ"
                           >
                             ธรรมชาติ
@@ -11497,7 +12634,7 @@ export default function AdminPortal({
                           <button
                             type="button"
                             onClick={() => setEmailWrapMode('keep_all')}
-                            className={`flex-1 py-1 rounded text-center font-bold transition text-[9px] ${emailWrapMode === 'keep_all' ? 'bg-orange-600 text-white shadow-3xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`flex-1 py-1 rounded text-center font-bold transition text-[9px] cursor-pointer ${emailWrapMode === 'keep_all' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                             title="ไม่แยกคำย่อย"
                           >
                             ไม่แยกคำ
@@ -11505,7 +12642,7 @@ export default function AdminPortal({
                           <button
                             type="button"
                             onClick={() => setEmailWrapMode('strict')}
-                            className={`flex-1 py-1 rounded text-center font-bold transition text-[9px] ${emailWrapMode === 'strict' ? 'bg-orange-600 text-white shadow-3xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`flex-1 py-1 rounded text-center font-bold transition text-[9px] cursor-pointer ${emailWrapMode === 'strict' ? 'bg-[#071A4B] text-white shadow-xs' : 'text-slate-600 hover:text-[#071A4B]'}`}
                             title="ตามที่เคาะจริง"
                           >
                             ตามเคาะ
@@ -11522,20 +12659,22 @@ export default function AdminPortal({
                       type="text"
                       value={campaignSubject}
                       onChange={(e) => setCampaignSubject(e.target.value)}
-                      className="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs font-semibold text-slate-850"
+                      className="w-full bg-white border border-[#E2E8F0] p-2.5 rounded-xl text-xs font-semibold text-[#071A4B] focus:outline-none focus:border-[#071A4B]"
                     />
                   </div>
 
-                  {/* Message Textarea */}
+                  {/* Visual Rich Text Editor */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-500 block">
                       เนื้อหาจดหมาย
                     </label>
-                    <textarea
-                      rows={11}
+                    <VisualHtmlEditor
                       value={campaignMessage}
-                      onChange={(e) => setCampaignMessage(e.target.value)}
-                      className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-xs text-slate-850 leading-relaxed font-mono focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                      onChange={setCampaignMessage}
+                      variables={CAMPAIGN_VARIABLES}
+                      defaultValue={DEFAULT_CAMPAIGN_MESSAGE}
+                      minHeightClass="min-h-[240px]"
+                      maxHeightClass="max-h-[380px]"
                       placeholder="พิมพ์เนื้อหาที่นี่..."
                     />
                   </div>
@@ -11545,7 +12684,7 @@ export default function AdminPortal({
               {/* Right Column: Realistic Preview (7 cols) */}
               <div 
                 ref={modalPreviewScrollRef} 
-                className={`lg:col-span-7 bg-slate-100/70 p-4 sm:p-6 overflow-y-auto overscroll-contain flex flex-col items-center scroll-smooth pb-28 ${
+                className={`lg:col-span-7 bg-[#F5F7FA] p-4 sm:p-6 min-h-0 h-full overflow-y-auto overflow-x-hidden overscroll-contain flex-col items-center scroll-smooth pb-16 ${
                   preSendModalTab === 'preview' ? 'flex' : 'hidden lg:flex'
                 }`}
               >
@@ -11567,7 +12706,7 @@ export default function AdminPortal({
                         </div>
 
                         {/* Fast Scroll to Bottom & Top buttons */}
-                        <div className="flex items-center gap-1 text-[10px]">
+                        <div className="flex items-center gap-1.5 text-[10px]">
                           <button
                             type="button"
                             onClick={() => {
@@ -11575,7 +12714,7 @@ export default function AdminPortal({
                                 modalPreviewScrollRef.current.scrollTo({ top: modalPreviewScrollRef.current.scrollHeight, behavior: 'smooth' });
                               }
                             }}
-                            className="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg shadow-2xs font-bold transition cursor-pointer"
+                            className="px-3 py-1 bg-white hover:bg-slate-50 text-[#071A4B] border border-[#E2E8F0] hover:border-[#071A4B] rounded-full font-bold transition cursor-pointer"
                             title="เลื่อนดูเนื้อหาท้ายจดหมายและปุ่มลงทะเบียน"
                           >
                             ⬇️ เลื่อนดูด้านล่างสุด
@@ -11587,7 +12726,7 @@ export default function AdminPortal({
                                 modalPreviewScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
                               }
                             }}
-                            className="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg shadow-2xs font-bold transition cursor-pointer"
+                            className="px-3 py-1 bg-white hover:bg-slate-50 text-[#071A4B] border border-[#E2E8F0] hover:border-[#071A4B] rounded-full font-bold transition cursor-pointer"
                             title="เลื่อนกลับไปบนสุด"
                           >
                             ⬆️ บนสุด
@@ -11597,10 +12736,10 @@ export default function AdminPortal({
 
                       {/* Recipient switcher banner in modal */}
                       {campaignSendType === 'individual' && hasRecipients && (
-                        <div className="w-full max-w-2xl mb-3 bg-white border border-slate-200 rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+                        <div className="w-full max-w-2xl mb-3 bg-white border border-[#E2E8F0] rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 shadow-xs tabular-nums">
                           <div className="flex items-center gap-1.5 text-xs">
-                            <span className="font-extrabold text-slate-800">👤 แสดงตัวอย่างสำหรับ:</span>
-                            <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 truncate max-w-[200px]">
+                            <span className="font-extrabold text-[#071A4B]">👤 แสดงตัวอย่างสำหรับ:</span>
+                            <span className="font-bold text-[#071A4B] bg-[#F5F7FA] px-2 py-0.5 rounded-full border border-[#E2E8F0] truncate max-w-[200px]">
                               {currentModalRecipient?.name || '-'}
                             </span>
                           </div>
@@ -11609,7 +12748,7 @@ export default function AdminPortal({
                               type="button"
                               onClick={() => setPreviewRecipientIndex(prev => Math.max(0, prev - 1))}
                               disabled={safeModalIdx <= 0}
-                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-30 rounded-lg text-slate-700 font-bold transition cursor-pointer"
+                              className="px-2 py-1 bg-[#F5F7FA] hover:bg-slate-200 disabled:opacity-30 rounded-lg text-[#071A4B] font-bold transition cursor-pointer"
                               title="คนก่อนหน้า"
                             >
                               ◀
@@ -11617,7 +12756,7 @@ export default function AdminPortal({
                             <select
                               value={safeModalIdx}
                               onChange={(e) => setPreviewRecipientIndex(Number(e.target.value))}
-                              className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 cursor-pointer max-w-[190px] truncate"
+                              className="text-xs font-bold text-[#071A4B] bg-[#F5F7FA] border border-[#E2E8F0] rounded-lg px-2 py-1 cursor-pointer max-w-[190px] truncate"
                             >
                               {modalRecipients.map((r, idx) => (
                                 <option key={r.id || idx} value={idx}>
@@ -11629,7 +12768,7 @@ export default function AdminPortal({
                               type="button"
                               onClick={() => setPreviewRecipientIndex(prev => Math.min(modalRecipients.length - 1, prev + 1))}
                               disabled={safeModalIdx >= modalRecipients.length - 1}
-                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-30 rounded-lg text-slate-700 font-bold transition cursor-pointer"
+                              className="px-2 py-1 bg-[#F5F7FA] hover:bg-slate-200 disabled:opacity-30 rounded-lg text-[#071A4B] font-bold transition cursor-pointer"
                               title="คนถัดไป"
                             >
                               ▶
@@ -11646,20 +12785,20 @@ export default function AdminPortal({
                           width: previewViewport === 'narrow' ? '320px' : previewViewport === 'mobile' ? '375px' : '100%',
                           maxWidth: previewViewport === 'narrow' ? '320px' : previewViewport === 'mobile' ? '375px' : '600px'
                         }}
-                        className="transition-all duration-300 bg-white border border-slate-250 rounded-2xl overflow-hidden shadow-md"
+                        className="transition-all duration-300 bg-white border border-[#E2E8F0] rounded-2xl overflow-x-hidden shadow-md shrink-0 h-fit"
                       >
                         {/* Email Banner */}
-                        <div className="bg-gradient-to-r from-orange-600 to-amber-500 text-white p-5 text-center relative">
-                          <Landmark className="h-8 w-8 text-white/90 mx-auto" />
-                          <h4 className="text-xs font-mono tracking-widest text-orange-100 font-bold uppercase mt-1">Bangkok University</h4>
-                          <h3 className="text-sm font-extrabold mt-1 tracking-tight">สำนักมาตรฐานคุณภาพการศึกษา</h3>
+                        <div className="bg-[#071A4B] text-white p-5 text-center relative border-b-2 border-b-[#F97316] rounded-t-2xl">
+                          <Landmark className="h-8 w-8 text-[#EA580C] mx-auto" />
+                          <h4 className="text-[10px] font-mono tracking-[0.18em] text-[#EA580C] font-bold uppercase mt-1.5">Bangkok University</h4>
+                          <h3 className="text-sm font-extrabold mt-0.5 tracking-tight">สำนักมาตรฐานคุณภาพการศึกษา</h3>
                         </div>
 
                         {/* Email Content */}
                         <div className="p-5 space-y-4">
                           {/* Formatted Message text */}
                           <div 
-                            className="text-slate-800 font-medium"
+                            className="text-[#071A4B] font-medium [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_table]:max-w-full"
                             style={{
                               fontSize: emailTextFontSize,
                               textAlign: emailTextAlign,
@@ -11685,26 +12824,26 @@ export default function AdminPortal({
                               <img 
                                 src={selCourse?.posterUrl} 
                                 alt="โปสเตอร์อบรม" 
-                                className="max-h-72 max-w-full rounded-lg mx-auto shadow-sm border border-slate-200"
+                                className="max-w-full h-auto rounded-xl mx-auto shadow-sm border border-[#E2E8F0]"
                               />
                             </div>
                           )}
 
-                          <hr className="border-slate-100" />
+                          <hr className="border-[#E2E8F0]" />
                           
                           {/* Course Info Card */}
-                          <div className="bg-slate-50 border border-slate-150 p-4 rounded-xl space-y-2 text-xs text-slate-700">
-                            <p className="font-extrabold text-slate-900 border-b border-slate-150 pb-1.5 flex items-center justify-between">
+                          <div className="bg-[#F5F7FA] border border-[#E2E8F0] p-4 rounded-xl space-y-2 text-xs text-slate-700">
+                            <p className="font-extrabold text-[#071A4B] border-b border-[#E2E8F0] pb-1.5 flex items-center justify-between">
                               <span>📋 สรุปรายละเอียดกำหนดการสัมมนา:</span>
-                              <span className="text-[9px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded font-extrabold">รอบจองสิทธิ์ด่วน</span>
+                              <span className="text-[9px] bg-orange-100 text-[#EA580C] px-2 py-0.5 rounded-full font-extrabold">รอบจองสิทธิ์ด่วน</span>
                             </p>
                             {selCourse ? (
                               <>
-                                <p className="font-bold text-slate-850">
+                                <p className="font-bold text-[#071A4B]">
                                   หัวข้อ: {selCourse.title}
                                 </p>
                                 <p>วิทยากร: 👨‍🏫 <strong>{selCourse.speaker}</strong></p>
-                                <p>วันเวลา: 📅 {selCourse.date} เวลา {selCourse.time} น.</p>
+                                <p className="tabular-nums">วันเวลา: 📅 {selCourse.date} เวลา {selCourse.time} น.</p>
                                 <p>สถานที่: 📍 {selCourse.location}</p>
                               </>
                             ) : (
@@ -11716,14 +12855,16 @@ export default function AdminPortal({
                           <div className="text-center pt-2">
                             <button
                               type="button"
-                              className="w-full bg-orange-600 text-white font-extrabold py-3 px-4 rounded-xl text-xs shadow-md flex items-center justify-center gap-1 cursor-default"
+                              className="w-full bg-[#F97316] text-white font-extrabold py-2.5 px-5 rounded-full text-xs shadow-sm flex items-center justify-between gap-2 cursor-default"
                             >
                               <span>👉 คลิกที่นี่เพื่อลงทะเบียนจองสิทธิ์เข้าร่วมอบรม</span>
-                              <ArrowRight className="h-4 w-4" />
+                              <span className="w-6 h-6 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                                <ArrowRight className="h-3.5 w-3.5" />
+                              </span>
                             </button>
                           </div>
 
-                          <div className="text-[10px] text-slate-400 text-center leading-normal pt-2 border-t border-slate-100 pb-8">
+                          <div className="text-[10px] text-slate-400 text-center leading-normal pt-2 border-t border-[#E2E8F0] pb-8">
                             จดหมายฉบับนี้ส่งถึงคุณโดยระบบอัตโนมัติภายใต้โครงข่ายความรู้ส่วนกลาง มหาวิทยาลัยกรุงเทพ<br />
                             สำนักมาตรฐานคุณภาพการศึกษา
                           </div>
@@ -11736,11 +12877,11 @@ export default function AdminPortal({
             </div>
 
             {/* Modal Footer */}
-            <div className="bg-slate-50 border-t border-slate-200 px-6 py-3.5 flex items-center justify-between shrink-0">
+            <div className="bg-[#F5F7FA] border-t border-[#E2E8F0] px-6 py-3.5 flex items-center justify-between shrink-0">
               <button
                 type="button"
                 onClick={() => setShowPreSendModal(false)}
-                className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-250 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
+                className="px-5 py-2 bg-white hover:bg-slate-50 border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] font-bold rounded-full text-xs transition cursor-pointer"
               >
                 ✕ ปิด / กลับไปแก้ไขต่อ
               </button>
@@ -11753,10 +12894,13 @@ export default function AdminPortal({
                     handleSendCampaignEmails();
                   }}
                   disabled={sendingCampaignMessage || getCampaignRecipients().length === 0}
-                  className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-extrabold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-5 py-2 bg-[#F97316] hover:bg-[#EA580C] disabled:opacity-50 text-white font-bold rounded-full text-xs shadow-sm transition flex items-center gap-2.5 cursor-pointer tabular-nums"
                 >
                   <Send className="h-4 w-4" />
-                  <span>🚀 ยืนยันและเริ่มส่งจดหมาย ({getCampaignRecipients().length} คน)</span>
+                  <span>ยืนยันและเริ่มส่งจดหมาย ({getCampaignRecipients().length} คน)</span>
+                  <span className="w-6 h-6 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                    <ArrowRight className="h-3 w-3" />
+                  </span>
                 </button>
               </div>
             </div>
@@ -11766,16 +12910,21 @@ export default function AdminPortal({
 
       {/* Modal สำหรับแก้ไขข้อมูลผู้เข้าร่วมอบรม */}
       {editingRegistration && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 shadow-2xl" id="modal-edit-registration">
-          <div className="bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-150">
-            <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-6">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Edit className="h-5 w-5 text-amber-500" />
-                <span>แก้ไขข้อมูลผู้ลงทะเบียน / ผู้เข้าอบรม</span>
-              </h3>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4" id="modal-edit-registration">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl border border-[#E2E8F0] max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-150">
+            <div className="flex justify-between items-center pb-4 border-b border-[#E2E8F0] mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                  <Edit className="h-4 w-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">Edit Participant</span>
+                  <h3 className="text-base font-extrabold text-[#071A4B]">แก้ไขข้อมูลผู้ลงทะเบียน / ผู้เข้าอบรม</h3>
+                </div>
+              </div>
               <button 
                 onClick={() => setEditingRegistration(null)}
-                className="text-slate-400 hover:text-slate-600 font-bold text-xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-50 transition"
+                className="text-slate-400 hover:text-[#071A4B] font-bold text-xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition cursor-pointer"
                 aria-label="Close"
               >
                 &times;
@@ -11789,7 +12938,7 @@ export default function AdminPortal({
                   type="text"
                   value={editRegForm.personnelId}
                   onChange={(e) => setEditRegForm({ ...editRegForm, personnelId: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-amber-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
@@ -11799,7 +12948,7 @@ export default function AdminPortal({
                   type="text"
                   value={editRegForm.name}
                   onChange={(e) => setEditRegForm({ ...editRegForm, name: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-amber-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
@@ -11810,7 +12959,7 @@ export default function AdminPortal({
                   value={editRegForm.position}
                   onChange={(e) => setEditRegForm({ ...editRegForm, position: e.target.value })}
                   placeholder="เช่น อาจารย์, เจ้าหน้าที่บริหารงานทั่วไป"
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-amber-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
@@ -11820,7 +12969,7 @@ export default function AdminPortal({
                   type="email"
                   value={editRegForm.email}
                   onChange={(e) => setEditRegForm({ ...editRegForm, email: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-850 font-mono focus:outline-none focus:border-amber-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-mono focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
@@ -11830,36 +12979,36 @@ export default function AdminPortal({
                   type="text"
                   value={editRegForm.department}
                   onChange={(e) => setEditRegForm({ ...editRegForm, department: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-amber-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
-              <div className="bg-slate-50 border border-slate-150 p-4 rounded-xl flex items-center gap-2 mt-4">
+              <div className="bg-[#F5F7FA] border border-[#E2E8F0] p-4 rounded-xl flex items-center gap-2 mt-4">
                 <input
                   type="checkbox"
                   id="edit-reg-checked-in"
                   checked={editRegForm.checkedIn}
                   onChange={(e) => setEditRegForm({ ...editRegForm, checkedIn: e.target.checked })}
-                  className="rounded text-orange-600 focus:ring-orange-500 h-4 w-4 shadow-sm cursor-pointer"
+                  className="rounded text-[#EA580C] focus:ring-[#EA580C] h-4 w-4 cursor-pointer"
                 />
-                <label htmlFor="edit-reg-checked-in" className="text-xs font-bold text-slate-700 cursor-pointer select-none">
+                <label htmlFor="edit-reg-checked-in" className="text-xs font-bold text-[#071A4B] cursor-pointer select-none">
                   ผ่านการเช็คอินเข้าอบรมเรียบร้อยแล้ว
                 </label>
               </div>
             </div>
 
-            <div className="flex gap-3 justify-end mt-6 border-t border-slate-100 pt-4">
+            <div className="flex gap-3 justify-end mt-6 border-t border-[#E2E8F0] pt-4">
               <button
                 type="button"
                 onClick={() => setEditingRegistration(null)}
-                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition min-h-[38px]"
+                className="px-5 py-2 text-xs font-bold bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] rounded-full transition min-h-[38px] cursor-pointer"
               >
                 ยกเลิก
               </button>
               <button
                 type="button"
                 onClick={handleSaveRegistrationEdit}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition shadow-sm min-h-[38px]"
+                className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-5 py-2 rounded-full text-xs transition shadow-sm min-h-[38px] cursor-pointer"
               >
                 บันทึกการเปลี่ยนแปลง
               </button>
@@ -11870,16 +13019,21 @@ export default function AdminPortal({
 
       {/* Modal สำหรับแก้ไขข้อมูลแอดมินเจ้าหน้าที่ */}
       {editingAdminState && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 shadow-2xl" id="modal-edit-admin">
-          <div className="bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-150">
-            <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-6">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Edit className="h-5 w-5 text-amber-500" />
-                <span>แก้ไขข้อมูลแอดมินเจ้าหน้าที่ / ผู้ร่วมบริหาร</span>
-              </h3>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4" id="modal-edit-admin">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl border border-[#E2E8F0] max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-150">
+            <div className="flex justify-between items-center pb-4 border-b border-[#E2E8F0] mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <Edit className="h-4 w-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">Edit Admin Profile</span>
+                  <h3 className="text-base font-extrabold text-[#071A4B]">แก้ไขข้อมูลแอดมินเจ้าหน้าที่ / ผู้ร่วมบริหาร</h3>
+                </div>
+              </div>
               <button 
                 onClick={() => setEditingAdminState(null)}
-                className="text-slate-400 hover:text-slate-600 font-bold text-xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-50 transition"
+                className="text-slate-400 hover:text-[#071A4B] font-bold text-xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition cursor-pointer"
                 aria-label="Close"
               >
                 &times;
@@ -11893,7 +13047,7 @@ export default function AdminPortal({
                   type="email"
                   value={editAdminForm.email}
                   onChange={(e) => setEditAdminForm({ ...editAdminForm, email: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-850 font-mono focus:outline-none focus:border-amber-500 min-h-[38px] disabled:opacity-55"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-mono focus:outline-none focus:border-[#071A4B] min-h-[38px] disabled:opacity-55"
                 />
               </div>
 
@@ -11903,7 +13057,7 @@ export default function AdminPortal({
                   type="text"
                   value={editAdminForm.name}
                   onChange={(e) => setEditAdminForm({ ...editAdminForm, name: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-amber-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
@@ -11913,7 +13067,7 @@ export default function AdminPortal({
                   type="text"
                   value={editAdminForm.staffId}
                   onChange={(e) => setEditAdminForm({ ...editAdminForm, staffId: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-850 focus:outline-none focus:border-amber-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
@@ -11923,7 +13077,7 @@ export default function AdminPortal({
                   type="text"
                   value={editAdminForm.position}
                   onChange={(e) => setEditAdminForm({ ...editAdminForm, position: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
@@ -11933,7 +13087,7 @@ export default function AdminPortal({
                   type="text"
                   value={editAdminForm.department}
                   onChange={(e) => setEditAdminForm({ ...editAdminForm, department: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
@@ -11943,7 +13097,7 @@ export default function AdminPortal({
                   type="text"
                   value={editAdminForm.phone}
                   onChange={(e) => setEditAdminForm({ ...editAdminForm, phone: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
@@ -11953,23 +13107,23 @@ export default function AdminPortal({
                   type="text"
                   value="Admin (ผู้ดูแลระบบ)"
                   disabled
-                  className="w-full bg-slate-100 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-500 font-semibold min-h-[38px]"
+                  className="w-full bg-slate-100 border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-slate-500 font-semibold min-h-[38px]"
                 />
               </div>
             </div>
 
-            <div className="flex gap-3 justify-end mt-6 border-t border-slate-100 pt-4">
+            <div className="flex gap-3 justify-end mt-6 border-t border-[#E2E8F0] pt-4">
               <button
                 type="button"
                 onClick={() => setEditingAdminState(null)}
-                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition min-h-[38px]"
+                className="px-5 py-2 text-xs font-bold bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] rounded-full transition min-h-[38px] cursor-pointer"
               >
                 ยกเลิก
               </button>
               <button
                 type="button"
                 onClick={handleSaveAdminEdit}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition shadow-sm min-h-[38px]"
+                className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-5 py-2 rounded-full text-xs transition shadow-sm min-h-[38px] cursor-pointer"
               >
                 บันทึกการเปลี่ยนแปลง
               </button>
@@ -11980,16 +13134,21 @@ export default function AdminPortal({
 
       {/* Modal สำหรับแก้ไขประวัติส่งเมล (Edit Campaign Log) */}
       {editingCampaignLog && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 shadow-2xl" id="modal-edit-campaign-log">
-          <div className="bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-150 scrollbar-thin">
-            <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-6">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Edit className="h-5 w-5 text-orange-500" />
-                <span>แก้ไขรายละเอียดประวัติการจัดส่งเมลเชิญ</span>
-              </h3>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4" id="modal-edit-campaign-log">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl border border-[#E2E8F0] max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-150 scrollbar-thin">
+            <div className="flex justify-between items-center pb-4 border-b border-[#E2E8F0] mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0">
+                  <Edit className="h-4 w-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">Edit Campaign Log</span>
+                  <h3 className="text-base font-extrabold text-[#071A4B]">แก้ไขรายละเอียดประวัติการจัดส่งเมลเชิญ</h3>
+                </div>
+              </div>
               <button 
                 onClick={() => setEditingCampaignLog(null)}
-                className="text-slate-400 hover:text-slate-600 font-bold text-xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-50 transition"
+                className="text-slate-400 hover:text-[#071A4B] font-bold text-xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition cursor-pointer"
                 aria-label="Close"
               >
                 &times;
@@ -12003,7 +13162,7 @@ export default function AdminPortal({
                   type="text"
                   value={editCampaignForm.courseTitle || ''}
                   onChange={(e) => setEditCampaignForm({ ...editCampaignForm, courseTitle: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-orange-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-bold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                   placeholder="เช่น อบรมแนวทางตามเกณฑ์ AUN-QA version 4"
                 />
               </div>
@@ -12015,7 +13174,7 @@ export default function AdminPortal({
                     type="text"
                     value={editCampaignForm.courseId || ''}
                     onChange={(e) => setEditCampaignForm({ ...editCampaignForm, courseId: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-orange-500 min-h-[38px]"
+                    className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                     placeholder="เช่น manual หรือรหัสคอร์สจริง"
                   />
                 </div>
@@ -12025,7 +13184,7 @@ export default function AdminPortal({
                     type="text"
                     value={editCampaignForm.targetDetails || ''}
                     onChange={(e) => setEditCampaignForm({ ...editCampaignForm, targetDetails: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-orange-500 min-h-[38px]"
+                    className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                     placeholder="เช่น อาจารย์ประจำ คณะบัญชี หรือ เจาะจงรายบุคคล"
                   />
                 </div>
@@ -12037,46 +13196,49 @@ export default function AdminPortal({
                   type="text"
                   value={editCampaignForm.subject || ''}
                   onChange={(e) => setEditCampaignForm({ ...editCampaignForm, subject: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-orange-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-bold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 block">เนื้อหาอีเมลส่งเชิญ (Template / Message) *</label>
-                <textarea
+                <VisualHtmlEditor
                   value={editCampaignForm.message || ''}
-                  onChange={(e) => setEditCampaignForm({ ...editCampaignForm, message: e.target.value })}
-                  rows={6}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500"
-                ></textarea>
+                  onChange={(val) => setEditCampaignForm({ ...editCampaignForm, message: val })}
+                  variables={CAMPAIGN_VARIABLES}
+                  defaultValue={DEFAULT_CAMPAIGN_MESSAGE}
+                  minHeightClass="min-h-[160px]"
+                  maxHeightClass="max-h-[300px]"
+                  placeholder="แก้ไขเนื้อหาอีเมลส่งเชิญ..."
+                />
               </div>
 
-              <div className="grid grid-cols-3 gap-4 bg-orange-50/40 p-4 rounded-xl border border-orange-100">
+              <div className="grid grid-cols-3 gap-4 bg-[#F5F7FA] p-4 rounded-xl border border-[#E2E8F0] tabular-nums">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-orange-800 block">จำนวนเป้าหมายรวม *</label>
+                  <label className="text-[10px] font-bold text-[#071A4B] block">จำนวนเป้าหมายรวม *</label>
                   <input
                     type="number"
                     value={editCampaignForm.recipientsCount || 0}
                     onChange={(e) => setEditCampaignForm({ ...editCampaignForm, recipientsCount: Number(e.target.value) })}
-                    className="w-full bg-white border border-slate-250 p-2 rounded-lg text-xs font-bold text-slate-800 min-h-[34px]"
+                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-lg text-xs font-bold text-[#071A4B] min-h-[34px]"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-emerald-800 block">ส่งสำเร็จ *</label>
+                  <label className="text-[10px] font-bold text-emerald-700 block">ส่งสำเร็จ *</label>
                   <input
                     type="number"
                     value={editCampaignForm.successCount || 0}
                     onChange={(e) => setEditCampaignForm({ ...editCampaignForm, successCount: Number(e.target.value) })}
-                    className="w-full bg-white border border-slate-250 p-2 rounded-lg text-xs font-bold text-emerald-700 min-h-[34px]"
+                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-lg text-xs font-bold text-emerald-700 min-h-[34px]"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-rose-800 block">ส่งล้มเหลว *</label>
+                  <label className="text-[10px] font-bold text-rose-700 block">ส่งล้มเหลว *</label>
                   <input
                     type="number"
                     value={editCampaignForm.failCount || 0}
                     onChange={(e) => setEditCampaignForm({ ...editCampaignForm, failCount: Number(e.target.value) })}
-                    className="w-full bg-white border border-slate-250 p-2 rounded-lg text-xs font-bold text-rose-700 min-h-[34px]"
+                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-lg text-xs font-bold text-rose-700 min-h-[34px]"
                   />
                 </div>
               </div>
@@ -12088,7 +13250,7 @@ export default function AdminPortal({
                     type="text"
                     value={editCampaignForm.sentBy || ''}
                     onChange={(e) => setEditCampaignForm({ ...editCampaignForm, sentBy: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500 min-h-[38px]"
+                    className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-mono focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                   />
                 </div>
                 <div className="space-y-1">
@@ -12097,24 +13259,24 @@ export default function AdminPortal({
                     type="text"
                     value={editCampaignForm.sentAt || ''}
                     onChange={(e) => setEditCampaignForm({ ...editCampaignForm, sentAt: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500 min-h-[38px]"
+                    className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-mono focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-3 justify-end mt-6 border-t border-slate-100 pt-4">
+            <div className="flex gap-3 justify-end mt-6 border-t border-[#E2E8F0] pt-4">
               <button
                 type="button"
                 onClick={() => setEditingCampaignLog(null)}
-                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition min-h-[38px]"
+                className="px-5 py-2 text-xs font-bold bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] rounded-full transition min-h-[38px] cursor-pointer"
               >
                 ยกเลิก
               </button>
               <button
                 type="button"
                 onClick={handleSaveCampaignLogEdit}
-                className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition shadow-sm min-h-[38px]"
+                className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-5 py-2 rounded-full text-xs transition shadow-sm min-h-[38px] cursor-pointer"
               >
                 บันทึกประวัติจัดส่ง
               </button>
@@ -12125,16 +13287,21 @@ export default function AdminPortal({
 
       {/* Modal สำหรับลงบันทึกแมนนวล (Add Manual Campaign Log) */}
       {showAddCampaignModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 shadow-2xl" id="modal-add-campaign-log">
-          <div className="bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-150 scrollbar-thin">
-            <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-6">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <PlusCircle className="h-5 w-5 text-emerald-500" />
-                <span>ลงบันทึกประวัติการส่งจดหมายเชิญแบบกำหนดเอง (Manual Log)</span>
-              </h3>
+        <div className="fixed inset-0 z-50 bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4" id="modal-add-campaign-log">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl border border-[#E2E8F0] max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-150 scrollbar-thin">
+            <div className="flex justify-between items-center pb-4 border-b border-[#E2E8F0] mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0">
+                  <PlusCircle className="h-4 w-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#EA580C] block">Manual Campaign Log</span>
+                  <h3 className="text-base font-extrabold text-[#071A4B]">ลงบันทึกประวัติการส่งจดหมายเชิญแบบกำหนดเอง (Manual Log)</h3>
+                </div>
+              </div>
               <button 
                 onClick={() => setShowAddCampaignModal(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold text-xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-50 transition"
+                className="text-slate-400 hover:text-[#071A4B] font-bold text-xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition cursor-pointer"
                 aria-label="Close"
               >
                 &times;
@@ -12163,7 +13330,7 @@ export default function AdminPortal({
                       });
                     }
                   }}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-emerald-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                 >
                   <option value="">-- กรุณาเลือกหลักสูตร หรือ เลือกกรอกด้วยตนเอง --</option>
                   {courses.filter(c => !c.archived || c.id === addCampaignForm.courseId || showArchivedInDropdown).map(c => (
@@ -12182,7 +13349,7 @@ export default function AdminPortal({
                   value={addCampaignForm.courseTitle || ''}
                   onChange={(e) => setAddCampaignForm({ ...addCampaignForm, courseTitle: e.target.value })}
                   disabled={addCampaignForm.courseId !== 'custom' && !!addCampaignForm.courseId}
-                  className="w-full disabled:bg-slate-100 bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-emerald-500 min-h-[38px]"
+                  className="w-full disabled:bg-slate-100 bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-bold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                   placeholder="เช่น โครงการพัฒนาสมรรถนะอาจารย์ยุคใหม่"
                 />
               </div>
@@ -12194,7 +13361,7 @@ export default function AdminPortal({
                     type="text"
                     value={addCampaignForm.targetDetails || ''}
                     onChange={(e) => setAddCampaignForm({ ...addCampaignForm, targetDetails: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-emerald-500 min-h-[38px]"
+                    className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                     placeholder="เช่น อาจารย์ประจำคณะบริหารธุรกิจ, เจาะจงรายบุคคล"
                   />
                 </div>
@@ -12203,7 +13370,7 @@ export default function AdminPortal({
                   <select
                     value={addCampaignForm.targetType || 'all'}
                     onChange={(e) => setAddCampaignForm({ ...addCampaignForm, targetType: e.target.value as any })}
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-emerald-500 min-h-[38px]"
+                    className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-semibold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                   >
                     <option value="all">บุคลากรทั้งหมด (All)</option>
                     <option value="custom_dept">เฉพาะสาขา/สังกัด (Department)</option>
@@ -12219,25 +13386,27 @@ export default function AdminPortal({
                   type="text"
                   value={addCampaignForm.subject || ''}
                   onChange={(e) => setAddCampaignForm({ ...addCampaignForm, subject: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-emerald-500 min-h-[38px]"
+                  className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-bold focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                   placeholder="เช่น ขอเรียนเชิญเข้าร่วมโครงการอบรม..."
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 block">เนื้อหาอีเมล (Message Body) *</label>
-                <textarea
+                <VisualHtmlEditor
                   value={addCampaignForm.message || ''}
-                  onChange={(e) => setAddCampaignForm({ ...addCampaignForm, message: e.target.value })}
-                  rows={5}
-                  className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 font-mono focus:outline-none focus:border-emerald-500"
+                  onChange={(val) => setAddCampaignForm({ ...addCampaignForm, message: val })}
+                  variables={CAMPAIGN_VARIABLES}
+                  defaultValue={DEFAULT_CAMPAIGN_MESSAGE}
+                  minHeightClass="min-h-[160px]"
+                  maxHeightClass="max-h-[300px]"
                   placeholder="กรอกข้อความรายละเอียดเมลที่ส่งออก..."
-                ></textarea>
+                />
               </div>
 
-              <div className="grid grid-cols-3 gap-4 bg-emerald-50/40 p-4 rounded-xl border border-emerald-100">
+              <div className="grid grid-cols-3 gap-4 bg-[#F5F7FA] p-4 rounded-xl border border-[#E2E8F0] tabular-nums">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-emerald-800 block">จำนวนผู้รับทั้งหมด *</label>
+                  <label className="text-[10px] font-bold text-[#071A4B] block">จำนวนผู้รับทั้งหมด *</label>
                   <input
                     type="number"
                     value={addCampaignForm.recipientsCount || 0}
@@ -12250,11 +13419,11 @@ export default function AdminPortal({
                         failCount: Math.max(0, count - currentSuccess)
                       });
                     }}
-                    className="w-full bg-white border border-slate-250 p-2 rounded-lg text-xs font-bold text-slate-800 min-h-[34px]"
+                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-lg text-xs font-bold text-[#071A4B] min-h-[34px]"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-emerald-800 block">ส่งสำเร็จ (Success) *</label>
+                  <label className="text-[10px] font-bold text-emerald-700 block">ส่งสำเร็จ (Success) *</label>
                   <input
                     type="number"
                     value={addCampaignForm.successCount || 0}
@@ -12267,16 +13436,16 @@ export default function AdminPortal({
                         failCount: Math.max(0, currentTotal - success)
                       });
                     }}
-                    className="w-full bg-white border border-slate-250 p-2 rounded-lg text-xs font-bold text-emerald-700 min-h-[34px]"
+                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-lg text-xs font-bold text-emerald-700 min-h-[34px]"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-rose-800 block">ส่งล้มเหลว (Fail) *</label>
+                  <label className="text-[10px] font-bold text-rose-700 block">ส่งล้มเหลว (Fail) *</label>
                   <input
                     type="number"
                     value={addCampaignForm.failCount || 0}
                     onChange={(e) => setAddCampaignForm({ ...addCampaignForm, failCount: Number(e.target.value) })}
-                    className="w-full bg-white border border-slate-250 p-2 rounded-lg text-xs font-bold text-rose-700 min-h-[34px]"
+                    className="w-full bg-white border border-[#E2E8F0] p-2 rounded-lg text-xs font-bold text-rose-700 min-h-[34px]"
                   />
                 </div>
               </div>
@@ -12288,7 +13457,7 @@ export default function AdminPortal({
                     type="text"
                     value={addCampaignForm.sentBy || ''}
                     onChange={(e) => setAddCampaignForm({ ...addCampaignForm, sentBy: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-850 font-mono focus:outline-none focus:border-emerald-500 min-h-[38px]"
+                    className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] font-mono focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                   />
                 </div>
                 <div className="space-y-1">
@@ -12297,24 +13466,24 @@ export default function AdminPortal({
                     type="datetime-local"
                     value={addCampaignForm.sentAt ? addCampaignForm.sentAt.slice(0, 16) : ''}
                     onChange={(e) => setAddCampaignForm({ ...addCampaignForm, sentAt: e.target.value ? new Date(e.target.value).toISOString() : '' })}
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500 min-h-[38px]"
+                    className="w-full bg-[#F5F7FA] border border-[#E2E8F0] p-2.5 rounded-xl text-xs text-[#071A4B] focus:outline-none focus:border-[#071A4B] min-h-[38px]"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-3 justify-end mt-6 border-t border-slate-100 pt-4">
+            <div className="flex gap-3 justify-end mt-6 border-t border-[#E2E8F0] pt-4">
               <button
                 type="button"
                 onClick={() => setShowAddCampaignModal(false)}
-                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition min-h-[38px]"
+                className="px-5 py-2 text-xs font-bold bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] rounded-full transition min-h-[38px] cursor-pointer"
               >
                 ยกเลิก
               </button>
               <button
                 type="button"
                 onClick={handleManualAddCampaignLog}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition shadow-sm min-h-[38px]"
+                className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-5 py-2 rounded-full text-xs transition shadow-sm min-h-[38px] cursor-pointer"
               >
                 เพิ่มบันทึกประวัติ
               </button>
@@ -12325,25 +13494,25 @@ export default function AdminPortal({
 
       {/* Custom Confirmation Dialog Modal */}
       {confirmDialog.isOpen && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden w-full max-w-md p-6 space-y-4">
+        <div className="fixed inset-0 z-[100] bg-[#071A4B]/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xl overflow-hidden w-full max-w-md p-6 space-y-4">
             <div className="flex items-start gap-4">
-              <div className={`p-3 rounded-xl flex-shrink-0 ${confirmDialog.isDestructive ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
-                {confirmDialog.isDestructive ? <Trash2 className="h-6 w-6" /> : <AlertTriangle className="h-6 w-6" />}
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${confirmDialog.isDestructive ? 'bg-rose-600 text-white' : 'bg-[#F97316] text-white'}`}>
+                {confirmDialog.isDestructive ? <Trash2 className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
               </div>
               <div className="space-y-1">
-                <h3 className="font-extrabold text-slate-800 text-sm">{confirmDialog.title}</h3>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                <h3 className="font-extrabold text-[#071A4B] text-sm">{confirmDialog.title}</h3>
+                <p className="text-xs text-slate-600 font-medium leading-relaxed">
                   {confirmDialog.message}
                 </p>
               </div>
             </div>
             
-            <div className="flex gap-2.5 justify-end pt-2 border-t border-slate-100">
+            <div className="flex gap-2.5 justify-end pt-3 border-t border-[#E2E8F0]">
               <button
                 type="button"
                 onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold transition min-h-[38px]"
+                className="px-5 py-2 bg-white border border-[#E2E8F0] hover:border-[#071A4B] text-[#071A4B] rounded-full text-xs font-bold transition min-h-[38px] cursor-pointer"
               >
                 {confirmDialog.cancelText}
               </button>
@@ -12353,10 +13522,10 @@ export default function AdminPortal({
                   setConfirmDialog(prev => ({ ...prev, isOpen: false }));
                   await confirmDialog.onConfirm();
                 }}
-                className={`px-5 py-2 text-white rounded-xl text-xs font-bold transition min-h-[38px] ${
+                className={`px-5 py-2 text-white rounded-full text-xs font-bold transition min-h-[38px] cursor-pointer ${
                   confirmDialog.isDestructive 
                     ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800' 
-                    : 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
+                    : 'bg-[#F97316] hover:bg-[#EA580C] active:bg-[#EA580C]'
                 }`}
               >
                 {confirmDialog.confirmText}

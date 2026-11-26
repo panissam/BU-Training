@@ -466,86 +466,96 @@ function doPost(e) {
   };
 
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 md:p-6 text-slate-800">
-      <div className="flex items-center gap-2 mb-3">
-        <FileCode className="h-6 w-6 text-violet-600" id="gas-guide-icon" />
-        <h3 className="text-lg font-bold text-slate-900" id="gas-guide-title">
-          คู่มือจัดตั้งระบบส่งอีเมลฟรี (Google Apps Script)
-        </h3>
+    <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] rounded-2xl p-5 md:p-6 text-[#071A4B] shadow-sm">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0" id="gas-guide-icon">
+          <FileCode className="h-5 w-5 text-[#F97316]" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#EA580C]">
+              SERVERLESS EMAIL INTEGRATION
+            </span>
+          </div>
+          <h3 className="text-lg font-extrabold text-[#071A4B] mt-0.5" id="gas-guide-title">
+            คู่มือจัดตั้งระบบส่งอีเมลฟรี <span className="text-[#F97316]">(Google Apps Script)</span>
+          </h3>
+        </div>
       </div>
-      <p className="text-sm text-slate-600 mb-4" id="gas-guide-desc">
+      <p className="text-sm text-slate-600 mb-5 leading-relaxed" id="gas-guide-desc">
         ระบบใช้สถาปัตยกรรม Serverless เชื่อมต่อไปยัง Google Apps Script ของคุณ 
         เพื่อให้บริการส่งอีเมลตอบรับและส่งประกาศกลุ่มอย่างเป็นส่วนตัวและฟรี 100% ภายใต้โควต้าของมหาวิทยาลัย (@bu.ac.th)
       </p>
 
       <div className="space-y-4 mb-5 text-sm" id="gas-steps">
-        <div className="flex gap-2">
-          <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-semibold text-xs">
+        <div className="flex gap-3">
+          <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#071A4B] text-white font-bold text-xs tabular-nums">
             1
           </div>
           <div>
-            <p className="font-semibold text-slate-900">สร้างโครงการสคริปต์ใหม่</p>
-            <p className="text-slate-500">ไปที่ <a href="https://script.google.com" target="_blank" rel="noreferrer" className="text-violet-600 underline font-medium">script.google.com</a> กดปุ่ม "โครงการใหม่" (New Project)</p>
+            <p className="font-bold text-[#071A4B]">สร้างโครงการสคริปต์ใหม่</p>
+            <p className="text-slate-600">ไปที่ <a href="https://script.google.com" target="_blank" rel="noreferrer" className="text-[#EA580C] hover:text-[#F97316] underline font-semibold">script.google.com</a> กดปุ่ม "โครงการใหม่" (New Project)</p>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-semibold text-xs">
+        <div className="flex gap-3">
+          <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#071A4B] text-white font-bold text-xs tabular-nums">
             2
           </div>
           <div>
-            <p className="font-semibold text-slate-900">วางสคริปต์และบันทึก</p>
-            <p className="text-slate-500">คัดลอกซอร์สโค้ดด้านล่างนี้ วางแทนที่โค้ดเดิมในไฟล์ <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono text-xs">รหัส.gs</code> แล้วกดบันทึก</p>
+            <p className="font-bold text-[#071A4B]">วางสคริปต์และบันทึก</p>
+            <p className="text-slate-600">คัดลอกซอร์สโค้ดด้านล่างนี้ วางแทนที่โค้ดเดิมในไฟล์ <code className="bg-[#F5F7FA] border border-[#E2E8F0] text-[#071A4B] px-1.5 py-0.5 rounded font-mono text-xs">รหัส.gs</code> แล้วกดบันทึก</p>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-semibold text-xs">
+        <div className="flex gap-3">
+          <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#F97316] text-white font-bold text-xs tabular-nums">
             3
           </div>
           <div>
-            <p className="font-semibold text-slate-900">การติดตั้งใช้งานในลักษณะเว็บแอป (Deploy)</p>
-            <p className="text-slate-500">
-              กดปุ่ม <strong className="text-slate-800">การทำให้ใช้งานได้ (Deploy)</strong> &gt; <strong className="text-slate-800">การทำให้ใช้งานได้ใหม่ (New deployment)</strong> จากนั้นกำหนดค่า:<br />
-              - ประเภทบริการ: <strong className="text-violet-700">เว็บแอป (Web app)</strong><br />
-              - เรียกใช้งานในฐานะ: <strong className="text-violet-700">ฉัน (บัญชีของคุณ/ panisara.l@bu.ac.th หรือดีที่สุดล็อกอินด้วย buqa@bu.ac.th)</strong><br />
-              - ผู้เข้าถึง: <strong className="text-violet-700">ทุกคน (Anyone)</strong>
+            <p className="font-bold text-[#071A4B]">การติดตั้งใช้งานในลักษณะเว็บแอป (Deploy)</p>
+            <p className="text-slate-600">
+              กดปุ่ม <strong className="text-[#071A4B]">การทำให้ใช้งานได้ (Deploy)</strong> &gt; <strong className="text-[#071A4B]">การทำให้ใช้งานได้ใหม่ (New deployment)</strong> จากนั้นกำหนดค่า:<br />
+              - ประเภทบริการ: <strong className="text-[#EA580C]">เว็บแอป (Web app)</strong><br />
+              - เรียกใช้งานในฐานะ: <strong className="text-[#071A4B]">ฉัน (บัญชีของคุณ/ panisara.l@bu.ac.th หรือดีที่สุดล็อกอินด้วย buqa@bu.ac.th)</strong><br />
+              - ผู้เข้าถึง: <strong className="text-[#EA580C]">ทุกคน (Anyone)</strong>
             </p>
-            <div className="mt-2 bg-violet-50 border border-violet-100 p-2.5 rounded-lg text-violet-800 text-[11px] leading-relaxed">
-              <span className="font-bold">📧 วิธีส่งอีเมลจาก "buqa@bu.ac.th" ทุกครั้ง:</span><br />
-              • <strong className="underline">วิธีที่ 1 (ง่ายที่สุด):</strong> ล็อกอินเข้าระบบ Google Apps Script ด้วยบัญชี <strong className="text-violet-900">buqa@bu.ac.th</strong> โดยตรงและทำการบันทึก+Deploy ด้วยสคริปต์นี้<br />
-              • <strong className="underline">วิธีที่ 2 (ส่งแทน):</strong> หากยังต้องการล็อกอินผ่านบัญชีของตนเอง ให้เพิ่มอีเมล <strong className="font-semibold text-violet-900">buqa@bu.ac.th</strong> เข้าเป็นอีเมลสำรองในส่วน <strong className="text-violet-950">"ส่งอีเมลในนามของ... (Send mail as)"</strong> ของผู้รับสิทธิ์ส่งก่อน จากนั้นระบบจะสลับบัญชีผู้ส่งไปยัง buqa@bu.ac.th ให้ปลายทางโดยอัตโนมัติ!
+            <div className="mt-2.5 bg-[#F5F7FA] border border-[#E2E8F0] p-3 rounded-xl text-slate-700 text-xs leading-relaxed">
+              <span className="font-bold text-[#071A4B]">วิธีส่งอีเมลจาก "buqa@bu.ac.th" ทุกครั้ง:</span><br />
+              • <strong className="underline">วิธีที่ 1 (ง่ายที่สุด):</strong> ล็อกอินเข้าระบบ Google Apps Script ด้วยบัญชี <strong className="text-[#071A4B]">buqa@bu.ac.th</strong> โดยตรงและทำการบันทึก+Deploy ด้วยสคริปต์นี้<br />
+              • <strong className="underline">วิธีที่ 2 (ส่งแทน):</strong> หากยังต้องการล็อกอินผ่านบัญชีของตนเอง ให้เพิ่มอีเมล <strong className="font-semibold text-[#071A4B]">buqa@bu.ac.th</strong> เข้าเป็นอีเมลสำรองในส่วน <strong className="text-[#071A4B]">"ส่งอีเมลในนามของ... (Send mail as)"</strong> ของผู้รับสิทธิ์ส่งก่อน จากนั้นระบบจะสลับบัญชีผู้ส่งไปยัง buqa@bu.ac.th ให้ปลายทางโดยอัตโนมัติ
             </div>
-            <div className="mt-2 bg-rose-50 border border-rose-100 p-2.5 rounded-lg text-rose-800 text-[11px] leading-relaxed">
-              <span className="font-bold">⚠️ ข้อควรระวังสูงสุด (สาเหตุหลักที่ผู้อื่นไม่ได้รับเมล):</span> ต้องกำหนดให้ผู้เข้าถึงเป็น <strong className="underline">ทุกคน (Anyone)</strong> เสมอ! 
-              หากคุณเลือก "เฉพาะฉัน (Only myself)" จะมีเพียงตัวคุณคนเดียวเท่านั้นที่ได้รับเมลเวลากดทดสอบ แต่เมื่อคุณครูหรือบุคลากรคนอื่น ๆ เข้ามาลงทะเบียนจริง บราวเซอร์ของพวกเขาจะไม่สามารถเข้าถึงลิงก์นี้ได้ และระบบจะไม่ส่งอีเมลแต่อย่างใด
+            <div className="mt-2 bg-rose-50 border border-rose-200 p-3 rounded-xl text-rose-900 text-xs leading-relaxed">
+              <span className="font-bold">ข้อควรระวังสูงสุด (สาเหตุหลักที่ผู้อื่นไม่ได้รับเมล):</span> ต้องกำหนดให้ผู้เข้าถึงเป็น <strong className="underline">ทุกคน (Anyone)</strong> เสมอ! 
+              หากคุณเลือก "เฉพาะฉัน (Only myself)" จะมีเพียงตัวคุณคนเดียวเท่านั้นที่ได้รับเมลเวลากดทดสอบ แต่เมื่ออาจารย์หรือบุคลากรท่านอื่นเข้ามาลงทะเบียนจริง เบราว์เซอร์ของพวกเขาจะไม่สามารถเข้าถึงลิงก์นี้ได้ และระบบจะไม่ส่งอีเมลแต่อย่างใด
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-semibold text-xs">
+        <div className="flex gap-3">
+          <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#071A4B] text-white font-bold text-xs tabular-nums">
             4
           </div>
           <div>
-            <p className="font-semibold text-slate-900">ก๊อปปี้ URL มากรอกในตั้งค่าเว็บนี้</p>
-            <p className="text-slate-500">คัดลอก "URL เว็บแอป" ที่ได้จากการ Deploy แล้วคลิกที่ <strong className="text-slate-800">"ตั้งค่าเว็บบริการส่งเมล"</strong> ด้านล่างเพื่อบันทึกระบบ</p>
+            <p className="font-bold text-[#071A4B]">คัดลอก URL มากรอกในตั้งค่าเว็บนี้</p>
+            <p className="text-slate-600">คัดลอก "URL เว็บแอป" ที่ได้จากการ Deploy แล้วคลิกที่ <strong className="text-[#071A4B]">"ตั้งค่าเว็บบริการส่งเมล"</strong> ด้านล่างเพื่อบันทึกระบบ</p>
           </div>
         </div>
       </div>
 
       {/* Code box */}
-      <div className="relative border border-slate-200 rounded-lg overflow-hidden bg-slate-900 text-slate-100 font-mono text-xs max-h-60 overflow-y-auto mb-4" id="gas-code-box">
-        <div className="sticky top-0 right-0 p-2 flex justify-end bg-slate-800/80 backdrop-blur border-b border-slate-700">
+      <div className="relative border border-white/10 rounded-2xl overflow-hidden bg-[#071A4B] text-slate-100 font-mono text-xs max-h-60 overflow-y-auto mb-4" id="gas-code-box">
+        <div className="sticky top-0 right-0 p-2.5 flex justify-end bg-[#0D2566]/95 backdrop-blur border-b border-white/10">
           <button
             onClick={copyToClipboard}
-            className="flex items-center gap-1.5 px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs transition duration-150"
+            className="flex items-center gap-1.5 px-4 py-1.5 bg-[#F97316] hover:bg-[#EA580C] text-white font-sans font-bold rounded-full text-xs transition duration-150 cursor-pointer"
             id="btn-copy-gas-code"
           >
             {copied ? (
               <>
-                <Check className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="text-emerald-400">คัดลอกแล้ว!</span>
+                <Check className="h-3.5 w-3.5 text-white" />
+                <span>คัดลอกแล้ว!</span>
               </>
             ) : (
               <>
@@ -555,16 +565,16 @@ function doPost(e) {
             )}
           </button>
         </div>
-        <pre className="p-4 leading-relaxed overflow-x-auto text-slate-300">
+        <pre className="p-4 leading-relaxed overflow-x-auto text-slate-200">
           <code>{codeString}</code>
         </pre>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-900 text-xs flex gap-2">
-        <HelpCircle className="h-4 w-4 text-amber-700 flex-shrink-0 mt-0.5" />
+      <div className="bg-[#F5F7FA] border border-[#E2E8F0] rounded-xl p-3.5 text-slate-700 text-xs flex gap-2.5 items-start">
+        <HelpCircle className="h-4 w-4 text-[#F97316] flex-shrink-0 mt-0.5" />
         <div>
-          <strong>โหมดทดสอบจำลอง (Simulation Mode)</strong>: หากท่านยังไม่ได้นำไปติดตั้ง 
-          ระบบจะทำการจำลองการส่งข้อมูล (Simulation Mode) และแจ้งประวัติการส่งเมลออกมาทางคอนโซล/แจ้งเตือนบนเว็บโดยอัตโนมัติ เพื่อให้ท่านทดลองระบบได้ทันที
+          <strong className="text-[#071A4B]">โหมดทดสอบจำลอง (Simulation Mode)</strong>: หากท่านยังไม่ได้นำไปติดตั้ง 
+          ระบบจะทำการจำลองการส่งข้อมูลและแจ้งประวัติการส่งเมลออกมาทางหน้าจอโดยอัตโนมัติ เพื่อให้ท่านทดลองระบบได้ทันที
         </div>
       </div>
     </div>

@@ -1,17 +1,39 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@400;500;600;700&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", "Montserrat", "Sarabun", "IBM Plex Sans Thai", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Montserrat", "Sarabun", "Inter", sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Prompt", "Sarabun", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Prompt", "Sarabun", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-navy-950: #071A4B;
+  --color-navy-900: #0A2463;
+  --color-navy-800: #0D2566;
+  --color-brand-orange: #F97316;
+  --color-brand-orange-hover: #EA580C;
 }
 
-body {
-  font-family: var(--font-sans);
-  background-color: #f8fafc;
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: #F5F7FA;
+    color: #071A4B;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
 }
 
-/* Custom scrollbars for a modern editorial feel */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom scrollbars for a clean corporate feel */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -22,10 +44,19 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
+  background: #CBD5E1;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #94A3B8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

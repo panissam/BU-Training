@@ -320,15 +320,16 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-orange-100 flex flex-col justify-between" id="app-container">
+    <div className="min-h-screen bg-[#F5F7FA] text-[#071A4B] font-sans selection:bg-orange-100 selection:text-[#071A4B] flex flex-col justify-between" id="app-container">
       
       {/* Top Banner Accent */}
-      <div className="h-2 bg-gradient-to-r from-orange-600 via-slate-800 to-slate-900 w-full" id="top-accent-line"></div>
+      <div className="h-1.5 bg-gradient-to-r from-[#071A4B] via-[#0A2463] to-[#F97316] w-full" id="top-accent-line"></div>
 
       {authLoading ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 h-[80vh]">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-600 border-t-transparent mb-4"></div>
-          <p className="text-slate-400 text-sm font-semibold">กำลังยืนยันความปลอดภัย...</p>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-[75vh]">
+          <div className="w-12 h-12 rounded-full border-[3px] border-slate-200 border-t-[#F97316] animate-spin mb-4"></div>
+          <p className="text-[#071A4B] text-sm font-bold tracking-tight">กำลังตรวจสอบสิทธิ์การเข้าถึง...</p>
+          <p className="text-slate-400 text-xs mt-1">Bangkok University Identity Verification</p>
         </div>
       ) : (
         <main className="flex-grow flex flex-col">
@@ -336,80 +337,95 @@ export default function App() {
             {!user ? (
               /* LANDING PAGE (UNAUTHENTICATED) */
               <motion.div
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.4 }}
-                className="flex-1 flex flex-col justify-center items-center py-16 px-4 md:px-8 max-w-4xl mx-auto w-full gap-8"
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25 }}
+                className="flex-1 flex flex-col justify-center items-center py-14 px-4 md:px-8 max-w-5xl mx-auto w-full gap-8"
                 id="landing-inner"
               >
                 {/* Branding Heading */}
-                <div className="text-center space-y-4 max-w-2xl" id="landing-brand">
-                  <div className="flex justify-center mb-2">
-                    <span className="inline-flex items-center gap-1.5 bg-orange-100 text-orange-850 text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest shadow-sm">
-                      <Landmark className="h-4 w-4" />
-                      Bangkok University
-                    </span>
-                  </div>
-                  <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
-                    BU Training <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-orange-500 font-black">Management</span> System
+                <div className="text-center space-y-3 max-w-2xl" id="landing-brand">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 flex items-center justify-center gap-2.5">
+                    <span className="inline-block w-5 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                    <span>Bangkok University · Staff Development</span>
+                  </p>
+                  <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#071A4B] leading-[1.15]">
+                    BU Training <span className="text-[#F97316]">Management</span> System
                   </h1>
-                  <p className="text-slate-500 text-sm md:text-base font-medium max-w-xl mx-auto" id="app-tagline">
-                    ระบบบริหารจัดการลงทะเบียน เช็คอินเข้างาน และตอบประเมินผลสัมมนาสำหรับบุคลากรและอาจารย์ แพลตฟอร์มแบบ Single-point All-in-One
+                  <p className="text-slate-600 text-sm md:text-base font-medium max-w-xl mx-auto leading-relaxed" id="app-tagline">
+                    ระบบบริหารจัดการลงทะเบียน เช็คอินเข้างาน และประเมินผลการอบรมสำหรับคณาจารย์และบุคลากรมหาวิทยาลัยกรุงเทพ
                   </p>
                 </div>
 
                 {/* Authentication errors panel */}
                 {authError && (
                   <motion.div 
-                    initial={{ scale: 0.95, opacity: 0 }}
+                    initial={{ scale: 0.97, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-2xl text-xs max-w-md w-full flex gap-3 shadow-sm"
+                    className="bg-white border border-rose-200 text-rose-800 p-4 rounded-2xl text-xs max-w-md w-full flex gap-3 shadow-sm"
                     id="login-error-banner"
                   >
-                    <AlertCircle className="h-5 w-5 text-rose-600 flex-shrink-0 mt-0.5" />
+                    <div className="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0">
+                      <AlertCircle className="h-4 w-4" />
+                    </div>
                     <div>
-                      <strong className="block font-bold">แจ้งเตือนระบบความปลอดภัย:</strong>
+                      <strong className="block font-bold text-[#071A4B]">แจ้งเตือนระบบความปลอดภัย</strong>
                       <p className="mt-1 leading-relaxed text-rose-700">{authError}</p>
                     </div>
                   </motion.div>
                 )}
 
                 {/* Unified Login Card */}
-                <div className="bg-white border border-slate-150 p-8 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 max-w-md w-full text-center space-y-6" id="login-container-card">
-                  <div className="space-y-2">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-orange-50 text-orange-600 mb-2">
-                      <LogIn className="h-6 w-6" />
+                <div className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] p-8 sm:p-10 rounded-3xl shadow-[0_10px_35px_-10px_rgba(7,26,75,0.1)] max-w-md w-full text-center space-y-6" id="login-container-card">
+                  <div className="space-y-3">
+                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#071A4B] text-white shadow-sm mx-auto">
+                      <LogIn className="h-6 w-6 text-[#F97316]" />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900">ลงชื่อเข้าใช้งานระบบ</h2>
-                    <p className="text-xs text-slate-400">
-                      ยินดีต้อนรับเข้าสู่อุปกรณ์ระบบอบรม เพื่อเริ่มต้นใช้งานกรุณาเข้าสู่ระบบด้วยสิทธิ์บัญชีของท่าน
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 flex items-center justify-center gap-2">
+                        <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                        <span>Single Sign-On Portal</span>
+                      </p>
+                      <h2 className="text-2xl font-extrabold text-[#071A4B] tracking-tight">
+                        ลงชื่อเข้าใช้งาน<span className="text-[#F97316]">ระบบ</span>
+                      </h2>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      กรุณาเข้าสู่ระบบด้วยบัญชี Google ของมหาวิทยาลัยกรุงเทพเพื่อเริ่มต้นใช้งาน
                     </p>
                   </div>
 
                   <button
                     onClick={() => handleLogin()}
-                    className="w-full flex items-center justify-center gap-3 bg-slate-950 hover:bg-black text-white font-extrabold h-12 px-6 rounded-2xl transition duration-150 shadow-sm hover:shadow-md hover:scale-[1.01] cursor-pointer"
+                    className="w-full group flex items-center justify-between bg-[#F97316] hover:bg-[#EA580C] text-white font-bold h-13 pl-6 pr-2 rounded-full transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#071A4B]"
                     id="btn-google-login"
                   >
-                    {/* Inline Google G Logo SVG */}
-                    <svg className="h-4.5 w-4.5 fill-current text-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.513 0-6.326-2.813-6.326-6.326s2.813-6.326 6.326-6.326c1.65 0 3.003.58 4.114 1.63L19.262 3.51C17.414 1.773 14.97 1 12.24 1 6.042 1 12.24s5.042 11.24 11.24 11.24c5.845 0 10.742-4.114 10.742-11.24 0-.741-.089-1.294-.241-1.955H12.24z"/>
-                    </svg>
-                    <span>เข้าสู่ระบบด้วย Google Account</span>
+                    <span className="flex items-center gap-3 text-sm">
+                      <svg className="h-4 w-4 fill-current text-white shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.513 0-6.326-2.813-6.326-6.326s2.813-6.326 6.326-6.326c1.65 0 3.003.58 4.114 1.63L19.262 3.51C17.414 1.773 14.97 1 12.24 1 6.042 1 1 6.042 1 12.24s5.042 11.24 11.24 11.24c5.845 0 10.742-4.114 10.742-11.24 0-.741-.089-1.294-.241-1.955H12.24z"/>
+                      </svg>
+                      <span className="whitespace-nowrap">เข้าสู่ระบบด้วย Google Account</span>
+                    </span>
+                    <span className="w-9 h-9 rounded-full bg-[#071A4B] text-white flex items-center justify-center shrink-0 group-hover:translate-x-0.5 transition-transform duration-200">
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
                   </button>
 
-                  <div className="border-t border-slate-100 pt-4 flex flex-col items-center gap-1">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">ข้อจำกัดโดเมนเมลสมาชิก</span>
-                    <p className="text-[11px] text-slate-500 font-medium">
-                      สมาชิกต้องระบุอีเมลส่วนบุคคล <span className="font-bold text-slate-700 font-mono">@bu.ac.th</span> เท่านั้น
+                  <div className="border-t border-slate-100 pt-5 flex flex-col items-center gap-1">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-[0.15em]">
+                      ข้อจำกัดโดเมนเมลสมาชิก
+                    </span>
+                    <p className="text-xs text-slate-600 font-medium">
+                      จำกัดเฉพาะอีเมลบุคลากร <span className="font-bold text-[#071A4B] font-mono">@bu.ac.th</span> เท่านั้น
                     </p>
                   </div>
                 </div>
 
-                {/* Secure warning text footer */}
-                <p className="text-[10px] text-slate-400 text-center uppercase tracking-wide bg-slate-105 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-inner">
-                  🔐 Secured access via Google Identity Protocol • For Internal BU Employees Only
+                {/* Secure note */}
+                <p className="text-[11px] text-slate-500 text-center tracking-wide flex items-center gap-1.5">
+                  <Lock className="h-3.5 w-3.5 text-[#071A4B]" />
+                  <span>Secured via Google Identity Protocol · Internal BU Staff Only</span>
                 </p>
               </motion.div>
             ) : (
@@ -431,103 +447,109 @@ export default function App() {
                     id="role-selection-view"
                   >
                     {/* Header Information */}
-                    <div className="text-center space-y-2" id="role-selection-header">
-                      <div className="flex justify-center mb-1">
-                        <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 border border-green-200 text-[10px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full">
-                          <CheckCircle className="h-3 w-3 text-green-605" />
-                          ยืนยันตัวตนสำเร็จ (Authenticated)
-                        </span>
-                      </div>
-                      <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-                        กรุณาเลือกบทบาทในการเข้าใช้งานระบบ
+                    <div className="text-center space-y-2.5" id="role-selection-header">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 flex items-center justify-center gap-2">
+                        <span className="inline-block w-5 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                        <span>Authenticated · @bu.ac.th</span>
+                      </p>
+                      <h1 className="text-2xl md:text-4xl font-extrabold text-[#071A4B] tracking-tight">
+                        เลือกบทบาท <span className="text-[#F97316]">เข้าใช้งานระบบ</span>
                       </h1>
-                      <p className="text-xs md:text-sm text-slate-500 font-semibold" id="selection-logged-info">
-                        ยินดีต้อนรับคุณ <strong className="text-slate-800">{dbName || user.displayName || 'บุคลากร'}</strong> (<span className="font-mono text-slate-600">{user.email}</span>)
+                      <p className="text-xs md:text-sm text-slate-500 font-medium" id="selection-logged-info">
+                        ยินดีต้อนรับคุณ <strong className="text-[#071A4B]">{dbName || user.displayName || 'บุคลากร'}</strong> · <span className="font-mono text-slate-600">{user.email}</span>
                       </p>
                     </div>
 
                     {/* Selection Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl mt-2" id="role-selector-grid">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl mt-2" id="role-selector-grid">
                       
                       {/* Participant card choice */}
-                      <div 
+                      <button
+                        type="button"
                         onClick={() => setSelectedEntrance('user')}
-                        className="bg-white border border-slate-200 hover:border-orange-500 hover:shadow-md rounded-[2rem] p-6 text-left cursor-pointer transition-all duration-200 group flex flex-col justify-between"
+                        className="bg-white border border-[#E2E8F0] border-b-2 border-b-[#F97316] hover:border-[#F97316] hover:shadow-[0_10px_30px_-10px_rgba(249,115,22,0.18)] rounded-2xl p-7 text-left cursor-pointer transition-all duration-200 group flex flex-col justify-between"
                         id="role-choice-user"
                       >
                         <div className="space-y-4">
-                          <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-100 group-hover:scale-105 transition">
-                            <User className="h-6 w-6" />
+                          <div className="w-12 h-12 rounded-full bg-[#F97316] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform duration-200">
+                            <User className="h-5 w-5" />
                           </div>
                           <div className="space-y-1.5">
-                            <h2 className="text-lg font-extrabold text-slate-950 group-hover:text-orange-600 transition">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 flex items-center gap-2">
+                              <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                              <span>Participant Portal</span>
+                            </p>
+                            <h2 className="text-lg font-extrabold text-[#071A4B] group-hover:text-[#EA580C] transition-colors">
                               ผู้เข้าร่วมอบรม (Participant)
                             </h2>
-                            <p className="text-slate-500 text-xs leading-relaxed font-semibold">
-                              สำหรับคณาจารย์และเจ้าหน้าที่กองงาน เข้าลงทะเบียนจองสิทธิ์สัมมนา แสดงบัตรเช็คอินคิวอาร์โค้ด และดาวน์โหลดใบประกาศนียบัตรผ่านระบบ
+                            <p className="text-slate-500 text-xs leading-relaxed">
+                              สำหรับคณาจารย์และบุคลากร เข้าลงทะเบียนจองสิทธิ์สัมมนา เช็คอินด้วย QR Code ทำแบบประเมิน และดาวน์โหลดวุฒิบัตร
                             </p>
                           </div>
                         </div>
-                        <div className="mt-8 flex items-center justify-between text-xs font-bold text-orange-600">
-                          <span>ดำเนินการเข้าใช้งานแบบผู้เข้าอบรม →</span>
+                        <div className="mt-7 pt-4 border-t border-slate-100 flex items-center justify-between w-full">
+                          <span className="text-xs font-bold text-[#071A4B] group-hover:text-[#EA580C] transition-colors">เข้าใช้งานแบบผู้เข้าอบรม</span>
+                          <span className="w-8 h-8 rounded-full bg-[#071A4B] group-hover:bg-[#F97316] text-white flex items-center justify-center transition-colors">
+                            <ArrowRight className="h-4 w-4" />
+                          </span>
                         </div>
-                      </div>
+                      </button>
 
                       {/* Admin role choice */}
                       {isAdmin ? (
-                        <div 
+                        <button
+                          type="button"
                           onClick={() => setSelectedEntrance('admin')}
-                          className="bg-white border border-slate-200 hover:border-slate-800 hover:shadow-md rounded-[2rem] p-6 text-left cursor-pointer transition-all duration-200 group flex flex-col justify-between"
+                          className="bg-[#071A4B] border border-white/10 border-b-2 border-b-[#F97316] hover:bg-[#0A2463] hover:shadow-[0_10px_30px_-10px_rgba(7,26,75,0.28)] rounded-2xl p-7 text-left cursor-pointer transition-all duration-200 group flex flex-col justify-between text-white"
                           id="role-choice-admin-allowed"
                         >
                           <div className="space-y-4">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-900 text-orange-550 flex items-center justify-center border border-slate-850 group-hover:scale-105 transition">
-                              <ShieldCheck className="h-6 w-6" />
+                            <div className="w-12 h-12 rounded-full bg-[#0D2566] border border-white/15 text-[#F97316] flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform duration-200">
+                              <ShieldCheck className="h-5 w-5" />
                             </div>
                             <div className="space-y-1.5">
-                              <div className="flex items-center gap-1.5">
-                                <h2 className="text-lg font-extrabold text-slate-950 group-hover:text-orange-600 transition">
-                                  ผู้ดูแลระบบ / แอดมิน (Admin)
-                                </h2>
-                                <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">
-                                  สิทธิ์แอดมิน
-                                </span>
-                              </div>
-                              <p className="text-slate-500 text-xs leading-relaxed font-semibold">
-                                สำหรับทีมงานสถาบันพัฒนาบุคลากร หรือคณบดี จัดสรรบอร์ดสารสนเทศหลักสูตร คุมระบบเอกสารตอบรับ พิมพ์คิวอาร์ และนำเข้าชาร์ตสถิติสัมมนา
+                              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-300 flex items-center gap-2">
+                                <span className="inline-block w-4 h-0.5 bg-[#F97316] rounded-full" aria-hidden="true" />
+                                <span>Authorized Admin</span>
+                              </p>
+                              <h2 className="text-lg font-extrabold text-white">
+                                ผู้ดูแลระบบ / แอดมิน (<span className="text-[#F97316]">Admin</span>)
+                              </h2>
+                              <p className="text-slate-300 text-xs leading-relaxed">
+                                สำหรับทีมงานพัฒนาบุคลากร จัดการหลักสูตรอบรม ตรวจสอบรายชื่อผู้สมัคร ส่งจดหมายเชิญ และวิเคราะห์ผลประเมิน
                               </p>
                             </div>
                           </div>
-                          <div className="mt-8 flex items-center justify-between text-xs font-bold text-slate-900">
-                            <span>เข้าสู่ระบบบริหารการจัดการ (แอดมิน) →</span>
+                          <div className="mt-7 pt-4 border-t border-white/10 flex items-center justify-between w-full">
+                            <span className="text-xs font-bold text-white">เข้าสู่ระบบบริหารจัดการ</span>
+                            <span className="w-8 h-8 rounded-full bg-[#F97316] text-white flex items-center justify-center group-hover:bg-[#EA580C] transition-colors">
+                              <ArrowRight className="h-4 w-4" />
+                            </span>
                           </div>
-                        </div>
+                        </button>
                       ) : (
                         <div 
-                          className="bg-slate-50/50 border border-slate-200 rounded-[2rem] p-6 text-left opacity-75 relative flex flex-col justify-between cursor-not-allowed"
+                          className="bg-slate-50 border border-[#E2E8F0] rounded-2xl p-7 text-left opacity-75 relative flex flex-col justify-between cursor-not-allowed"
                           id="role-choice-admin-disabled"
                         >
                           <div className="space-y-4">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center border border-slate-200">
-                              <Lock className="h-6 w-6" />
+                            <div className="w-12 h-12 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center">
+                              <Lock className="h-5 w-5" />
                             </div>
                             <div className="space-y-1.5">
-                              <div className="flex items-center gap-1.5">
-                                <h2 className="text-lg font-bold text-slate-400">
-                                  ผู้ดูแลระบบ / แอดมิน (Admin)
-                                </h2>
-                                <span className="bg-slate-100 text-slate-500 border border-slate-200 text-[9px] px-1.5 py-0.5 rounded-full font-bold">
-                                  จำกัดสิทธิ์
-                                </span>
-                              </div>
-                              <p className="text-slate-400 text-xs leading-relaxed font-semibold">
-                                ระบบผู้ดูแลระบบคัดกรองเฉพาะบัญชีบุคลากรที่ได้รับการแต่งตั้งในกองผู้คุมระบบ หากระดับชั้นสิทธิ์ของท่านไม่ตรงกรุณาติดต่อทีมงาน
+                              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Restricted Access</p>
+                              <h2 className="text-lg font-bold text-slate-500">
+                                ผู้ดูแลระบบ / แอดมิน (Admin)
+                              </h2>
+                              <p className="text-slate-400 text-xs leading-relaxed">
+                                จำกัดสิทธิ์เฉพาะบุคลากรที่ได้รับการแต่งตั้งเป็นผู้ดูแลระบบเท่านั้น หากต้องการสิทธิ์กรุณาติดต่อทีมงาน
                               </p>
                             </div>
                           </div>
                           
-                          <div className="mt-8 text-[11px] font-bold text-slate-405 flex items-center gap-1">
-                            <span>🔒 สำหรับผู้ที่มีบัญชีในสิทธิ์แอดมินเท่านั้น</span>
+                          <div className="mt-7 pt-4 border-t border-slate-200/70 text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+                            <Lock className="h-3.5 w-3.5" />
+                            <span>สำหรับผู้ที่มีบัญชีสิทธิ์แอดมินเท่านั้น</span>
                           </div>
                         </div>
                       )}
@@ -537,27 +559,25 @@ export default function App() {
                     {/* Simple Log Out Option on Role Selector */}
                     <button
                       onClick={handleLogout}
-                      className="mt-4 text-xs text-slate-500 hover:text-rose-600 font-bold flex items-center gap-1.5 bg-white border border-slate-200 px-5 py-2.5 rounded-full shadow-sm hover:border-rose-200 transition duration-150 cursor-pointer"
+                      className="mt-2 text-xs text-[#071A4B] hover:text-rose-600 font-bold flex items-center gap-2 bg-white border border-[#E2E8F0] hover:border-rose-200 px-6 py-2.5 rounded-full shadow-xs transition duration-150 cursor-pointer"
                       id="btn-logout-from-selector"
                     >
                       <LogOut className="h-3.5 w-3.5" />
-                      <span>ออกจากระบบ / ลงชื่อเข้าใช้ด้วยบัญชีอื่น (Log Out)</span>
+                      <span>ออกจากระบบ / เปลี่ยนบัญชีผู้ใช้งาน</span>
                     </button>
                   </motion.div>
                 ) : selectedEntrance === 'admin' && isAdmin ? (
                   <div className="relative">
                     {/* Switch layout button back to user view */}
-                    <div className="bg-slate-900 text-slate-205 px-4 py-2 hover:bg-black transition text-xs font-bold flex justify-between items-center z-40 relative">
-                      <span>อยู่ในหน้าต่างบริหารจัดการระบบอบรม (แอดมิน)</span>
-                      <div className="flex gap-2.5">
-                        <button 
-                          onClick={() => setSelectedEntrance('user')}
-                          className="bg-white/15 hover:bg-white/25 text-white rounded px-3 py-1 flex items-center gap-1 transition text-[11px]"
-                        >
-                          สลับไปดูบอร์ดมุมมองผู้เข้าร่วมอบรม (Participant View)
-                          <ArrowRight className="h-3 w-3" />
-                        </button>
-                      </div>
+                    <div className="bg-[#071A4B] text-slate-200 px-4 sm:px-6 py-2.5 border-b border-white/10 text-xs font-semibold flex flex-wrap justify-between items-center gap-2 z-40 relative">
+                      <span className="text-slate-300">โหมดผู้ดูแลระบบ (Admin Workspace)</span>
+                      <button 
+                        onClick={() => setSelectedEntrance('user')}
+                        className="bg-[#0D2566] border border-white/10 hover:bg-[#F97316] hover:border-[#F97316] text-white rounded-full px-4 py-1.5 flex items-center gap-2 transition text-[11px] font-bold cursor-pointer whitespace-nowrap"
+                      >
+                        <span>สลับไปมุมมองผู้เข้าร่วมอบรม</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                     <AdminPortal 
                       userEmail={user.email || ''} 
@@ -571,17 +591,15 @@ export default function App() {
                 ) : (
                   <div>
                     {isAdmin && (
-                      <div className="bg-orange-600 text-slate-100 px-4 py-2 text-xs font-bold flex justify-between items-center z-40 relative shadow-sm">
-                        <span>สิทธิ์แอดมิน: คุณได้รับสิทธิ์ให้เข้าควบคุมดูแลระบบได้</span>
-                        <div className="flex gap-2.5">
-                          <button 
-                            onClick={() => setSelectedEntrance('admin')}
-                            className="bg-white/15 hover:bg-white/25 text-white rounded px-3 py-1 flex items-center gap-1 transition font-bold text-[11px]"
-                          >
-                            เปลี่ยนเข้าสู่โหมดแอดมินบริหารระบบ (Admin Panel)
-                            <ArrowRight className="h-3 w-3" />
-                          </button>
-                        </div>
+                      <div className="bg-[#071A4B] text-white px-4 sm:px-6 py-2.5 border-b border-white/10 text-xs font-semibold flex flex-wrap justify-between items-center gap-2 z-40 relative">
+                        <span className="text-slate-300">สิทธิ์ผู้ดูแลระบบ: กำลังแสดงมุมมองผู้เข้าร่วมอบรม</span>
+                        <button 
+                          onClick={() => setSelectedEntrance('admin')}
+                          className="bg-[#F97316] hover:bg-[#EA580C] text-white rounded-full px-4 py-1.5 flex items-center gap-2 transition font-bold text-[11px] cursor-pointer whitespace-nowrap"
+                        >
+                          <span>กลับสู่โหมดแอดมิน (Admin Panel)</span>
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     )}
                     <ParticipantPortal
@@ -604,14 +622,13 @@ export default function App() {
       )}
 
       {/* Solid humanized brand footer */}
-      <footer className="py-6 border-t border-slate-100 bg-white" id="app-footer">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between text-slate-400 text-xs text-center sm:text-left gap-2 mb-2">
+      <footer className="py-6 border-t border-[#E2E8F0] bg-white" id="app-footer">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between text-slate-500 text-xs text-center sm:text-left gap-2">
           <p id="copyright-text">
-            © 2026 <strong>Bangkok University</strong> • ระบบจัดสรรและพิจารณาประสิทธิภาพกำลังบุคลากร
+            © 2026 <strong className="text-[#071A4B]">Bangkok University</strong> · สำนักมาตรฐานคุณภาพการศึกษา
           </p>
-          <div className="flex gap-4" id="footer-links">
-            <span className="hover:text-slate-600 transition">ฝ่ายเทคโนโลยีสารสนเทศ</span>
-            <span className="hover:text-slate-600 transition">นโยบายส่วนบุคคล</span>
+          <div className="flex gap-4 text-slate-400" id="footer-links">
+            <span>BU Training Management System</span>
           </div>
         </div>
       </footer>

@@ -73,6 +73,8 @@ export interface Feedback {
   part2Before?: number;
   part2After?: number;
   answers?: Record<string, string | number>;
+  source?: 'organic' | 'imported';
+  importedAt?: string;
 }
 
 export interface Registration {
@@ -89,6 +91,8 @@ export interface Registration {
   checkedIn: boolean;
   checkedInAt?: any; // Firestore Timestamp or string
   feedback?: Feedback;
+  source?: 'organic' | 'imported';
+  originalIdentifier?: string;
 }
 
 export const DEFAULT_EVALUATION_CONFIG: EvaluationConfig = {
